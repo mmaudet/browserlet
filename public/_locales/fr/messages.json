@@ -1,0 +1,226 @@
+{
+  "appName": {
+    "message": "Browserlet",
+    "description": "Nom de l'extension affiche dans le navigateur"
+  },
+  "appDescription": {
+    "message": "Automatisation web pour applications legacy - automatisation resiliente sans couts recurrents d'IA",
+    "description": "Description de l'extension affichee dans le navigateur"
+  },
+  "scriptListTitle": {
+    "message": "Scripts",
+    "description": "Titre de la vue liste des scripts"
+  },
+  "searchPlaceholder": {
+    "message": "Rechercher des scripts...",
+    "description": "Texte indicatif pour la recherche de scripts"
+  },
+  "noScriptsFound": {
+    "message": "Aucun script trouve",
+    "description": "Message quand aucun script ne correspond a la recherche"
+  },
+  "createNewScript": {
+    "message": "Creer un nouveau script",
+    "description": "Bouton pour creer un nouveau script"
+  },
+  "recordingTitle": {
+    "message": "Enregistrement",
+    "description": "Titre de la vue enregistrement"
+  },
+  "recordingInProgress": {
+    "message": "Enregistrement en cours...",
+    "description": "Statut quand l'enregistrement est actif"
+  },
+  "startRecording": {
+    "message": "Demarrer l'enregistrement",
+    "description": "Bouton pour demarrer l'enregistrement"
+  },
+  "stopRecording": {
+    "message": "Arreter l'enregistrement",
+    "description": "Bouton pour arreter l'enregistrement"
+  },
+  "pauseRecording": {
+    "message": "Mettre en pause",
+    "description": "Bouton pour mettre en pause l'enregistrement"
+  },
+  "resumeRecording": {
+    "message": "Reprendre l'enregistrement",
+    "description": "Bouton pour reprendre l'enregistrement"
+  },
+  "actionsRecorded": {
+    "message": "$COUNT$ actions enregistrees",
+    "description": "Compteur affichant le nombre d'actions enregistrees",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "editorTitle": {
+    "message": "Editeur",
+    "description": "Titre de la vue editeur de script"
+  },
+  "saveScript": {
+    "message": "Enregistrer",
+    "description": "Bouton pour enregistrer le script"
+  },
+  "saveScriptAs": {
+    "message": "Enregistrer sous...",
+    "description": "Bouton pour enregistrer le script avec un nouveau nom"
+  },
+  "exportScript": {
+    "message": "Exporter",
+    "description": "Bouton pour exporter le script"
+  },
+  "importScript": {
+    "message": "Importer",
+    "description": "Bouton pour importer un script"
+  },
+  "scriptName": {
+    "message": "Nom du script",
+    "description": "Libelle pour le champ nom du script"
+  },
+  "scriptNamePlaceholder": {
+    "message": "Entrez le nom du script...",
+    "description": "Texte indicatif pour le champ nom du script"
+  },
+  "unsavedChanges": {
+    "message": "Vous avez des modifications non enregistrees",
+    "description": "Avertissement sur les modifications non enregistrees"
+  },
+  "executionTitle": {
+    "message": "Execution",
+    "description": "Titre de la vue execution"
+  },
+  "runScript": {
+    "message": "Executer le script",
+    "description": "Bouton pour executer le script"
+  },
+  "stopExecution": {
+    "message": "Arreter",
+    "description": "Bouton pour arreter l'execution"
+  },
+  "executionRunning": {
+    "message": "Execution en cours...",
+    "description": "Statut quand le script s'execute"
+  },
+  "executionStep": {
+    "message": "Etape $CURRENT$ sur $TOTAL$",
+    "description": "Indicateur de l'etape d'execution en cours",
+    "placeholders": {
+      "current": {
+        "content": "$1",
+        "example": "3"
+      },
+      "total": {
+        "content": "$2",
+        "example": "10"
+      }
+    }
+  },
+  "executionComplete": {
+    "message": "Execution terminee",
+    "description": "Statut quand l'execution est terminee"
+  },
+  "executionFailed": {
+    "message": "Execution echouee",
+    "description": "Statut quand l'execution a echoue"
+  },
+  "copyJson": {
+    "message": "Copier JSON",
+    "description": "Bouton pour copier les resultats en JSON"
+  },
+  "copyCsv": {
+    "message": "Copier CSV",
+    "description": "Bouton pour copier les resultats en CSV"
+  },
+  "downloadJson": {
+    "message": "Telecharger JSON",
+    "description": "Bouton pour telecharger les resultats en fichier JSON"
+  },
+  "downloadCsv": {
+    "message": "Telecharger CSV",
+    "description": "Bouton pour telecharger les resultats en fichier CSV"
+  },
+  "copiedToClipboard": {
+    "message": "Copie dans le presse-papiers",
+    "description": "Retour quand le contenu est copie"
+  },
+  "contextZoneTitle": {
+    "message": "Contexte",
+    "description": "Titre de la zone de contexte"
+  },
+  "contextInstructions": {
+    "message": "Selectionnez des elements sur la page pour fournir du contexte a l'assistance IA",
+    "description": "Instructions pour la zone de contexte"
+  },
+  "addContext": {
+    "message": "Ajouter du contexte",
+    "description": "Bouton pour ajouter un element de contexte"
+  },
+  "clearContext": {
+    "message": "Effacer le contexte",
+    "description": "Bouton pour effacer tout le contexte"
+  },
+  "cancel": {
+    "message": "Annuler",
+    "description": "Bouton annuler"
+  },
+  "confirm": {
+    "message": "Confirmer",
+    "description": "Bouton confirmer"
+  },
+  "delete": {
+    "message": "Supprimer",
+    "description": "Bouton supprimer"
+  },
+  "edit": {
+    "message": "Modifier",
+    "description": "Bouton modifier"
+  },
+  "duplicate": {
+    "message": "Dupliquer",
+    "description": "Bouton dupliquer"
+  },
+  "rename": {
+    "message": "Renommer",
+    "description": "Bouton renommer"
+  },
+  "close": {
+    "message": "Fermer",
+    "description": "Bouton fermer"
+  },
+  "back": {
+    "message": "Retour",
+    "description": "Bouton retour"
+  },
+  "next": {
+    "message": "Suivant",
+    "description": "Bouton suivant"
+  },
+  "loading": {
+    "message": "Chargement...",
+    "description": "Indicateur de chargement"
+  },
+  "error": {
+    "message": "Erreur",
+    "description": "Titre erreur"
+  },
+  "success": {
+    "message": "Succes",
+    "description": "Titre succes"
+  },
+  "warning": {
+    "message": "Attention",
+    "description": "Titre avertissement"
+  },
+  "deleteScriptConfirm": {
+    "message": "Etes-vous sur de vouloir supprimer ce script ?",
+    "description": "Message de confirmation pour la suppression d'un script"
+  },
+  "discardChangesConfirm": {
+    "message": "Abandonner les modifications non enregistrees ?",
+    "description": "Message de confirmation pour abandonner les modifications"
+  }
+}

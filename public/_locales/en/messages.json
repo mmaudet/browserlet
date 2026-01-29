@@ -1,0 +1,226 @@
+{
+  "appName": {
+    "message": "Browserlet",
+    "description": "Extension name displayed in browser"
+  },
+  "appDescription": {
+    "message": "Web automation for legacy applications - resilient automation without recurring AI costs",
+    "description": "Extension description displayed in browser"
+  },
+  "scriptListTitle": {
+    "message": "Scripts",
+    "description": "Title for the script list view"
+  },
+  "searchPlaceholder": {
+    "message": "Search scripts...",
+    "description": "Placeholder text for script search input"
+  },
+  "noScriptsFound": {
+    "message": "No scripts found",
+    "description": "Message when no scripts match search"
+  },
+  "createNewScript": {
+    "message": "Create new script",
+    "description": "Button to create a new script"
+  },
+  "recordingTitle": {
+    "message": "Recording",
+    "description": "Title for recording view"
+  },
+  "recordingInProgress": {
+    "message": "Recording in progress...",
+    "description": "Status when recording is active"
+  },
+  "startRecording": {
+    "message": "Start Recording",
+    "description": "Button to start recording"
+  },
+  "stopRecording": {
+    "message": "Stop Recording",
+    "description": "Button to stop recording"
+  },
+  "pauseRecording": {
+    "message": "Pause Recording",
+    "description": "Button to pause recording"
+  },
+  "resumeRecording": {
+    "message": "Resume Recording",
+    "description": "Button to resume recording"
+  },
+  "actionsRecorded": {
+    "message": "$COUNT$ actions recorded",
+    "description": "Counter showing number of recorded actions",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "editorTitle": {
+    "message": "Editor",
+    "description": "Title for script editor view"
+  },
+  "saveScript": {
+    "message": "Save",
+    "description": "Button to save script"
+  },
+  "saveScriptAs": {
+    "message": "Save As...",
+    "description": "Button to save script with new name"
+  },
+  "exportScript": {
+    "message": "Export",
+    "description": "Button to export script"
+  },
+  "importScript": {
+    "message": "Import",
+    "description": "Button to import script"
+  },
+  "scriptName": {
+    "message": "Script Name",
+    "description": "Label for script name input"
+  },
+  "scriptNamePlaceholder": {
+    "message": "Enter script name...",
+    "description": "Placeholder for script name input"
+  },
+  "unsavedChanges": {
+    "message": "You have unsaved changes",
+    "description": "Warning about unsaved changes"
+  },
+  "executionTitle": {
+    "message": "Execution",
+    "description": "Title for execution view"
+  },
+  "runScript": {
+    "message": "Run Script",
+    "description": "Button to run script"
+  },
+  "stopExecution": {
+    "message": "Stop",
+    "description": "Button to stop execution"
+  },
+  "executionRunning": {
+    "message": "Running...",
+    "description": "Status when script is running"
+  },
+  "executionStep": {
+    "message": "Step $CURRENT$ of $TOTAL$",
+    "description": "Current execution step indicator",
+    "placeholders": {
+      "current": {
+        "content": "$1",
+        "example": "3"
+      },
+      "total": {
+        "content": "$2",
+        "example": "10"
+      }
+    }
+  },
+  "executionComplete": {
+    "message": "Execution complete",
+    "description": "Status when execution finished"
+  },
+  "executionFailed": {
+    "message": "Execution failed",
+    "description": "Status when execution failed"
+  },
+  "copyJson": {
+    "message": "Copy JSON",
+    "description": "Button to copy results as JSON"
+  },
+  "copyCsv": {
+    "message": "Copy CSV",
+    "description": "Button to copy results as CSV"
+  },
+  "downloadJson": {
+    "message": "Download JSON",
+    "description": "Button to download results as JSON file"
+  },
+  "downloadCsv": {
+    "message": "Download CSV",
+    "description": "Button to download results as CSV file"
+  },
+  "copiedToClipboard": {
+    "message": "Copied to clipboard",
+    "description": "Feedback when content copied"
+  },
+  "contextZoneTitle": {
+    "message": "Context",
+    "description": "Title for context zone"
+  },
+  "contextInstructions": {
+    "message": "Select elements on the page to provide context for AI assistance",
+    "description": "Instructions for context zone"
+  },
+  "addContext": {
+    "message": "Add Context",
+    "description": "Button to add context element"
+  },
+  "clearContext": {
+    "message": "Clear Context",
+    "description": "Button to clear all context"
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "Cancel button"
+  },
+  "confirm": {
+    "message": "Confirm",
+    "description": "Confirm button"
+  },
+  "delete": {
+    "message": "Delete",
+    "description": "Delete button"
+  },
+  "edit": {
+    "message": "Edit",
+    "description": "Edit button"
+  },
+  "duplicate": {
+    "message": "Duplicate",
+    "description": "Duplicate button"
+  },
+  "rename": {
+    "message": "Rename",
+    "description": "Rename button"
+  },
+  "close": {
+    "message": "Close",
+    "description": "Close button"
+  },
+  "back": {
+    "message": "Back",
+    "description": "Back button"
+  },
+  "next": {
+    "message": "Next",
+    "description": "Next button"
+  },
+  "loading": {
+    "message": "Loading...",
+    "description": "Loading indicator"
+  },
+  "error": {
+    "message": "Error",
+    "description": "Error title"
+  },
+  "success": {
+    "message": "Success",
+    "description": "Success title"
+  },
+  "warning": {
+    "message": "Warning",
+    "description": "Warning title"
+  },
+  "deleteScriptConfirm": {
+    "message": "Are you sure you want to delete this script?",
+    "description": "Confirmation message for script deletion"
+  },
+  "discardChangesConfirm": {
+    "message": "Discard unsaved changes?",
+    "description": "Confirmation message for discarding changes"
+  }
+}
