@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 3 of 6 (Side Panel)
-Plan: 2 of TBD in current phase
+Plan: 1 of TBD in current phase
 Status: In progress
-Last activity: 2026-01-29 — Completed 03-02-PLAN.md (Script Storage Layer)
+Last activity: 2026-01-29 — Completed 03-01-PLAN.md (Dependencies and Monaco Setup)
 
 Progress: [███░░░░░░░] 33% (2 of 6 phases complete)
 
@@ -74,6 +74,9 @@ Recent decisions affecting current work:
 - Show last 20 actions in reverse order (most recent first) for usability
 
 **Phase 3 decisions (in progress):**
+- ESM/CJS interop for vite-plugin-monaco-editor using fallback pattern
+- i18n files in public/ directory for WXT static asset copying
+- Comprehensive i18n keys for all Phase 3 UI strings upfront
 - crypto.randomUUID() for script/history ID generation (browser-native)
 - Per-script history keying with browserlet_history_{scriptId} prefix
 - Prepend new records and slice to enforce 50-entry history cap
@@ -134,6 +137,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29T12:04:00Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-01-29T12:09:00Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None - clean state
