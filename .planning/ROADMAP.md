@@ -114,10 +114,14 @@ Plans:
   4. Rate limiting prevents API exhaustion with exponential backoff
   5. Extension falls back to basic selectors if LLM unavailable
   6. API keys are stored encrypted in chrome.storage
-**Plans**: TBD
+**Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] TBD during planning
+- [ ] 05-01-PLAN.md — Install dependencies, manifest host_permissions, encryption utils
+- [ ] 05-02-PLAN.md — Provider types, rate limiter, prompt builder, fallback generator
+- [ ] 05-03-PLAN.md — Claude provider, Ollama provider, LLM service facade
+- [ ] 05-04-PLAN.md — Message handlers, config store, Settings UI component
+- [ ] 05-05-PLAN.md — UI integration, recording wiring, E2E verification
 
 ### Phase 6: Contextual Triggers
 **Goal**: Smart automation with context-aware script suggestions
@@ -146,8 +150,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Recording | 5/5 | Complete | 2026-01-29 |
 | 3. Side Panel | 7/7 | Complete | 2026-01-29 |
 | 4. Playback | 7/7 | Complete | 2026-01-29 |
-| 5. LLM Integration | 0/TBD | Not started | - |
+| 5. LLM Integration | 0/5 | Ready | - |
 | 6. Contextual Triggers | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-01-29 after Phase 4 completion*
+*Last updated: 2026-01-29 after Phase 5 planning*
