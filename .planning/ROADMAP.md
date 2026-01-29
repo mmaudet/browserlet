@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Recording** - DOM observation and semantic hint capture
 - [x] **Phase 3: Side Panel** - UI, Monaco Editor, and script management
 - [x] **Phase 4: Playback** - BSL execution engine with semantic resolution
-- [ ] **Phase 5: LLM Integration** - AI-assisted semantic selector generation
+- [x] **Phase 5: LLM Integration** - AI-assisted semantic selector generation
 - [ ] **Phase 6: Contextual Triggers** - Smart suggestions and auto-execution
 
 ## Phase Details
@@ -117,11 +117,11 @@ Plans:
 **Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] 05-01-PLAN.md — Install dependencies, manifest host_permissions, encryption utils
-- [ ] 05-02-PLAN.md — Provider types, rate limiter, prompt builder, fallback generator
-- [ ] 05-03-PLAN.md — Claude provider, Ollama provider, LLM service facade
-- [ ] 05-04-PLAN.md — Message handlers, config store, Settings UI component
-- [ ] 05-05-PLAN.md — UI integration, recording wiring, E2E verification
+- [x] 05-01-PLAN.md — Install dependencies, manifest host_permissions, encryption utils
+- [x] 05-02-PLAN.md — Provider types, rate limiter, prompt builder, fallback generator
+- [x] 05-03-PLAN.md — Claude provider, Ollama provider, LLM service facade
+- [x] 05-04-PLAN.md — Message handlers, config store, Settings UI component
+- [x] 05-05-PLAN.md — UI integration, recording wiring, E2E verification
 
 ### Phase 6: Contextual Triggers
 **Goal**: Smart automation with context-aware script suggestions
@@ -150,8 +150,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Recording | 5/5 | Complete | 2026-01-29 |
 | 3. Side Panel | 7/7 | Complete | 2026-01-29 |
 | 4. Playback | 7/7 | Complete | 2026-01-29 |
-| 5. LLM Integration | 0/5 | Ready | - |
+| 5. LLM Integration | 5/5 | Complete | 2026-01-29 |
 | 6. Contextual Triggers | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-01-29 after Phase 5 planning*
+*Last updated: 2026-01-29 after Phase 5 completion*
