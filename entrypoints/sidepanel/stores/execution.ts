@@ -1,13 +1,14 @@
 import van from 'vanjs-core';
 import type { Script, ExecutionRecord } from '../../../utils/types';
 import { addExecutionRecord, updateExecutionRecord } from '../../../utils/storage/history';
+import { parseSteps } from '../../../utils/yaml/stepParser';
 
 // Execution state
 export const isExecuting = van.state(false);
 export const currentScript = van.state<Script | null>(null);
 export const currentStep = van.state(0);
 export const totalSteps = van.state(0);
-export const executionStatus = van.state<'idle' | 'running' | 'completed' | 'failed' | 'stopped'>('idle');
+export const executionStatus = van.state<'idle' | 'running' | 'completed' | 'failed' | 'stopped' | 'waiting_auth'>('idle');
 export const executionResults = van.state<unknown[]>([]);
 export const executionError = van.state<string | null>(null);
 export const currentRecordId = van.state<string | null>(null);
@@ -18,18 +19,26 @@ export const progressPercent = van.derive(() => {
   return Math.round((currentStep.val / totalSteps.val) * 100);
 });
 
-// Start execution (placeholder - actual execution in Phase 4)
+// Start execution - sends EXECUTE_SCRIPT to content script
 export async function startExecution(script: Script): Promise<void> {
+  // Parse script to get accurate step count
+  let stepCount = 0;
+  try {
+    const parsed = parseSteps(script.content);
+    stepCount = parsed.steps.length;
+  } catch (error) {
+    console.error('[Browserlet] Failed to parse script:', error);
+    // Use a default if parsing fails
+    stepCount = 1;
+  }
+
   isExecuting.val = true;
   currentScript.val = script;
   currentStep.val = 0;
+  totalSteps.val = stepCount;
   executionStatus.val = 'running';
   executionResults.val = [];
   executionError.val = null;
-
-  // Parse steps from script content to get total
-  // For now, use placeholder count
-  totalSteps.val = 10; // Will be parsed from script.content in Phase 4
 
   // Create execution record
   const record = await addExecutionRecord({
@@ -38,9 +47,25 @@ export async function startExecution(script: Script): Promise<void> {
     startedAt: Date.now(),
     status: 'running',
     currentStep: 0,
-    totalSteps: totalSteps.val
+    totalSteps: stepCount
   });
   currentRecordId.val = record.id;
+
+  // Send to content script for execution
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.id) {
+    try {
+      await chrome.tabs.sendMessage(tab.id, {
+        type: 'EXECUTE_SCRIPT',
+        payload: { content: script.content }
+      });
+    } catch (error) {
+      console.error('[Browserlet] Failed to send execute message:', error);
+      await failExecution('Failed to communicate with page');
+    }
+  } else {
+    await failExecution('No active tab found');
+  }
 }
 
 // Update progress (called by execution engine in Phase 4)
@@ -94,8 +119,18 @@ export async function failExecution(error: string): Promise<void> {
   }
 }
 
-// Stop execution (user requested)
+// Stop execution (user requested) - sends STOP_EXECUTION to content script
 export async function stopExecution(): Promise<void> {
+  // Send stop message to content script
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.id) {
+    try {
+      await chrome.tabs.sendMessage(tab.id, { type: 'STOP_EXECUTION' });
+    } catch (error) {
+      console.error('[Browserlet] Failed to send stop message:', error);
+    }
+  }
+
   isExecuting.val = false;
   executionStatus.val = 'stopped';
 
@@ -118,3 +153,43 @@ export function resetExecution(): void {
   executionError.val = null;
   currentRecordId.val = null;
 }
+
+// Listen for execution events from content script
+chrome.runtime.onMessage.addListener((message) => {
+  switch (message.type) {
+    case 'EXECUTION_PROGRESS': {
+      const { step, totalSteps: total } = message.payload || {};
+      if (typeof step === 'number') {
+        currentStep.val = step;
+      }
+      if (typeof total === 'number') {
+        totalSteps.val = total;
+      }
+      // Update record
+      if (currentRecordId.val && currentScript.val && typeof step === 'number') {
+        updateExecutionRecord(currentScript.val.id, currentRecordId.val, {
+          currentStep: step,
+          status: 'running'
+        });
+      }
+      break;
+    }
+
+    case 'EXECUTION_COMPLETED': {
+      const results = message.payload?.results;
+      completeExecution(results);
+      break;
+    }
+
+    case 'EXECUTION_FAILED': {
+      const error = message.payload?.error || 'Execution failed';
+      failExecution(error);
+      break;
+    }
+
+    case 'AUTH_REQUIRED': {
+      executionStatus.val = 'waiting_auth';
+      break;
+    }
+  }
+});
