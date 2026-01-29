@@ -1,5 +1,5 @@
 import van from 'vanjs-core';
-import { llmConfigStore, getLLMConfigForServiceWorker } from '../stores/llmConfig';
+import { llmConfigStore, getLLMConfigForServiceWorker, loadLLMConfig, isConfigValid } from '../stores/llmConfig';
 import { loadScripts } from '../stores/scripts';
 import { navigateTo } from '../router';
 import { saveScript } from '../../../utils/storage/scripts';
@@ -126,15 +126,26 @@ function generateBasicBSL(actions: typeof recordedActions.val): string {
  * Generate BSL from recorded actions - tries LLM first, falls back to basic
  */
 async function generateBSL(actions: typeof recordedActions.val): Promise<{ bsl: string; usedLLM: boolean }> {
-  // Check if LLM is configured
-  if (!llmConfigStore.isConfigured.val) {
-    console.log('LLM not configured, using basic generation');
+  // Reload config from storage to ensure we have latest state
+  try {
+    await loadLLMConfig();
+  } catch (error) {
+    console.error('Failed to load LLM config:', error);
+  }
+
+  // Check if LLM is configured and valid
+  const configured = llmConfigStore.isConfigured.val && isConfigValid();
+  console.log('[Browserlet] LLM check - isConfigured:', llmConfigStore.isConfigured.val, 'isValid:', isConfigValid(), 'provider:', llmConfigStore.provider.val);
+
+  if (!configured) {
+    console.log('[Browserlet] LLM not configured, using basic generation');
     return { bsl: generateBasicBSL(actions), usedLLM: false };
   }
 
   try {
     // Ensure LLM service is configured with current settings
     const config = getLLMConfigForServiceWorker();
+    console.log('[Browserlet] Configuring LLM service with:', { provider: config.provider, hasApiKey: !!config.claudeApiKey });
     await chrome.runtime.sendMessage({ type: 'CONFIGURE_LLM', payload: config });
 
     // Send GENERATE_BSL message to service worker
@@ -308,6 +319,8 @@ function LoadingIndicator() {
 export function RecordingView() {
   // Load initial state
   loadRecordingState();
+  // Load LLM config to check if configured
+  loadLLMConfig().catch(console.error);
 
   // Add CSS for spinner animation if not present
   if (!document.getElementById('recording-view-styles')) {
@@ -344,15 +357,19 @@ export function RecordingView() {
     StatusMessage(),
 
     // LLM not configured warning (only when not recording and LLM not configured)
-    () => !isRecording.val && !llmConfigStore.isConfigured.val && !isGeneratingBSL.val && !generationStatus.val
-      ? div({
+    () => {
+      const configured = llmConfigStore.isConfigured.val && isConfigValid();
+      if (!isRecording.val && !configured && !isGeneratingBSL.val && !generationStatus.val) {
+        return div({
           style: 'background: #fff3cd; border: 1px solid #ffc107; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: #856404;'
         },
           p({ style: 'margin: 0;' },
             chrome.i18n.getMessage('llmNotConfigured') || 'LLM not configured - scripts will use basic generation'
           )
-        )
-      : null,
+        );
+      }
+      return span();
+    },
 
     // Record button
     button({
