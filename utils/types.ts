@@ -37,3 +37,31 @@ export interface MessageResponse<T = unknown> {
   data?: T;
   error?: string;
 }
+
+// Script metadata (STOR-04)
+export interface Script {
+  id: string;                    // UUID
+  name: string;                  // Required, display name
+  description?: string;          // Optional description
+  version: string;               // Semantic version
+  target_app?: string;           // Target application name
+  author?: string;               // Author name
+  tags?: string[];               // Searchable tags
+  content: string;               // YAML content (BSL script)
+  createdAt: number;             // Timestamp
+  updatedAt: number;             // Timestamp
+}
+
+// Execution history (STOR-05)
+export interface ExecutionRecord {
+  id: string;                    // UUID
+  scriptId: string;              // Reference to script
+  scriptName: string;            // Denormalized for history
+  startedAt: number;             // Start timestamp
+  completedAt?: number;          // End timestamp (undefined if running)
+  status: 'running' | 'completed' | 'failed' | 'stopped';
+  currentStep?: number;          // Current step index (for progress)
+  totalSteps?: number;           // Total steps in script
+  results?: unknown;             // Extracted data
+  error?: string;                // Error message if failed
+}
