@@ -314,5 +314,85 @@
   "authContinue": {
     "message": "Veuillez vous connecter a l'application cible. L'execution reprendra automatiquement.",
     "description": "Message expliquant la reprise automatique apres auth"
+  },
+  "settings": {
+    "message": "Parametres",
+    "description": "Bouton/titre de la vue parametres"
+  },
+  "llmSettingsTitle": {
+    "message": "Configuration LLM",
+    "description": "Titre de la section parametres LLM"
+  },
+  "llmProvider": {
+    "message": "Fournisseur LLM",
+    "description": "Libelle pour la selection du fournisseur LLM"
+  },
+  "apiKey": {
+    "message": "Cle API",
+    "description": "Libelle pour le champ de cle API"
+  },
+  "apiKeyHint": {
+    "message": "Obtenez votre cle API sur console.anthropic.com",
+    "description": "Indication pour obtenir la cle API"
+  },
+  "apiKeyRequired": {
+    "message": "Cle API requise",
+    "description": "Titre quand la cle API est necessaire"
+  },
+  "apiKeyExpired": {
+    "message": "Votre cle API doit etre ressaisie apres le redemarrage du navigateur.",
+    "description": "Message expliquant l'expiration de la cle de session"
+  },
+  "llmModel": {
+    "message": "Modele",
+    "description": "Libelle pour la selection du modele"
+  },
+  "ollamaHost": {
+    "message": "Hote Ollama",
+    "description": "Libelle pour l'URL de l'hote Ollama"
+  },
+  "ollamaModel": {
+    "message": "Nom du modele",
+    "description": "Libelle pour le nom du modele Ollama"
+  },
+  "testConnection": {
+    "message": "Tester la connexion",
+    "description": "Bouton pour tester la connexion Ollama"
+  },
+  "testing": {
+    "message": "Test en cours...",
+    "description": "Statut pendant le test de connexion"
+  },
+  "saveSettings": {
+    "message": "Enregistrer les parametres",
+    "description": "Bouton pour enregistrer les parametres LLM"
+  },
+  "settingsSaved": {
+    "message": "Parametres enregistres avec succes !",
+    "description": "Message quand les parametres sont enregistres"
+  },
+  "sessionKeyNote": {
+    "message": "Note : Votre cle API est chiffree et stockee localement. Apres le redemarrage du navigateur, vous devrez ressaisir votre cle API pour des raisons de securite.",
+    "description": "Note expliquant le comportement de la cle API de session"
+  },
+  "generatingBSL": {
+    "message": "Generation du script...",
+    "description": "Statut pendant la generation du BSL depuis l'enregistrement"
+  },
+  "generatedWithLLM": {
+    "message": "Genere avec LLM",
+    "description": "Indicateur que le script a ete genere avec le LLM"
+  },
+  "generatedBasic": {
+    "message": "Genere (mode basique)",
+    "description": "Indicateur que le script a ete genere sans LLM"
+  },
+  "llmConfigured": {
+    "message": "Utilisation du fournisseur LLM configure",
+    "description": "Statut quand le LLM est configure"
+  },
+  "llmNotConfigured": {
+    "message": "LLM non configure - les scripts utiliseront la generation basique",
+    "description": "Avertissement quand le LLM n'est pas configure"
   }
 }

@@ -314,5 +314,85 @@
   "authContinue": {
     "message": "Please log in to the target application. Execution will resume automatically.",
     "description": "Message explaining auth will auto-resume"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Settings button/view title"
+  },
+  "llmSettingsTitle": {
+    "message": "LLM Settings",
+    "description": "Title for LLM settings section"
+  },
+  "llmProvider": {
+    "message": "LLM Provider",
+    "description": "Label for LLM provider selection"
+  },
+  "apiKey": {
+    "message": "API Key",
+    "description": "Label for API key input"
+  },
+  "apiKeyHint": {
+    "message": "Get your API key from console.anthropic.com",
+    "description": "Hint for where to get API key"
+  },
+  "apiKeyRequired": {
+    "message": "API Key Required",
+    "description": "Title when API key is needed"
+  },
+  "apiKeyExpired": {
+    "message": "Your API key needs to be re-entered after browser restart.",
+    "description": "Message explaining session key expiration"
+  },
+  "llmModel": {
+    "message": "Model",
+    "description": "Label for model selection"
+  },
+  "ollamaHost": {
+    "message": "Ollama Host",
+    "description": "Label for Ollama host URL input"
+  },
+  "ollamaModel": {
+    "message": "Model Name",
+    "description": "Label for Ollama model name input"
+  },
+  "testConnection": {
+    "message": "Test Connection",
+    "description": "Button to test Ollama connection"
+  },
+  "testing": {
+    "message": "Testing...",
+    "description": "Status while testing connection"
+  },
+  "saveSettings": {
+    "message": "Save Settings",
+    "description": "Button to save LLM settings"
+  },
+  "settingsSaved": {
+    "message": "Settings saved successfully!",
+    "description": "Message when settings are saved"
+  },
+  "sessionKeyNote": {
+    "message": "Note: Your API key is encrypted and stored locally. After browser restart, you will need to re-enter your API key for security.",
+    "description": "Note explaining API key session behavior"
+  },
+  "generatingBSL": {
+    "message": "Generating script...",
+    "description": "Status while generating BSL from recording"
+  },
+  "generatedWithLLM": {
+    "message": "Generated with LLM",
+    "description": "Indicator that script was generated using LLM"
+  },
+  "generatedBasic": {
+    "message": "Generated (basic mode)",
+    "description": "Indicator that script was generated without LLM"
+  },
+  "llmConfigured": {
+    "message": "Using configured LLM provider",
+    "description": "Status when LLM is configured"
+  },
+  "llmNotConfigured": {
+    "message": "LLM not configured - scripts will use basic generation",
+    "description": "Warning when LLM is not configured"
   }
 }
