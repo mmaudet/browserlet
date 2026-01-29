@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-29)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** Phase 3 - Side Panel
+**Current focus:** Phase 4 - Playback
 
 ## Current Position
 
 Phase: 4 of 6 (Playback)
-Plan: Not started
-Status: Ready for Phase 4 planning
-Last activity: 2026-01-29 — Completed Phase 3 (Side Panel)
+Plan: 2 of 7
+Status: In progress
+Last activity: 2026-01-29 — Completed 04-02-PLAN.md (Humanizer)
 
-Progress: [█████░░░░░] 50% (3 of 6 phases complete)
+Progress: [█████░░░░░] 50% (3 of 6 phases complete, Phase 4: 2/7 plans)
 
 ## Performance Metrics
 
@@ -73,7 +73,7 @@ Recent decisions affecting current work:
 - Clear previous actions when starting new recording for clean sessions
 - Show last 20 actions in reverse order (most recent first) for usability
 
-**Phase 3 decisions (in progress):**
+**Phase 3 decisions (completed):**
 - ESM/CJS interop for vite-plugin-monaco-editor using fallback pattern
 - i18n files in public/ directory for WXT static asset copying
 - Comprehensive i18n keys for all Phase 3 UI strings upfront
@@ -90,6 +90,11 @@ Recent decisions affecting current work:
 - Storage change listener for cross-context sync in script stores
 - Tab listeners at module level for singleton context updates
 - @json2csv/plainjs Parser for CSV export functionality
+
+**Phase 4 decisions (in progress):**
+- Box-Muller transform for Gaussian distribution (natural timing feel)
+- DEFAULT_CONFIG ranges: 500-2000ms base, 50-150ms typing, 100-300ms scroll
+- Normalize Gaussian to 0-1 with (gaussian + 3) / 6 clamping
 
 ### Pending Todos
 
@@ -172,6 +177,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29
-Stopped at: Phase 3 complete
-Resume file: None - clean state
+Last session: 2026-01-29T12:33:05Z
+Stopped at: Completed 04-02-PLAN.md (Humanizer)
+Resume file: None
