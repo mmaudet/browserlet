@@ -4,6 +4,8 @@ const DEFAULT_STATE: AppState = {
   version: '0.1.0',
   firstInstall: 0,
   lastActivity: 0,
+  recordingState: 'idle',
+  recordedActions: [],
 };
 
 export async function getState(): Promise<AppState> {
