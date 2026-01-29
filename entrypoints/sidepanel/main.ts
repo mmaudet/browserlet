@@ -1,127 +1,168 @@
-// Elements
-const swStatusEl = document.getElementById('sw-status')!;
-const recordingStatusEl = document.getElementById('recording-status')!;
-const recordBtnEl = document.getElementById('record-btn')! as HTMLButtonElement;
-const actionsCountEl = document.getElementById('actions-count')!;
-const actionsListEl = document.getElementById('actions-list')!;
+import van from 'vanjs-core';
+import { currentView, navigateTo, goBack, editorScript } from './router';
+import { loadScripts, selectedScript, selectScript } from './stores/scripts';
+import { ScriptList } from './components/ScriptList';
+import { ScriptEditor, disposeEditor } from './components/ScriptEditor';
+import { RecordingView } from './components/RecordingView';
+import { ExecutionView } from './components/ExecutionView';
+import { ContextZone } from './components/ContextZone';
+import { ImportButton, ExportButton } from './components/ImportExport';
+import { saveScript } from '../../utils/storage/scripts';
+import type { Script } from '../../utils/types';
 
-// State
-let isRecording = false;
+const { div, button, span, nav } = van.tags;
+
+// Navigation tabs
+function NavTabs() {
+  const tabs: Array<{ id: typeof currentView.val; label: string; icon: string }> = [
+    { id: 'list', label: chrome.i18n.getMessage('scripts') || 'Scripts', icon: '📋' },
+    { id: 'recording', label: chrome.i18n.getMessage('record') || 'Record', icon: '🔴' },
+    { id: 'execution', label: chrome.i18n.getMessage('run') || 'Run', icon: '▶️' }
+  ];
+
+  return nav({
+    style: 'display: flex; border-bottom: 1px solid #ddd; background: white;'
+  },
+    ...tabs.map(tab =>
+      button({
+        style: () => `flex: 1; padding: 12px 8px; border: none; background: none; cursor: pointer; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; ${
+          currentView.val === tab.id || (currentView.val === 'editor' && tab.id === 'list')
+            ? 'color: #4285f4; border-bottom: 2px solid #4285f4;'
+            : 'color: #666;'
+        }`,
+        onclick: () => {
+          if (currentView.val === 'editor') {
+            disposeEditor();
+          }
+          navigateTo(tab.id);
+        }
+      },
+        span({ style: 'font-size: 16px;' }, tab.icon),
+        span(tab.label)
+      )
+    )
+  );
+}
+
+// Create new script
+async function createNewScript(): Promise<void> {
+  const defaultContent = `name: New Script
+version: "1.0.0"
+description: ""
+steps:
+  - action: navigate
+    url: "https://example.com"
+`;
+
+  const script = await saveScript({
+    name: 'New Script',
+    version: '1.0.0',
+    content: defaultContent
+  });
+
+  await loadScripts();
+  selectScript(script.id);
+  navigateTo('editor', script);
+}
+
+// Main app component
+function App() {
+  return div({ style: 'display: flex; flex-direction: column; height: 100vh; background: #f5f5f5;' },
+    // Header
+    div({
+      style: 'padding: 12px 16px; background: white; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;'
+    },
+      span({ style: 'font-weight: 600; font-size: 16px;' }, 'Browserlet'),
+      div({ style: 'display: flex; gap: 8px;' },
+        ImportButton({ onImport: (script) => navigateTo('editor', script) })
+      )
+    ),
+
+    // Context zone
+    div({ style: 'padding: 12px 16px 0;' },
+      ContextZone()
+    ),
+
+    // Navigation
+    NavTabs(),
+
+    // Content area
+    div({ style: 'flex: 1; overflow: hidden; display: flex; flex-direction: column;' },
+      () => {
+        const view = currentView.val;
+
+        if (view === 'list') {
+          return ScriptList({
+            onScriptSelect: (script) => navigateTo('editor', script),
+            onNewScript: createNewScript
+          });
+        }
+
+        if (view === 'editor') {
+          const script = editorScript.val;
+          if (!script) {
+            navigateTo('list');
+            return div();
+          }
+          return div({ style: 'display: flex; flex-direction: column; height: 100%;' },
+            // Editor toolbar
+            div({
+              style: 'display: flex; justify-content: space-between; padding: 8px 12px; background: white; border-bottom: 1px solid #ddd;'
+            },
+              button({
+                style: 'background: none; border: none; cursor: pointer; font-size: 14px; color: #666;',
+                onclick: () => {
+                  disposeEditor();
+                  goBack();
+                }
+              }, '← ' + (chrome.i18n.getMessage('back') || 'Back')),
+              div({ style: 'display: flex; gap: 8px;' },
+                ExportButton({ script })
+              )
+            ),
+            // Editor
+            div({ style: 'flex: 1;' },
+              ScriptEditor({
+                script,
+                onSave: (updated) => {
+                  // Script already saved by auto-save
+                }
+              })
+            )
+          );
+        }
+
+        if (view === 'recording') {
+          return RecordingView();
+        }
+
+        if (view === 'execution') {
+          return ExecutionView();
+        }
+
+        return div();
+      }
+    )
+  );
+}
 
 // Initialize
-init();
-
 async function init() {
-  // Check service worker connection
+  // Check service worker
   try {
-    const response = await chrome.runtime.sendMessage({ type: 'PING' });
-    if (response.success) {
-      swStatusEl.textContent = 'Connected';
-      swStatusEl.classList.add('connected');
-    } else {
-      swStatusEl.textContent = 'Error';
-    }
+    await chrome.runtime.sendMessage({ type: 'PING' });
   } catch (error) {
-    swStatusEl.textContent = 'Disconnected';
+    console.error('Service worker not available:', error);
   }
 
-  // Load initial state
-  await loadState();
+  // Load scripts
+  await loadScripts();
 
-  // Set up event listeners
-  recordBtnEl.addEventListener('click', toggleRecording);
-
-  // Listen for storage changes
-  chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && changes.appState) {
-      updateUI(changes.appState.newValue as AppState);
-    }
-  });
-}
-
-async function loadState() {
-  try {
-    const response = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
-    if (response.success && response.data) {
-      updateUI(response.data);
-    }
-  } catch (error) {
-    console.error('Failed to load state:', error);
+  // Mount app
+  const root = document.getElementById('app');
+  if (root) {
+    van.add(root, App());
   }
 }
 
-interface AppState {
-  recordingState?: 'idle' | 'recording' | 'paused';
-  recordedActions?: Array<{
-    type: string;
-    timestamp: number;
-    url: string;
-    hints: Array<{ type: string; value: unknown }>;
-    value?: string;
-  }>;
-}
-
-function updateUI(state: AppState) {
-  // Update recording status
-  isRecording = state.recordingState === 'recording';
-
-  if (isRecording) {
-    recordingStatusEl.textContent = 'Recording';
-    recordingStatusEl.classList.add('recording');
-    recordBtnEl.textContent = 'Stop Recording';
-    recordBtnEl.classList.remove('btn-primary');
-    recordBtnEl.classList.add('btn-danger');
-  } else {
-    recordingStatusEl.textContent = 'Idle';
-    recordingStatusEl.classList.remove('recording');
-    recordBtnEl.textContent = 'Start Recording';
-    recordBtnEl.classList.remove('btn-danger');
-    recordBtnEl.classList.add('btn-primary');
-  }
-
-  // Update actions list
-  const actions = state.recordedActions || [];
-  actionsCountEl.textContent = actions.length.toString();
-
-  if (actions.length === 0) {
-    actionsListEl.innerHTML = '<div class="empty-state">No actions recorded yet</div>';
-  } else {
-    actionsListEl.innerHTML = actions
-      .slice(-20) // Show last 20 actions
-      .reverse() // Most recent first
-      .map(action => {
-        const hint = action.hints[0];
-        const hintText = hint ? `${hint.type}: ${typeof hint.value === 'string' ? hint.value : JSON.stringify(hint.value)}` : '';
-        const valueText = action.value ? ` = "${action.value.substring(0, 30)}${action.value.length > 30 ? '...' : ''}"` : '';
-
-        return `
-          <div class="action-item">
-            <span class="action-type">${action.type}</span>
-            <div class="action-details">${hintText}${valueText}</div>
-          </div>
-        `;
-      })
-      .join('');
-  }
-}
-
-async function toggleRecording() {
-  recordBtnEl.disabled = true;
-
-  try {
-    if (isRecording) {
-      await chrome.runtime.sendMessage({ type: 'STOP_RECORDING' });
-    } else {
-      // Clear previous actions when starting new recording
-      await chrome.runtime.sendMessage({
-        type: 'SET_STATE',
-        payload: { recordedActions: [] }
-      });
-      await chrome.runtime.sendMessage({ type: 'START_RECORDING' });
-    }
-  } catch (error) {
-    console.error('Failed to toggle recording:', error);
-  } finally {
-    recordBtnEl.disabled = false;
-  }
-}
+init();
