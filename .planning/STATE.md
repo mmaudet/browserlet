@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 5 of 6 (LLM Integration)
-Plan: 2 of 5
+Plan: 3 of 5
 Status: In progress
-Last activity: 2026-01-29 — Completed 05-02-PLAN.md (LLM Infrastructure)
+Last activity: 2026-01-29 — Completed 05-03-PLAN.md (LLM Providers)
 
-Progress: [███████░░░] 70% (4 of 6 phases complete, Phase 5: 2/5 plans)
+Progress: [███████░░░] 72% (4 of 6 phases complete, Phase 5: 3/5 plans)
 
 ## Performance Metrics
 
@@ -128,6 +128,10 @@ Recent decisions affecting current work:
 - Fallback generator uses top 3 hints for resilience
 - Compact prompt variant for local models with limited context
 - Action mapping: input->type, submit->click (semantic BSL mapping)
+- dangerouslyAllowBrowser: true for Anthropic SDK in extension context
+- Haiku model for cost-efficient availability checks
+- No rate limiting for Ollama (local resource)
+- GenerateBSLResult includes usedLLM flag for UI feedback
 
 ### Pending Todos
 
@@ -210,6 +214,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29T15:16:58Z
-Stopped at: Completed 05-02-PLAN.md (LLM Infrastructure)
+Last session: 2026-01-29T15:20:37Z
+Stopped at: Completed 05-03-PLAN.md (LLM Providers)
 Resume file: None
