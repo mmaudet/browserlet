@@ -12,6 +12,11 @@ export default defineConfig({
     default_locale: 'en',
     version: '0.1.0',
     permissions: ['storage', 'sidePanel', 'tabs', 'activeTab'],
+    host_permissions: [
+      'https://api.anthropic.com/*',
+      'http://localhost:11434/*',
+      'http://127.0.0.1:11434/*',
+    ],
     side_panel: {
       default_path: 'sidepanel.html',
     },
