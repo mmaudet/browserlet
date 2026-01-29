@@ -30,11 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Service worker receives and routes messages between components
   3. Extension state persists across browser restarts via chrome.storage.local
   4. Context invalidation is detected and communicated to user
-  5. All communication patterns work (service worker ↔ content script ↔ side panel)
-**Plans**: TBD
+  5. All communication patterns work (service worker <-> content script <-> side panel)
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] TBD during planning
+- [ ] 01-01-PLAN.md — WXT project setup + service worker message router
+- [ ] 01-02-PLAN.md — Content script with context invalidation + side panel stub
+- [ ] 01-03-PLAN.md — Unit tests + manual E2E verification
 
 ### Phase 2: Recording
 **Goal**: User can record interactions and generate semantic BSL scripts
@@ -120,11 +122,11 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/3 | Planned | - |
 | 2. Recording | 0/TBD | Not started | - |
 | 3. Side Panel | 0/TBD | Not started | - |
 | 4. Playback | 0/TBD | Not started | - |
@@ -132,4 +134,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 6. Contextual Triggers | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-01-29 after roadmap creation*
+*Last updated: 2026-01-29 after Phase 1 planning*
