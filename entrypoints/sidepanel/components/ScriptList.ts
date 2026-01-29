@@ -3,6 +3,7 @@ import type { Script } from '../../../utils/types';
 import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId } from '../stores/scripts';
 import { startExecution } from '../stores/execution';
 import { navigateTo } from '../router';
+import { TriggerConfig } from './TriggerConfig';
 
 const { div, input, span, button } = van.tags;
 
@@ -11,11 +12,12 @@ interface ScriptListProps {
   onNewScript?: () => void;
 }
 
-function ScriptItem({ script, isSelected, onSelect, onRun }: {
+function ScriptItem({ script, isSelected, onSelect, onRun, onConfigureTriggers }: {
   script: Script;
   isSelected: boolean;
   onSelect: () => void;
   onRun: () => void;
+  onConfigureTriggers: () => void;
 }) {
   return div({
     class: () => `script-item ${isSelected ? 'selected' : ''}`,
@@ -39,14 +41,25 @@ function ScriptItem({ script, isSelected, onSelect, onRun }: {
           }, script.target_app) : ''
         )
       ),
-      button({
-        onclick: (e: Event) => {
-          e.stopPropagation();
-          onRun();
-        },
-        style: 'padding: 6px 12px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 8px;',
-        title: chrome.i18n.getMessage('runScript') || 'Run Script'
-      }, '▶')
+      div({ style: 'display: flex; gap: 4px; align-items: center;' },
+        button({
+          class: 'p-1 text-gray-400 hover:text-gray-600',
+          style: 'background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px 8px; color: #666;',
+          title: chrome.i18n.getMessage('configureTriggers') || 'Configure triggers',
+          onclick: (e: Event) => {
+            e.stopPropagation();
+            onConfigureTriggers();
+          }
+        }, '\u26A1'), // Lightning bolt emoji
+        button({
+          onclick: (e: Event) => {
+            e.stopPropagation();
+            onRun();
+          },
+          style: 'padding: 6px 12px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;',
+          title: chrome.i18n.getMessage('runScript') || 'Run Script'
+        }, '▶')
+      )
     ),
     script.description ? div({
       style: 'font-size: 12px; color: #666; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'
@@ -64,6 +77,8 @@ function ScriptItem({ script, isSelected, onSelect, onRun }: {
 }
 
 export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}) {
+  const showTriggerConfig = van.state<string | null>(null);
+
   return div({ class: 'script-list-container', style: 'display: flex; flex-direction: column; height: 100%;' },
     // Search header
     div({ style: 'padding: 12px; background: #f5f5f5; border-bottom: 1px solid #ddd;' },
@@ -116,11 +131,34 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
               onRun: () => {
                 startExecution(script);
                 navigateTo('execution');
+              },
+              onConfigureTriggers: () => {
+                showTriggerConfig.val = script.id;
               }
             })
           )
         );
       }
-    )
+    ),
+
+    // Trigger config modal
+    () => showTriggerConfig.val
+      ? div({
+          class: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50',
+          style: 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 50;',
+          onclick: () => { showTriggerConfig.val = null; }
+        },
+          div({
+            class: 'bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto',
+            style: 'background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 28rem; width: 100%; max-height: 80vh; overflow-y: auto;',
+            onclick: (e: Event) => e.stopPropagation()
+          },
+            TriggerConfig({
+              scriptId: showTriggerConfig.val,
+              onClose: () => { showTriggerConfig.val = null; }
+            })
+          )
+        )
+      : null
   );
 }
