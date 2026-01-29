@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 3 of 6 (Side Panel)
-Plan: 1 of TBD in current phase
+Plan: 5 of TBD in current phase
 Status: In progress
-Last activity: 2026-01-29 — Completed 03-01-PLAN.md (Dependencies and Monaco Setup)
+Last activity: 2026-01-29 — Completed 03-05-PLAN.md (Script Import/Export)
 
 Progress: [███░░░░░░░] 33% (2 of 6 phases complete)
 
@@ -80,6 +80,9 @@ Recent decisions affecting current work:
 - crypto.randomUUID() for script/history ID generation (browser-native)
 - Per-script history keying with browserlet_history_{scriptId} prefix
 - Prepend new records and slice to enforce 50-entry history cap
+- Return original YAML content on export if script.content exists (preserves formatting)
+- Validate BSL structure on import: name string + steps array required
+- UTF-8 encoding for file read/write operations
 
 ### Pending Todos
 
@@ -137,6 +140,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29T12:09:00Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-01-29T11:13:52Z
+Stopped at: Completed 03-05-PLAN.md
 Resume file: None - clean state
