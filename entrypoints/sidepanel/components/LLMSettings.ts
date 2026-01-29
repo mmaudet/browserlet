@@ -124,6 +124,7 @@ export function LLMSettings() {
   const inputStyle = 'width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box;';
   const selectStyle = inputStyle;
   const btnPrimaryStyle = 'width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;';
+  const btnPrimarySmallStyle = 'padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;';
   const btnSecondaryStyle = 'padding: 8px 16px; background-color: #e0e0e0; color: #333; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;';
   const btnDisabledStyle = 'opacity: 0.6; cursor: not-allowed;';
   const warningStyle = 'background-color: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 6px; margin-bottom: 16px;';
@@ -232,7 +233,7 @@ export function LLMSettings() {
       // Test connection button (before model selection)
       div({ style: 'margin-bottom: 16px;' },
         button({
-          style: () => testingConnection.val ? btnSecondaryStyle + btnDisabledStyle : btnSecondaryStyle,
+          style: () => testingConnection.val ? btnPrimarySmallStyle + btnDisabledStyle : btnPrimarySmallStyle,
           disabled: () => testingConnection.val,
           onclick: testOllamaConnection,
         },
