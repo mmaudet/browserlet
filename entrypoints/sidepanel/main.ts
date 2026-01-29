@@ -1,10 +1,12 @@
 import van from 'vanjs-core';
 import { currentView, navigateTo, goBack, editorScript } from './router';
 import { loadScripts, selectedScript, selectScript } from './stores/scripts';
+import { loadLLMConfig, llmConfigStore } from './stores/llmConfig';
 import { ScriptList } from './components/ScriptList';
 import { ScriptEditor, disposeEditor } from './components/ScriptEditor';
 import { RecordingView } from './components/RecordingView';
 import { ExecutionView } from './components/ExecutionView';
+import { LLMSettings } from './components/LLMSettings';
 import { ContextZone } from './components/ContextZone';
 import { ImportButton, ExportButton } from './components/ImportExport';
 import { saveScript } from '../../utils/storage/scripts';
@@ -73,8 +75,13 @@ function App() {
       style: 'padding: 12px 16px; background: white; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;'
     },
       span({ style: 'font-weight: 600; font-size: 16px;' }, 'Browserlet'),
-      div({ style: 'display: flex; gap: 8px;' },
-        ImportButton({ onImport: (script) => navigateTo('editor', script) })
+      div({ style: 'display: flex; gap: 8px; align-items: center;' },
+        ImportButton({ onImport: (script) => navigateTo('editor', script) }),
+        button({
+          style: 'background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px 8px; color: #666;',
+          title: chrome.i18n.getMessage('settings') || 'Settings',
+          onclick: () => navigateTo('settings')
+        }, '\u2699') // Gear icon
       )
     ),
 
@@ -145,6 +152,24 @@ function App() {
           return ExecutionView();
         }
 
+        if (view === 'settings') {
+          return div({ style: 'display: flex; flex-direction: column; height: 100%;' },
+            // Settings toolbar with back button
+            div({
+              style: 'display: flex; justify-content: flex-start; padding: 8px 12px; background: white; border-bottom: 1px solid #ddd;'
+            },
+              button({
+                style: 'background: none; border: none; cursor: pointer; font-size: 14px; color: #666;',
+                onclick: () => goBack()
+              }, '\u2190 ' + (chrome.i18n.getMessage('back') || 'Back'))
+            ),
+            // Settings content
+            div({ style: 'flex: 1; overflow-y: auto;' },
+              LLMSettings()
+            )
+          );
+        }
+
         return div();
       }
     )
@@ -162,6 +187,17 @@ async function init() {
 
   // Load scripts
   await loadScripts();
+
+  // Load LLM configuration from storage
+  try {
+    await loadLLMConfig();
+    // If API key needs re-entry after browser restart, log it
+    if (llmConfigStore.needsApiKey.val) {
+      console.log('LLM API key needs re-entry after browser restart');
+    }
+  } catch (error) {
+    console.error('Failed to load LLM config:', error);
+  }
 
   // Mount app
   const root = document.getElementById('app');
