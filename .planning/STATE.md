@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-29)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** Phase 4 - Playback
+**Current focus:** Phase 5 - LLM Integration
 
 ## Current Position
 
-Phase: 4 of 6 (Playback)
-Plan: 6 of 7
+Phase: 5 of 6 (LLM Integration)
+Plan: 2 of 5
 Status: In progress
-Last activity: 2026-01-29 — Completed 04-06-PLAN.md (PlaybackManager)
+Last activity: 2026-01-29 — Completed 05-02-PLAN.md (LLM Infrastructure)
 
-Progress: [██████░░░░] 55% (3 of 6 phases complete, Phase 4: 6/7 plans)
+Progress: [███████░░░] 70% (4 of 6 phases complete, Phase 5: 2/5 plans)
 
 ## Performance Metrics
 
@@ -91,7 +91,7 @@ Recent decisions affecting current work:
 - Tab listeners at module level for singleton context updates
 - @json2csv/plainjs Parser for CSV export functionality
 
-**Phase 4 decisions (in progress):**
+**Phase 4 decisions (completed):**
 - Re-export SemanticHint from playback/types.ts for convenience
 - Separate step parser (stepParser.ts) from script parser (parser.ts) for single responsibility
 - Validate target requirement per action type (7 require target, navigate requires value)
@@ -116,6 +116,13 @@ Recent decisions affecting current work:
 - Store extract results by output.variable in Map
 - Wait for page load after navigate with 10s timeout
 - Fallback selector tried on both low confidence and timeout
+
+**Phase 5 decisions (in progress):**
+- 10 hint types ordered by reliability: data_attribute most stable, id least reliable
+- RateLimiter only retries 429 errors with exponential backoff and jitter
+- Fallback generator uses top 3 hints for resilience
+- Compact prompt variant for local models with limited context
+- Action mapping: input->type, submit->click (semantic BSL mapping)
 
 ### Pending Todos
 
@@ -198,6 +205,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29T12:50:49Z
-Stopped at: Completed 04-06-PLAN.md (PlaybackManager)
+Last session: 2026-01-29T15:16:58Z
+Stopped at: Completed 05-02-PLAN.md (LLM Infrastructure)
 Resume file: None
