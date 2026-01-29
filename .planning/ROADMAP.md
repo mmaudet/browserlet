@@ -13,7 +13,7 @@ Browserlet delivers semantic web automation for legacy applications through six 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Service worker, storage, and messaging infrastructure
-- [ ] **Phase 2: Recording** - DOM observation and semantic hint capture
+- [x] **Phase 2: Recording** - DOM observation and semantic hint capture
 - [ ] **Phase 3: Side Panel** - UI, Monaco Editor, and script management
 - [ ] **Phase 4: Playback** - BSL execution engine with semantic resolution
 - [ ] **Phase 5: LLM Integration** - AI-assisted semantic selector generation
@@ -51,11 +51,11 @@ Plans:
 **Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] 02-01-PLAN.md — Recording types, hint utilities, and hint generator (port from POC)
-- [ ] 02-02-PLAN.md — Visual feedback overlay system
-- [ ] 02-03-PLAN.md — Event capture, navigation capture, and RecordingManager orchestrator
-- [ ] 02-04-PLAN.md — Side Panel controls, iframe injection, and message wiring
-- [ ] 02-05-PLAN.md — E2E verification checkpoint
+- [x] 02-01-PLAN.md — Recording types, hint utilities, and hint generator (port from POC)
+- [x] 02-02-PLAN.md — Visual feedback overlay system
+- [x] 02-03-PLAN.md — Event capture, navigation capture, and RecordingManager orchestrator
+- [x] 02-04-PLAN.md — Side Panel controls, iframe injection, and message wiring
+- [x] 02-05-PLAN.md — E2E verification checkpoint
 
 ### Phase 3: Side Panel
 **Goal**: Professional UI for managing and editing BSL scripts
@@ -69,10 +69,16 @@ Plans:
   5. Execution results can be copied as JSON or CSV
   6. UI appears in French or English based on browser language
   7. Scripts are persisted locally and survive browser restart
-**Plans**: TBD
+**Plans**: 7 plans in 3 waves
 
 Plans:
-- [ ] TBD during planning
+- [ ] 03-01-PLAN.md — Install dependencies, configure Monaco + i18n
+- [ ] 03-02-PLAN.md — Script types and storage CRUD operations
+- [ ] 03-03-PLAN.md — Monaco Editor component with YAML support
+- [ ] 03-04-PLAN.md — Script list with search/filter
+- [ ] 03-05-PLAN.md — Import/export as YAML files
+- [ ] 03-06-PLAN.md — Execution view with progress and results
+- [ ] 03-07-PLAN.md — UI integration and E2E verification
 
 ### Phase 4: Playback
 **Goal**: Deterministic execution of BSL scripts with resilient semantic selectors
@@ -131,11 +137,11 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-01-29 |
-| 2. Recording | 0/5 | Ready to execute | - |
-| 3. Side Panel | 0/TBD | Not started | - |
+| 2. Recording | 5/5 | Complete | 2026-01-29 |
+| 3. Side Panel | 0/7 | Planned | - |
 | 4. Playback | 0/TBD | Not started | - |
 | 5. LLM Integration | 0/TBD | Not started | - |
 | 6. Contextual Triggers | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-01-29 after Phase 2 planning*
+*Last updated: 2026-01-29 after Phase 3 planning*
