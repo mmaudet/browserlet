@@ -83,6 +83,8 @@ Recent decisions affecting current work:
 - Return original YAML content on export if script.content exists (preserves formatting)
 - Validate BSL structure on import: name string + steps array required
 - UTF-8 encoding for file read/write operations
+- Module-level editor singleton for external content access via exported functions
+- 1 second debounce for auto-save balancing responsiveness and storage writes
 
 ### Pending Todos
 
