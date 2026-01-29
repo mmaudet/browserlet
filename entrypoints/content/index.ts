@@ -2,6 +2,7 @@ import { sendMessageSafe } from './messaging';
 import { isContextValid } from '../../utils/context-check';
 import { RecordingManager } from './recording';
 import { PlaybackManager } from './playback';
+import { initializeTriggers, handleTriggerMessage } from './triggers';
 
 // Singleton instances
 let recordingManager: RecordingManager | null = null;
@@ -54,6 +55,11 @@ export default defineContentScript({
 
     // Verify communication with service worker on load
     verifyConnection();
+
+    // Initialize trigger monitoring (async, don't block)
+    initializeTriggers().catch(error => {
+      console.warn('[Browserlet] Trigger initialization failed:', error);
+    });
 
     // Listen for messages from service worker
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -181,6 +187,14 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
       console.log('[Browserlet] Execution stopped');
       return { success: true };
     }
+
+    case 'TRIGGERS_UPDATED':
+      handleTriggerMessage(message);
+      return { success: true };
+
+    case 'STOP_TRIGGERS':
+      handleTriggerMessage(message);
+      return { success: true };
 
     default:
       return { success: false, error: `Unknown message type: ${message.type}` };

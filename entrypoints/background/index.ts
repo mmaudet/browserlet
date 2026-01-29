@@ -1,5 +1,6 @@
 import { handleMessage } from './messaging';
 import { initializeState } from './storage';
+import { initializeTriggerEngine } from './triggers';
 
 export default defineBackground(() => {
   console.log('[Browserlet] Service worker started');
@@ -37,5 +38,10 @@ export default defineBackground(() => {
     if (details.reason === 'update') {
       console.log('[Browserlet] Extension updated from', details.previousVersion);
     }
+  });
+
+  // Initialize trigger engine
+  initializeTriggerEngine().catch(error => {
+    console.error('[Browserlet] Failed to initialize trigger engine:', error);
   });
 });
