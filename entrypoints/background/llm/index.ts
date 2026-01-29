@@ -51,15 +51,27 @@ export class LLMService {
    * @param config - LLM configuration
    */
   async initialize(config: LLMConfig): Promise<void> {
+    console.log('[LLM Service] Initialize called with:', {
+      provider: config.provider,
+      hasApiKey: !!config.claudeApiKey,
+      apiKeyLength: config.claudeApiKey?.length ?? 0,
+      model: config.claudeModel ?? config.ollamaModel
+    });
+
     this.config = config;
 
     if (config.provider === 'claude' && config.claudeApiKey) {
+      console.log('[LLM Service] Creating Claude provider');
       this.provider = new ClaudeProvider(config.claudeApiKey, config.claudeModel);
     } else if (config.provider === 'ollama') {
+      console.log('[LLM Service] Creating Ollama provider');
       this.provider = new OllamaProvider(config.ollamaHost, config.ollamaModel);
+    } else {
+      console.warn('[LLM Service] No provider created - missing API key or invalid config');
     }
 
     this.initialized = true;
+    console.log('[LLM Service] Initialized, provider:', this.provider?.name ?? 'none');
   }
 
   /**
@@ -70,8 +82,12 @@ export class LLMService {
    * @returns Promise resolving to BSL string and whether LLM was used
    */
   async generateBSL(actions: CapturedAction[]): Promise<GenerateBSLResult> {
+    console.log('[LLM Service] generateBSL called with', actions.length, 'actions');
+    console.log('[LLM Service] State: provider=', this.provider?.name ?? 'none', 'initialized=', this.initialized);
+
     // No provider configured - use fallback
     if (!this.provider || !this.initialized) {
+      console.warn('[LLM Service] No provider or not initialized, using fallback');
       return {
         bsl: generateBasicBSL(actions),
         usedLLM: false,
@@ -80,9 +96,12 @@ export class LLMService {
 
     try {
       // Check provider availability
+      console.log('[LLM Service] Checking provider availability...');
       const available = await this.provider.isAvailable();
+      console.log('[LLM Service] Provider available:', available);
+
       if (!available) {
-        console.warn('[LLM] Provider not available, using fallback');
+        console.warn('[LLM Service] Provider not available, using fallback');
         return {
           bsl: generateBasicBSL(actions),
           usedLLM: false,
@@ -90,13 +109,15 @@ export class LLMService {
       }
 
       // Generate with LLM
+      console.log('[LLM Service] Generating BSL with LLM...');
       const bsl = await this.provider.generateBSL(actions);
+      console.log('[LLM Service] BSL generated successfully with LLM');
       return {
         bsl,
         usedLLM: true,
       };
     } catch (error) {
-      console.error('[LLM] Provider failed, using fallback:', error);
+      console.error('[LLM Service] Provider failed, using fallback:', error);
       return {
         bsl: generateBasicBSL(actions),
         usedLLM: false,

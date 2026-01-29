@@ -17,9 +17,9 @@ const { div, label, input, select, option, button, span, p, h3 } = van.tags;
 
 /** Claude model options */
 const CLAUDE_MODELS = [
-  { value: 'claude-sonnet-4-5-20250929', label: 'Claude Sonnet 4.5 (balanced)' },
-  { value: 'claude-haiku-4-5-20250929', label: 'Claude Haiku 4.5 (faster, cheaper)' },
-  { value: 'claude-opus-4-5-20250929', label: 'Claude Opus 4.5 (most capable)' },
+  { value: 'claude-sonnet-4-5-20250514', label: 'Claude Sonnet 4.5 (balanced)' },
+  { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku (faster, cheaper)' },
+  { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (previous gen)' },
 ];
 
 /**

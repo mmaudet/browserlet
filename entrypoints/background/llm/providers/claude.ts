@@ -46,16 +46,19 @@ export class ClaudeProvider implements LLMProvider {
    * @returns Promise resolving to availability status
    */
   async isAvailable(): Promise<boolean> {
+    console.log('[Claude] Checking availability...');
     try {
       await this.rateLimiter.execute(async () => {
         await this.client.messages.create({
-          model: 'claude-haiku-4-5-20250929',
+          model: 'claude-3-5-haiku-20241022',
           max_tokens: 1,
           messages: [{ role: 'user', content: 'hi' }],
         });
       });
+      console.log('[Claude] Available: true');
       return true;
-    } catch {
+    } catch (error) {
+      console.error('[Claude] Availability check failed:', error);
       return false;
     }
   }
@@ -67,15 +70,21 @@ export class ClaudeProvider implements LLMProvider {
    * @throws Error if API call fails or generated BSL is invalid YAML
    */
   async generateBSL(actions: CapturedAction[]): Promise<string> {
+    console.log('[Claude] generateBSL called with', actions.length, 'actions');
+    console.log('[Claude] Using model:', this.model);
+
     const prompt = buildBSLPrompt(actions);
+    console.log('[Claude] Prompt length:', prompt.length, 'chars');
 
     const response = await this.rateLimiter.execute(async () => {
+      console.log('[Claude] Sending request to API...');
       return this.client.messages.create({
         model: this.model,
         max_tokens: 4096,
         messages: [{ role: 'user', content: prompt }],
       });
     });
+    console.log('[Claude] Response received');
 
     // Extract text content from response
     const textBlock = response.content.find(block => block.type === 'text');

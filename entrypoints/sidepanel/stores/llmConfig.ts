@@ -34,7 +34,7 @@ export const llmConfigStore = {
   /** Decrypted Claude API key (in memory only) */
   claudeApiKey: van.state<string>(''),
   /** Claude model */
-  claudeModel: van.state<string>('claude-sonnet-4-5-20250929'),
+  claudeModel: van.state<string>('claude-sonnet-4-5-20250514'),
   /** Ollama server host */
   ollamaHost: van.state<string>('http://localhost:11434'),
   /** Ollama model name */
