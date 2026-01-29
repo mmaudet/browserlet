@@ -11,7 +11,7 @@ export default defineConfig({
     description: '__MSG_appDescription__',
     default_locale: 'en',
     version: '0.1.0',
-    permissions: ['storage', 'sidePanel', 'tabs', 'activeTab'],
+    permissions: ['storage', 'sidePanel', 'tabs', 'activeTab', 'notifications'],
     host_permissions: [
       'https://api.anthropic.com/*',
       'http://localhost:11434/*',
