@@ -92,12 +92,33 @@ export class ClaudeProvider implements LLMProvider {
       throw new Error('No text content in Claude response');
     }
 
-    const bslContent = textBlock.text;
+    let bslContent = textBlock.text;
+    console.log('[Claude] Raw response length:', bslContent.length);
+
+    // Extract YAML from markdown code blocks if present
+    const yamlBlockMatch = bslContent.match(/```(?:yaml|yml)?\s*\n([\s\S]*?)\n```/);
+    if (yamlBlockMatch) {
+      console.log('[Claude] Extracted YAML from code block');
+      bslContent = yamlBlockMatch[1];
+    } else {
+      // Try to find YAML content starting with "name:" if no code block
+      const yamlStartMatch = bslContent.match(/(name:\s*[\s\S]*)/);
+      if (yamlStartMatch) {
+        console.log('[Claude] Extracted YAML starting from "name:"');
+        bslContent = yamlStartMatch[1];
+      }
+    }
+
+    // Trim whitespace
+    bslContent = bslContent.trim();
 
     // Validate YAML structure
     try {
       yaml.load(bslContent);
-    } catch {
+      console.log('[Claude] YAML validation passed');
+    } catch (parseError) {
+      console.error('[Claude] YAML validation failed:', parseError);
+      console.error('[Claude] Content was:', bslContent.substring(0, 500));
       throw new Error('LLM generated invalid BSL');
     }
 
