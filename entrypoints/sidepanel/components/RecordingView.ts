@@ -162,7 +162,7 @@ async function generateBSL(actions: typeof recordedActions.val): Promise<{ bsl: 
  */
 function extractScriptName(bsl: string): string {
   const nameMatch = bsl.match(/^name:\s*["']?([^"'\n]+)["']?/m);
-  return nameMatch ? nameMatch[1].trim() : `Recording ${new Date().toISOString().slice(0, 10)}`;
+  return nameMatch?.[1]?.trim() ?? `Recording ${new Date().toISOString().slice(0, 10)}`;
 }
 
 export async function toggleRecording(): Promise<void> {
