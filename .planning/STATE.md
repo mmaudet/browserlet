@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 2 of 6 (Recording)
-Plan: 3 of TBD in current phase
+Plan: 4 of TBD in current phase
 Status: In progress
-Last activity: 2026-01-29 — Completed 02-03-PLAN.md (Event Capture and Recording Orchestrator)
+Last activity: 2026-01-29 — Completed 02-04-PLAN.md (Recording Controls Integration)
 
-Progress: [██░░░░░░░░] 17% (1 of 6 phases complete, 3 plans in Phase 2)
+Progress: [██░░░░░░░░] 17% (1 of 6 phases complete, 4 plans in Phase 2)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 2.8 min
-- Total execution time: 0.26 hours
+- Total plans completed: 6
+- Average duration: 2.9 min
+- Total execution time: 0.34 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 8 min | 2.7 min |
-| 02-recording | 2 | 6 min | 3.0 min |
+| 02-recording | 3 | 10.7 min | 3.6 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (2 min), 01-03 (3 min), 02-01 (4 min), 02-03 (2.4 min)
+- Last 5 plans: 01-03 (3 min), 02-01 (4 min), 02-03 (2.4 min), 02-04 (4.7 min)
 - Trend: Consistent
 
 *Updated after each plan completion*
@@ -68,6 +68,10 @@ Recent decisions affecting current work:
 - Debounce input events at 500ms to capture final values, not keystrokes
 - Mask password field values as [MASKED] for security
 - Monkey-patch History API to detect SPA navigations
+- Broadcast START/STOP_RECORDING to all tabs for multi-tab support
+- Resume recording on page refresh by checking state on load
+- Clear previous actions when starting new recording for clean sessions
+- Show last 20 actions in reverse order (most recent first) for usability
 
 ### Pending Todos
 
@@ -106,6 +110,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29T10:02:48Z
-Stopped at: Completed 02-03-PLAN.md (Event Capture and Recording Orchestrator)
+Last session: 2026-01-29T10:11:02Z
+Stopped at: Completed 02-04-PLAN.md (Recording Controls Integration)
 Resume file: None - clean state
