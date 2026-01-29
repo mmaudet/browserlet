@@ -156,3 +156,67 @@ export async function executeSelect(element: Element, optionValue: string): Prom
   // Dispatch change event
   element.dispatchEvent(new Event('change', { bubbles: true }));
 }
+
+/**
+ * Execute an extract action to get data from an element (ACT-04)
+ * Supports multiple transforms (trim, number, lowercase, json, attribute:*)
+ */
+export function executeExtract(element: Element, transform?: string): unknown {
+  // Get raw value based on element type
+  let rawValue: string;
+
+  if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+    rawValue = element.value;
+  } else if (element instanceof HTMLSelectElement) {
+    const selectedOption = element.options[element.selectedIndex];
+    rawValue = selectedOption ? selectedOption.text : '';
+  } else {
+    rawValue = element.textContent || '';
+  }
+
+  // Apply transform if specified
+  if (!transform) {
+    return rawValue;
+  }
+
+  switch (transform) {
+    case 'trim':
+      return rawValue.trim();
+    case 'number':
+      return parseFloat(rawValue);
+    case 'lowercase':
+      return rawValue.toLowerCase();
+    case 'json':
+      return JSON.parse(rawValue);
+    default:
+      // Check for attribute:name pattern
+      if (transform.startsWith('attribute:')) {
+        const attrName = transform.slice('attribute:'.length);
+        return element.getAttribute(attrName);
+      }
+      // Unknown transform, return raw value
+      return rawValue;
+  }
+}
+
+/**
+ * Execute a wait_for action to wait for an element (ACT-05)
+ * Delegates to waitForElement from semanticResolver
+ */
+export async function executeWaitFor(hints: SemanticHint[], timeoutMs: number): Promise<Element> {
+  const result = await waitForElement(hints, timeoutMs);
+
+  if (!result.element) {
+    throw new Error(`waitForElement failed: no element found (confidence: ${result.confidence})`);
+  }
+
+  return result.element;
+}
+
+/**
+ * Execute a navigate action to change page (ACT-06)
+ * Navigation is async by nature - PlaybackManager handles post-navigation waiting
+ */
+export function executeNavigate(url: string): void {
+  window.location.href = url;
+}
