@@ -1,0 +1,26 @@
+{
+  "name": "browserlet",
+  "version": "0.1.0",
+  "description": "Web automation for legacy applications",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "postinstall": "wxt prepare"
+  },
+  "keywords": [
+    "chrome-extension",
+    "browser-automation",
+    "wxt"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "wxt": "^0.20.13"
+  }
+}
