@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 4 of 6 (Playback)
-Plan: 5 of 7
+Plan: 6 of 7
 Status: In progress
-Last activity: 2026-01-29 — Completed 04-05-PLAN.md (Session Detector)
+Last activity: 2026-01-29 — Completed 04-06-PLAN.md (PlaybackManager)
 
-Progress: [█████░░░░░] 50% (3 of 6 phases complete, Phase 4: 5/7 plans)
+Progress: [██████░░░░] 55% (3 of 6 phases complete, Phase 4: 6/7 plans)
 
 ## Performance Metrics
 
@@ -110,6 +110,12 @@ Recent decisions affecting current work:
 - Case-insensitive URL pattern matching for robustness
 - Short-circuit session checks: URL patterns first (fastest)
 - 2000ms default polling interval for waitForAuthentication
+- AbortController checked between steps for immediate stop
+- Session check before each step, not just at start
+- Error messages include step index and hint match details
+- Store extract results by output.variable in Map
+- Wait for page load after navigate with 10s timeout
+- Fallback selector tried on both low confidence and timeout
 
 ### Pending Todos
 
@@ -192,6 +198,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29T12:46:23Z
-Stopped at: Completed 04-05-PLAN.md (Session Detector)
+Last session: 2026-01-29T12:50:49Z
+Stopped at: Completed 04-06-PLAN.md (PlaybackManager)
 Resume file: None
