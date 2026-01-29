@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Service worker, storage, and messaging infrastructure
 - [x] **Phase 2: Recording** - DOM observation and semantic hint capture
 - [x] **Phase 3: Side Panel** - UI, Monaco Editor, and script management
-- [ ] **Phase 4: Playback** - BSL execution engine with semantic resolution
+- [x] **Phase 4: Playback** - BSL execution engine with semantic resolution
 - [ ] **Phase 5: LLM Integration** - AI-assisted semantic selector generation
 - [ ] **Phase 6: Contextual Triggers** - Smart suggestions and auto-execution
 
@@ -95,13 +95,13 @@ Plans:
 **Plans**: 7 plans in 5 waves
 
 Plans:
-- [ ] 04-01-PLAN.md — Playback types and BSL step parser
-- [ ] 04-02-PLAN.md — Humanization delay utilities
-- [ ] 04-03-PLAN.md — Semantic resolver with weighted scoring
-- [ ] 04-04-PLAN.md — Action executor (all 8 BSL actions)
-- [ ] 04-05-PLAN.md — Session detector for authentication
-- [ ] 04-06-PLAN.md — PlaybackManager orchestrator
-- [ ] 04-07-PLAN.md — UI wiring and E2E verification
+- [x] 04-01-PLAN.md — Playback types and BSL step parser
+- [x] 04-02-PLAN.md — Humanization delay utilities
+- [x] 04-03-PLAN.md — Semantic resolver with weighted scoring
+- [x] 04-04-PLAN.md — Action executor (all 8 BSL actions)
+- [x] 04-05-PLAN.md — Session detector for authentication
+- [x] 04-06-PLAN.md — PlaybackManager orchestrator
+- [x] 04-07-PLAN.md — UI wiring and E2E verification
 
 ### Phase 5: LLM Integration
 **Goal**: AI-enhanced semantic selector generation during recording
@@ -145,9 +145,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Foundation | 3/3 | Complete | 2026-01-29 |
 | 2. Recording | 5/5 | Complete | 2026-01-29 |
 | 3. Side Panel | 7/7 | Complete | 2026-01-29 |
-| 4. Playback | 0/7 | Ready | - |
+| 4. Playback | 7/7 | Complete | 2026-01-29 |
 | 5. LLM Integration | 0/TBD | Not started | - |
 | 6. Contextual Triggers | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-01-29 after Phase 4 planning*
+*Last updated: 2026-01-29 after Phase 4 completion*
