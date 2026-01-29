@@ -253,3 +253,110 @@ export function resolveElement(hints: SemanticHint[]): ResolverResult {
     failedHints: bestFailedHints,
   };
 }
+
+/**
+ * Check if an element is interactable (visible + enabled + has dimensions)
+ * More strict than isElementVisible - ensures element is ready for interaction
+ */
+export function isElementInteractable(element: Element): boolean {
+  // Must be visible first
+  if (!isElementVisible(element)) {
+    return false;
+  }
+
+  // Check disabled state
+  if (element.hasAttribute('disabled')) {
+    return false;
+  }
+
+  // Check aria-disabled
+  if (element.getAttribute('aria-disabled') === 'true') {
+    return false;
+  }
+
+  // Check dimensions
+  const rect = element.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Format hints for debugging output
+ */
+function formatHintsForDebug(hints: SemanticHint[]): string {
+  return hints.map(hint => {
+    if (typeof hint.value === 'string') {
+      return `${hint.type}:${hint.value}`;
+    }
+    return `${hint.type}:${hint.value.name}=${hint.value.value}`;
+  }).join(', ');
+}
+
+/**
+ * Wait for an element to appear and become interactable
+ * Uses MutationObserver for efficient DOM change detection with timeout fallback
+ */
+export function waitForElement(
+  hints: SemanticHint[],
+  timeoutMs: number = 10000
+): Promise<ResolverResult> {
+  return new Promise((resolve, reject) => {
+    // Try immediate resolution first
+    const immediateResult = resolveElement(hints);
+    if (immediateResult.element && isElementInteractable(immediateResult.element)) {
+      resolve(immediateResult);
+      return;
+    }
+
+    // Set up MutationObserver for DOM changes
+    let observer: MutationObserver | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    };
+
+    const checkElement = () => {
+      const result = resolveElement(hints);
+      if (result.element && isElementInteractable(result.element)) {
+        cleanup();
+        resolve(result);
+        return true;
+      }
+      return false;
+    };
+
+    // Set up MutationObserver
+    observer = new MutationObserver(() => {
+      checkElement();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style', 'hidden', 'aria-hidden', 'disabled', 'aria-disabled'],
+    });
+
+    // Set up timeout fallback
+    timeoutId = setTimeout(() => {
+      cleanup();
+
+      const hintsDebug = formatHintsForDebug(hints);
+      reject(new Error(
+        `waitForElement timeout after ${timeoutMs}ms. ` +
+        `Could not find interactable element matching hints: [${hintsDebug}]`
+      ));
+    }, timeoutMs);
+  });
+}
