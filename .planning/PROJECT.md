@@ -45,13 +45,20 @@ Browserlet est une extension Chrome qui permet d'automatiser des interactions av
 
 **Origine :** Projet LINAGORA pour automatiser des tâches répétitives sur applications métier legacy (ERP, SIRH) sans API exposée.
 
-**POC validé :** Le Semantic Resolver a été testé avec Playwright sur pages locales et sites réels (Google, GitHub, Wikipedia). 17/17 tests passés, performance < 100ms, zéro faux positif.
+**POC Semantic Resolver :** `/Users/mmaudet/work/poc-semantic-resolver`
+- TypeScript (~1,345 LOC), Playwright 1.41, Manifest V3
+- 17/17 tests passés (pages locales + Google, GitHub, Wikipedia)
+- Performance < 50ms (simple), < 100ms (complexe)
+- **10 hints supportés :** role, text_contains, text_matches, type, name, placeholder_contains, aria_label, near_label, class_contains, data_attribute
+- **Réutilisabilité : 85%** — resolver, evaluators, utils, types directement réutilisables
 
 **Leçons du POC :**
 - Toujours combiner plusieurs hints (un seul n'est jamais suffisant)
 - Privilégier hints explicites (aria_label, data_attribute, role) sur near_label
 - Utiliser data_attribute pour éléments dans listes/tableaux
 - Prévoir fallback_selector comme filet de sécurité
+- Score threshold à 0.7 fonctionne bien
+- Fuzzy matching avec Levenshtein pour tolérance aux variations
 
 **Personas cibles :**
 - Marie (gestionnaire) : exécute des scripts pré-configurés
@@ -77,6 +84,7 @@ Browserlet est une extension Chrome qui permet d'automatiser des interactions av
 | Claude API + Ollama | Flexibilité : cloud pour qualité, local pour offline/privacy | — Pending |
 | Pas de serveur v1 | Valider l'extension seule avant d'ajouter complexité | — Pending |
 | Auth basique v1 | Session existante + prompt suffisant pour valider le concept | — Pending |
+| Réutiliser POC Semantic Resolver | ~1,345 LOC TypeScript validé (17/17 tests), évite de repartir de zéro | — Pending |
 
 ---
-*Last updated: 2026-01-29 after initialization*
+*Last updated: 2026-01-29 after POC analysis*
