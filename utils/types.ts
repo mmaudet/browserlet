@@ -20,7 +20,11 @@ export type MessageType =
   // Execution state persistence (for cross-page navigation)
   | 'SAVE_EXECUTION_STATE'
   | 'GET_EXECUTION_STATE'
-  | 'CLEAR_EXECUTION_STATE';
+  | 'CLEAR_EXECUTION_STATE'
+  // LLM messages
+  | 'GENERATE_BSL'
+  | 'CONFIGURE_LLM'
+  | 'GET_LLM_STATUS';
 
 export interface Message {
   type: MessageType;

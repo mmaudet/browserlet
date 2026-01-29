@@ -1,5 +1,7 @@
 import type { AppState, Message, MessageResponse, PingResponse, CapturedAction } from '../../utils/types';
 import { getState, setState, setRecordingState, addRecordedAction } from './storage';
+import { getLLMService } from './llm';
+import type { LLMConfig } from './llm/providers/types';
 
 // Storage key for persisted execution state
 const EXECUTION_STATE_KEY = 'browserlet_execution_state';
@@ -115,6 +117,36 @@ async function processMessage(
     case 'CLEAR_EXECUTION_STATE': {
       await chrome.storage.local.remove(EXECUTION_STATE_KEY);
       return { success: true };
+    }
+
+    case 'GENERATE_BSL': {
+      const { actions } = message.payload as { actions: CapturedAction[] };
+      const llmService = getLLMService();
+      try {
+        const result = await llmService.generateBSL(actions);
+        return { success: true, data: result }; // { bsl: string, usedLLM: boolean }
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return { success: false, error: errorMessage };
+      }
+    }
+
+    case 'CONFIGURE_LLM': {
+      const config = message.payload as LLMConfig;
+      const llmService = getLLMService();
+      try {
+        await llmService.initialize(config);
+        return { success: true };
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return { success: false, error: errorMessage };
+      }
+    }
+
+    case 'GET_LLM_STATUS': {
+      const llmService = getLLMService();
+      const status = llmService.getStatus();
+      return { success: true, data: status };
     }
 
     default:
