@@ -394,5 +394,25 @@
   "llmNotConfigured": {
     "message": "LLM non configure - les scripts utiliseront la generation basique",
     "description": "Avertissement quand le LLM n'est pas configure"
+  },
+  "statusConfigured": {
+    "message": "Configure",
+    "description": "Statut quand le LLM est configure"
+  },
+  "statusNotConfigured": {
+    "message": "Non configure",
+    "description": "Statut quand le LLM n'est pas configure"
+  },
+  "statusLabel": {
+    "message": "Statut",
+    "description": "Libelle pour le statut"
+  },
+  "providerLabel": {
+    "message": "Fournisseur",
+    "description": "Libelle pour le fournisseur"
+  },
+  "loadModelsHint": {
+    "message": "Cliquez sur \"Tester la connexion\" pour charger les modeles disponibles",
+    "description": "Indication pour charger les modeles Ollama"
   }
 }

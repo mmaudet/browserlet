@@ -272,7 +272,7 @@ export function LLMSettings() {
                 oninput: handleOllamaModelChange,
               }),
               p({ style: 'margin: 6px 0 0 0; font-size: 11px; color: #666;' },
-                'Click "Test Connection" to load available models'
+                chrome.i18n.getMessage('loadModelsHint') || 'Click "Test Connection" to load available models'
               )
             )
       )
@@ -298,13 +298,19 @@ export function LLMSettings() {
     div({ style: 'margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee;' },
       div({ style: 'font-size: 13px; color: #666;' },
         div({ style: 'margin-bottom: 8px;' },
-          span({ style: 'font-weight: 500;' }, 'Status: '),
-          () => llmConfigStore.isConfigured.val
-            ? span({ style: 'color: #28a745;' }, 'Configured')
-            : span({ style: 'color: #dc3545;' }, 'Not configured')
+          span({ style: 'font-weight: 500;' }, (chrome.i18n.getMessage('statusLabel') || 'Status') + ': '),
+          () => {
+            // Show configured only if saved AND current form is valid
+            const saved = llmConfigStore.isConfigured.val;
+            const valid = isConfigValid();
+            if (saved && valid) {
+              return span({ style: 'color: #28a745;' }, chrome.i18n.getMessage('statusConfigured') || 'Configured');
+            }
+            return span({ style: 'color: #dc3545;' }, chrome.i18n.getMessage('statusNotConfigured') || 'Not configured');
+          }
         ),
         div(
-          span({ style: 'font-weight: 500;' }, 'Provider: '),
+          span({ style: 'font-weight: 500;' }, (chrome.i18n.getMessage('providerLabel') || 'Provider') + ': '),
           () => llmConfigStore.provider.val === 'claude' ? 'Claude API' : 'Ollama'
         )
       )

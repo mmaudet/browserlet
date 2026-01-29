@@ -394,5 +394,25 @@
   "llmNotConfigured": {
     "message": "LLM not configured - scripts will use basic generation",
     "description": "Warning when LLM is not configured"
+  },
+  "statusConfigured": {
+    "message": "Configured",
+    "description": "Status when LLM is configured"
+  },
+  "statusNotConfigured": {
+    "message": "Not configured",
+    "description": "Status when LLM is not configured"
+  },
+  "statusLabel": {
+    "message": "Status",
+    "description": "Label for status"
+  },
+  "providerLabel": {
+    "message": "Provider",
+    "description": "Label for provider"
+  },
+  "loadModelsHint": {
+    "message": "Click \"Test Connection\" to load available models",
+    "description": "Hint to load Ollama models"
   }
 }
