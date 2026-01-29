@@ -1,15 +1,105 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Browserlet</title>
-  </head>
-  <body>
-    <div id="app">
-      <h1>Browserlet</h1>
-      <p>Side panel loading...</p>
-    </div>
-    <script type="module" src="./main.ts"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browserlet</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #333;
+      padding: 16px;
+      background: #fafafa;
+    }
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1a1a1a;
+    }
+    .status {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .status-label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .status-value {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .status-ok {
+      color: #2e7d32;
+    }
+    .status-error {
+      color: #c62828;
+    }
+    .state-display {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    button:hover {
+      background: #1565c0;
+    }
+    button:disabled {
+      background: #bdbdbd;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>Browserlet</h1>
+
+  <div class="status">
+    <div class="status-label">Service Worker</div>
+    <div id="sw-status" class="status-value">Checking...</div>
+  </div>
+
+  <div class="status">
+    <div class="status-label">App State</div>
+    <div id="state-display" class="state-display">Loading...</div>
+  </div>
+
+  <div class="actions">
+    <button id="refresh-state">Refresh State</button>
+    <button id="ping-sw">Ping Service Worker</button>
+  </div>
+
+  <script type="module" src="./main.ts"></script>
+</body>
 </html>

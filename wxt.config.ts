@@ -9,5 +9,8 @@ export default defineConfig({
     side_panel: {
       default_path: 'sidepanel.html',
     },
+    action: {
+      default_title: 'Open Browserlet',
+    },
   },
 });
