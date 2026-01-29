@@ -426,5 +426,89 @@
   "resetSuccess": {
     "message": "Configuration reset successfully!",
     "description": "Message after successful reset"
+  },
+  "triggerConfigTitle": {
+    "message": "Trigger Configuration",
+    "description": "Title for trigger configuration section"
+  },
+  "triggerUrlPattern": {
+    "message": "URL Pattern",
+    "description": "Label for URL pattern input"
+  },
+  "triggerUrlPatternPlaceholder": {
+    "message": "*/dashboard*",
+    "description": "Placeholder for URL pattern"
+  },
+  "triggerElementHints": {
+    "message": "Element Hints (optional)",
+    "description": "Label for element hints"
+  },
+  "triggerModeSuggest": {
+    "message": "Suggest",
+    "description": "Suggest mode option"
+  },
+  "triggerModeAutoExecute": {
+    "message": "Auto-execute",
+    "description": "Auto-execute mode option"
+  },
+  "triggerModeLabel": {
+    "message": "When conditions match:",
+    "description": "Label for trigger mode selection"
+  },
+  "triggerEnabled": {
+    "message": "Enabled",
+    "description": "Enabled checkbox label"
+  },
+  "triggerSave": {
+    "message": "Save Trigger",
+    "description": "Save trigger button"
+  },
+  "triggerDelete": {
+    "message": "Delete",
+    "description": "Delete trigger button"
+  },
+  "triggerAddCondition": {
+    "message": "Add Condition",
+    "description": "Add condition button"
+  },
+  "suggestedScriptsTitle": {
+    "message": "Suggested Scripts",
+    "description": "Title for suggested scripts section"
+  },
+  "suggestedScriptsEmpty": {
+    "message": "No scripts match current context",
+    "description": "Empty state for suggestions"
+  },
+  "suggestedScriptRun": {
+    "message": "Run",
+    "description": "Run suggested script button"
+  },
+  "notificationAutoExecuteTitle": {
+    "message": "Script Auto-Executing",
+    "description": "Notification title for auto-execute"
+  },
+  "notificationAutoExecuteMessage": {
+    "message": "Running: $1",
+    "description": "Notification message with script name"
+  },
+  "notificationStop": {
+    "message": "Stop",
+    "description": "Stop button in notification"
+  },
+  "notificationDisableSite": {
+    "message": "Disable for this site",
+    "description": "Disable for site button in notification"
+  },
+  "notificationCompleteTitle": {
+    "message": "Script Completed",
+    "description": "Completion notification title"
+  },
+  "notificationFailedTitle": {
+    "message": "Script Failed",
+    "description": "Failure notification title"
+  },
+  "triggerCooldown": {
+    "message": "Cooldown (minutes)",
+    "description": "Label for cooldown setting"
   }
 }

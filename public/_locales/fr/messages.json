@@ -426,5 +426,89 @@
   "resetSuccess": {
     "message": "Configuration reinitialisee avec succes !",
     "description": "Message apres reinitialisation reussie"
+  },
+  "triggerConfigTitle": {
+    "message": "Configuration des triggers",
+    "description": "Titre de la section de configuration des triggers"
+  },
+  "triggerUrlPattern": {
+    "message": "Motif URL",
+    "description": "Label pour le champ motif URL"
+  },
+  "triggerUrlPatternPlaceholder": {
+    "message": "*/tableau-de-bord*",
+    "description": "Placeholder pour le motif URL"
+  },
+  "triggerElementHints": {
+    "message": "Indices d'element (optionnel)",
+    "description": "Label pour les indices d'element"
+  },
+  "triggerModeSuggest": {
+    "message": "Suggerer",
+    "description": "Option mode suggestion"
+  },
+  "triggerModeAutoExecute": {
+    "message": "Auto-executer",
+    "description": "Option mode auto-execution"
+  },
+  "triggerModeLabel": {
+    "message": "Quand les conditions sont remplies :",
+    "description": "Label pour la selection du mode"
+  },
+  "triggerEnabled": {
+    "message": "Active",
+    "description": "Label case a cocher activer"
+  },
+  "triggerSave": {
+    "message": "Sauvegarder le trigger",
+    "description": "Bouton sauvegarder trigger"
+  },
+  "triggerDelete": {
+    "message": "Supprimer",
+    "description": "Bouton supprimer trigger"
+  },
+  "triggerAddCondition": {
+    "message": "Ajouter une condition",
+    "description": "Bouton ajouter condition"
+  },
+  "suggestedScriptsTitle": {
+    "message": "Scripts suggeres",
+    "description": "Titre de la section scripts suggeres"
+  },
+  "suggestedScriptsEmpty": {
+    "message": "Aucun script ne correspond au contexte actuel",
+    "description": "Etat vide pour les suggestions"
+  },
+  "suggestedScriptRun": {
+    "message": "Executer",
+    "description": "Bouton executer script suggere"
+  },
+  "notificationAutoExecuteTitle": {
+    "message": "Script en auto-execution",
+    "description": "Titre notification auto-execution"
+  },
+  "notificationAutoExecuteMessage": {
+    "message": "Execution : $1",
+    "description": "Message notification avec nom du script"
+  },
+  "notificationStop": {
+    "message": "Arreter",
+    "description": "Bouton arreter dans notification"
+  },
+  "notificationDisableSite": {
+    "message": "Desactiver pour ce site",
+    "description": "Bouton desactiver pour ce site"
+  },
+  "notificationCompleteTitle": {
+    "message": "Script termine",
+    "description": "Titre notification completion"
+  },
+  "notificationFailedTitle": {
+    "message": "Script echoue",
+    "description": "Titre notification echec"
+  },
+  "triggerCooldown": {
+    "message": "Delai de refroidissement (minutes)",
+    "description": "Label pour le parametre de cooldown"
   }
 }
