@@ -134,10 +134,15 @@ Plans:
   4. Triggers support URL patterns and element presence conditions
   5. User can enable or disable triggers per site
   6. Context detection works continuously without performance impact
-**Plans**: TBD
+**Plans**: 6 plans in 5 waves
 
 Plans:
-- [ ] TBD during planning
+- [ ] 06-01-PLAN.md — Trigger types and storage layer
+- [ ] 06-02-PLAN.md — Content script context detection (URL + element)
+- [ ] 06-03-PLAN.md — Background trigger engine and notifications
+- [ ] 06-04-PLAN.md — Message wiring (content <-> background)
+- [ ] 06-05-PLAN.md — Side Panel UI components (TriggerConfig, SuggestedScripts)
+- [ ] 06-06-PLAN.md — UI integration and E2E verification
 
 ## Progress
 
@@ -151,7 +156,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Side Panel | 7/7 | Complete | 2026-01-29 |
 | 4. Playback | 7/7 | Complete | 2026-01-29 |
 | 5. LLM Integration | 5/5 | Complete | 2026-01-29 |
-| 6. Contextual Triggers | 0/TBD | Not started | - |
+| 6. Contextual Triggers | 0/6 | Not started | - |
 
 ---
-*Last updated: 2026-01-29 after Phase 5 completion*
+*Last updated: 2026-01-29 after Phase 6 planning*
