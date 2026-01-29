@@ -92,10 +92,16 @@ Plans:
   5. User can stop execution at any time
   6. Extension detects when user is logged out and pauses for manual authentication
   7. Humanization layer adds realistic delays to avoid bot detection
-**Plans**: TBD
+**Plans**: 7 plans in 5 waves
 
 Plans:
-- [ ] TBD during planning
+- [ ] 04-01-PLAN.md — Playback types and BSL step parser
+- [ ] 04-02-PLAN.md — Humanization delay utilities
+- [ ] 04-03-PLAN.md — Semantic resolver with weighted scoring
+- [ ] 04-04-PLAN.md — Action executor (all 8 BSL actions)
+- [ ] 04-05-PLAN.md — Session detector for authentication
+- [ ] 04-06-PLAN.md — PlaybackManager orchestrator
+- [ ] 04-07-PLAN.md — UI wiring and E2E verification
 
 ### Phase 5: LLM Integration
 **Goal**: AI-enhanced semantic selector generation during recording
@@ -139,9 +145,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Foundation | 3/3 | Complete | 2026-01-29 |
 | 2. Recording | 5/5 | Complete | 2026-01-29 |
 | 3. Side Panel | 7/7 | Complete | 2026-01-29 |
-| 4. Playback | 0/TBD | Not started | - |
+| 4. Playback | 0/7 | Ready | - |
 | 5. LLM Integration | 0/TBD | Not started | - |
 | 6. Contextual Triggers | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-01-29 after Phase 3 completion*
+*Last updated: 2026-01-29 after Phase 4 planning*
