@@ -1,80 +1,127 @@
-import type { Message, MessageResponse, AppState, PingResponse } from '../../utils/types';
+// Elements
+const swStatusEl = document.getElementById('sw-status')!;
+const recordingStatusEl = document.getElementById('recording-status')!;
+const recordBtnEl = document.getElementById('record-btn')! as HTMLButtonElement;
+const actionsCountEl = document.getElementById('actions-count')!;
+const actionsListEl = document.getElementById('actions-list')!;
 
-// DOM elements
-const swStatus = document.getElementById('sw-status')!;
-const stateDisplay = document.getElementById('state-display')!;
-const refreshBtn = document.getElementById('refresh-state')!;
-const pingBtn = document.getElementById('ping-sw')!;
+// State
+let isRecording = false;
 
-// Initialize on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
-  init();
-});
+// Initialize
+init();
 
-async function init(): Promise<void> {
-  console.log('[Browserlet Side Panel] Initializing...');
-
+async function init() {
   // Check service worker connection
-  await pingServiceWorker();
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'PING' });
+    if (response.success) {
+      swStatusEl.textContent = 'Connected';
+      swStatusEl.classList.add('connected');
+    } else {
+      swStatusEl.textContent = 'Error';
+    }
+  } catch (error) {
+    swStatusEl.textContent = 'Disconnected';
+  }
 
   // Load initial state
   await loadState();
 
-  // Listen for storage changes - automatic updates without explicit messaging
-  chrome.storage.onChanged.addListener(handleStorageChange);
+  // Set up event listeners
+  recordBtnEl.addEventListener('click', toggleRecording);
 
-  // Set up button handlers
-  refreshBtn.addEventListener('click', loadState);
-  pingBtn.addEventListener('click', pingServiceWorker);
-
-  console.log('[Browserlet Side Panel] Ready');
+  // Listen for storage changes
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.appState) {
+      updateUI(changes.appState.newValue as AppState);
+    }
+  });
 }
 
-async function pingServiceWorker(): Promise<void> {
+async function loadState() {
   try {
-    const response = await sendMessage<PingResponse>({ type: 'PING' });
-
+    const response = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
     if (response.success && response.data) {
-      swStatus.textContent = `Connected (${new Date(response.data.timestamp).toLocaleTimeString()})`;
-      swStatus.className = 'status-value status-ok';
-    } else {
-      swStatus.textContent = `Error: ${response.error || 'Unknown error'}`;
-      swStatus.className = 'status-value status-error';
+      updateUI(response.data);
     }
   } catch (error) {
-    swStatus.textContent = `Disconnected: ${error instanceof Error ? error.message : 'Unknown error'}`;
-    swStatus.className = 'status-value status-error';
+    console.error('Failed to load state:', error);
   }
 }
 
-async function loadState(): Promise<void> {
-  try {
-    const response = await sendMessage<AppState>({ type: 'GET_STATE' });
+interface AppState {
+  recordingState?: 'idle' | 'recording' | 'paused';
+  recordedActions?: Array<{
+    type: string;
+    timestamp: number;
+    url: string;
+    hints: Array<{ type: string; value: unknown }>;
+    value?: string;
+  }>;
+}
 
-    if (response.success && response.data) {
-      stateDisplay.textContent = JSON.stringify(response.data, null, 2);
+function updateUI(state: AppState) {
+  // Update recording status
+  isRecording = state.recordingState === 'recording';
+
+  if (isRecording) {
+    recordingStatusEl.textContent = 'Recording';
+    recordingStatusEl.classList.add('recording');
+    recordBtnEl.textContent = 'Stop Recording';
+    recordBtnEl.classList.remove('btn-primary');
+    recordBtnEl.classList.add('btn-danger');
+  } else {
+    recordingStatusEl.textContent = 'Idle';
+    recordingStatusEl.classList.remove('recording');
+    recordBtnEl.textContent = 'Start Recording';
+    recordBtnEl.classList.remove('btn-danger');
+    recordBtnEl.classList.add('btn-primary');
+  }
+
+  // Update actions list
+  const actions = state.recordedActions || [];
+  actionsCountEl.textContent = actions.length.toString();
+
+  if (actions.length === 0) {
+    actionsListEl.innerHTML = '<div class="empty-state">No actions recorded yet</div>';
+  } else {
+    actionsListEl.innerHTML = actions
+      .slice(-20) // Show last 20 actions
+      .reverse() // Most recent first
+      .map(action => {
+        const hint = action.hints[0];
+        const hintText = hint ? `${hint.type}: ${typeof hint.value === 'string' ? hint.value : JSON.stringify(hint.value)}` : '';
+        const valueText = action.value ? ` = "${action.value.substring(0, 30)}${action.value.length > 30 ? '...' : ''}"` : '';
+
+        return `
+          <div class="action-item">
+            <span class="action-type">${action.type}</span>
+            <div class="action-details">${hintText}${valueText}</div>
+          </div>
+        `;
+      })
+      .join('');
+  }
+}
+
+async function toggleRecording() {
+  recordBtnEl.disabled = true;
+
+  try {
+    if (isRecording) {
+      await chrome.runtime.sendMessage({ type: 'STOP_RECORDING' });
     } else {
-      stateDisplay.textContent = `Error: ${response.error || 'Unknown error'}`;
+      // Clear previous actions when starting new recording
+      await chrome.runtime.sendMessage({
+        type: 'SET_STATE',
+        payload: { recordedActions: [] }
+      });
+      await chrome.runtime.sendMessage({ type: 'START_RECORDING' });
     }
   } catch (error) {
-    stateDisplay.textContent = `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    console.error('Failed to toggle recording:', error);
+  } finally {
+    recordBtnEl.disabled = false;
   }
-}
-
-function handleStorageChange(
-  changes: { [key: string]: chrome.storage.StorageChange },
-  namespace: string
-): void {
-  if (namespace !== 'local') return;
-
-  console.log('[Browserlet Side Panel] Storage changed:', changes);
-
-  // Refresh state display when appState changes
-  if (changes.appState) {
-    stateDisplay.textContent = JSON.stringify(changes.appState.newValue, null, 2);
-  }
-}
-
-async function sendMessage<T>(message: Message): Promise<MessageResponse<T>> {
-  return chrome.runtime.sendMessage(message);
 }

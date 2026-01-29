@@ -10,96 +10,194 @@
       margin: 0;
       padding: 0;
     }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
-      line-height: 1.5;
-      color: #333;
       padding: 16px;
-      background: #fafafa;
+      background: #f5f5f5;
+      min-height: 100vh;
     }
+
+    .header {
+      margin-bottom: 20px;
+    }
+
     h1 {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 600;
-      margin-bottom: 16px;
-      color: #1a1a1a;
+      color: #333;
     }
+
     .status {
+      margin-bottom: 20px;
+      padding: 12px;
       background: white;
-      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 13px;
+    }
+
+    .status-label {
+      color: #666;
+    }
+
+    .status-value {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .status-value.recording {
+      color: #f44336;
+    }
+
+    .status-value.connected {
+      color: #4caf50;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: #4285f4;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #3367d6;
+    }
+
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .btn-danger {
+      background: #f44336;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #d32f2f;
+    }
+
+    .actions-section {
+      background: white;
       border-radius: 8px;
       padding: 12px;
-      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    .status-label {
+
+    .actions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .actions-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .actions-count {
       font-size: 12px;
       color: #666;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
+      background: #eee;
+      padding: 2px 8px;
+      border-radius: 12px;
     }
-    .status-value {
-      font-size: 14px;
-      font-weight: 500;
-    }
-    .status-ok {
-      color: #2e7d32;
-    }
-    .status-error {
-      color: #c62828;
-    }
-    .state-display {
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: 'SF Mono', Monaco, monospace;
+
+    .actions-list {
+      max-height: 300px;
+      overflow-y: auto;
       font-size: 12px;
-      white-space: pre-wrap;
+    }
+
+    .action-item {
+      padding: 8px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #555;
+    }
+
+    .action-item:last-child {
+      border-bottom: none;
+    }
+
+    .action-type {
+      font-weight: 500;
+      color: #333;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+
+    .action-details {
+      margin-top: 4px;
+      color: #888;
       word-break: break-all;
     }
-    .actions {
-      margin-top: 16px;
-      display: flex;
-      gap: 8px;
-    }
-    button {
-      background: #1976d2;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    button:hover {
-      background: #1565c0;
-    }
-    button:disabled {
-      background: #bdbdbd;
-      cursor: not-allowed;
+
+    .empty-state {
+      text-align: center;
+      padding: 24px;
+      color: #999;
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
-  <h1>Browserlet</h1>
-
-  <div class="status">
-    <div class="status-label">Service Worker</div>
-    <div id="sw-status" class="status-value">Checking...</div>
+  <div class="header">
+    <h1>Browserlet</h1>
   </div>
 
   <div class="status">
-    <div class="status-label">App State</div>
-    <div id="state-display" class="state-display">Loading...</div>
+    <div class="status-row">
+      <span class="status-label">Service Worker</span>
+      <span id="sw-status" class="status-value">Checking...</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label">Recording</span>
+      <span id="recording-status" class="status-value">Idle</span>
+    </div>
   </div>
 
-  <div class="actions">
-    <button id="refresh-state">Refresh State</button>
-    <button id="ping-sw">Ping Service Worker</button>
+  <div class="controls">
+    <button id="record-btn" class="btn btn-primary">Start Recording</button>
   </div>
 
-  <script type="module" src="./main.ts"></script>
+  <div class="actions-section">
+    <div class="actions-header">
+      <span class="actions-title">Captured Actions</span>
+      <span id="actions-count" class="actions-count">0</span>
+    </div>
+    <div id="actions-list" class="actions-list">
+      <div class="empty-state">No actions recorded yet</div>
+    </div>
+  </div>
+
+  <script src="./main.ts" type="module"></script>
 </body>
 </html>
