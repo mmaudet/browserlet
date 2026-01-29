@@ -85,6 +85,9 @@ Recent decisions affecting current work:
 - UTF-8 encoding for file read/write operations
 - Module-level editor singleton for external content access via exported functions
 - 1 second debounce for auto-save balancing responsiveness and storage writes
+- VanJS van.state for reactive store pattern in sidepanel
+- Derived state with van.derive for computed/filtered values
+- Storage change listener for cross-context sync in script stores
 
 ### Pending Todos
 
