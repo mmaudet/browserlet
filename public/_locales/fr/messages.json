@@ -222,5 +222,13 @@
   "discardChangesConfirm": {
     "message": "Abandonner les modifications non enregistrees ?",
     "description": "Message de confirmation pour abandonner les modifications"
+  },
+  "saving": {
+    "message": "Enregistrement...",
+    "description": "Statut pendant l'enregistrement du script"
+  },
+  "lastSaved": {
+    "message": "Enregistre",
+    "description": "Statut quand le script a ete enregistre"
   }
 }

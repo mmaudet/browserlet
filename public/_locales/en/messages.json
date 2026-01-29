@@ -222,5 +222,13 @@
   "discardChangesConfirm": {
     "message": "Discard unsaved changes?",
     "description": "Confirmation message for discarding changes"
+  },
+  "saving": {
+    "message": "Saving...",
+    "description": "Status while saving script"
+  },
+  "lastSaved": {
+    "message": "Saved",
+    "description": "Status when script was last saved"
   }
 }
