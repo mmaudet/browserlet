@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 4 of 6 (Playback)
-Plan: 4 of 7
+Plan: 5 of 7
 Status: In progress
-Last activity: 2026-01-29 — Completed 04-04-PLAN.md (Action Executor)
+Last activity: 2026-01-29 — Completed 04-05-PLAN.md (Session Detector)
 
-Progress: [█████░░░░░] 50% (3 of 6 phases complete, Phase 4: 4/7 plans)
+Progress: [█████░░░░░] 50% (3 of 6 phases complete, Phase 4: 5/7 plans)
 
 ## Performance Metrics
 
@@ -106,6 +106,10 @@ Recent decisions affecting current work:
 - Character-by-character typing with keydown/input/keyup per char
 - Option search by value first, then by text content
 - Hover persistence (no mouseleave dispatch)
+- URL pattern wildcards converted to regex with proper escaping
+- Case-insensitive URL pattern matching for robustness
+- Short-circuit session checks: URL patterns first (fastest)
+- 2000ms default polling interval for waitForAuthentication
 
 ### Pending Todos
 
@@ -188,6 +192,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29T12:45:24Z
-Stopped at: Completed 04-04-PLAN.md (Action Executor)
+Last session: 2026-01-29T12:46:23Z
+Stopped at: Completed 04-05-PLAN.md (Session Detector)
 Resume file: None
