@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-29)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** Phase 2 - Recording
+**Current focus:** Phase 3 - Side Panel
 
 ## Current Position
 
-Phase: 2 of 6 (Recording)
-Plan: 4 of TBD in current phase
+Phase: 3 of 6 (Side Panel)
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-01-29 — Completed 02-04-PLAN.md (Recording Controls Integration)
+Last activity: 2026-01-29 — Completed 03-02-PLAN.md (Script Storage Layer)
 
-Progress: [██░░░░░░░░] 17% (1 of 6 phases complete, 4 plans in Phase 2)
+Progress: [███░░░░░░░] 33% (2 of 6 phases complete)
 
 ## Performance Metrics
 
@@ -28,7 +28,7 @@ Progress: [██░░░░░░░░] 17% (1 of 6 phases complete, 4 plans 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 8 min | 2.7 min |
-| 02-recording | 3 | 10.7 min | 3.6 min |
+| 02-recording | 5 | ~15 min | 3 min |
 
 **Recent Trend:**
 - Last 5 plans: 01-03 (3 min), 02-01 (4 min), 02-03 (2.4 min), 02-04 (4.7 min)
@@ -59,7 +59,7 @@ Recent decisions affecting current work:
 - Exponential backoff 100/200/400ms for retry
 - WxtVitest plugin for automatic fake-browser setup
 
-**Phase 2 decisions (in progress):**
+**Phase 2 decisions (completed):**
 - 10 semantic hint types for element identification (role, id, text_contains, type, name, aria_label, placeholder_contains, near_label, class_contains, data_attribute)
 - Filter auto-generated IDs (UUIDs, React/Vue/Ember prefixes) to avoid unstable identifiers
 - Skip utility classes (Tailwind patterns) to focus on semantic class names
@@ -73,16 +73,21 @@ Recent decisions affecting current work:
 - Clear previous actions when starting new recording for clean sessions
 - Show last 20 actions in reverse order (most recent first) for usability
 
+**Phase 3 decisions (in progress):**
+- crypto.randomUUID() for script/history ID generation (browser-native)
+- Per-script history keying with browserlet_history_{scriptId} prefix
+- Prepend new records and slice to enforce 50-entry history cap
+
 ### Pending Todos
 
 None.
 
 ### Blockers/Concerns
 
-**Phase 2 (Recording - Next):**
-- Need real legacy ERP testing for iframe patterns validation
-- Selector validation with real target apps required
-- MutationObserver performance profiling needed
+**Phase 2 (Recording):** ✅ RESOLVED
+- ~~Need real legacy ERP testing for iframe patterns validation~~ - Tested on OBM
+- ~~Selector validation with real target apps required~~ - Semantic hints working
+- MutationObserver: Not needed for recording (only for playback element resolution)
 
 **Phase 4 (Playback):**
 - Bot detection landscape for legacy internal ERPs unknown
@@ -108,8 +113,27 @@ None.
 - Side panel with real-time state display
 - Unit test suite (20 tests passing)
 
+### Phase 2: Recording ✅
+- **Completed:** 2026-01-29
+- **Plans:** 5/5
+- **Duration:** ~15 min total
+- **E2E Verification:** APPROVED (all 6 test scenarios passed)
+
+**Deliverables:**
+- Recording types and SemanticHint interface (10 hint types)
+- Hint generator extracting semantic identifiers from DOM elements
+- Visual feedback system (HighlightOverlay + RecordingIndicator)
+- Event capture (clicks, inputs, form submits with debouncing)
+- Navigation capture (History API patching for SPA support)
+- RecordingManager state machine orchestrator
+- Side Panel recording controls with action list display
+- iframe injection via allFrames: true
+- Recording persistence across page refresh
+
+**Verified on:** Real legacy ERP (OBM - extranet.linagora.com)
+
 ## Session Continuity
 
-Last session: 2026-01-29T10:11:02Z
-Stopped at: Completed 02-04-PLAN.md (Recording Controls Integration)
+Last session: 2026-01-29T12:04:00Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None - clean state
