@@ -48,10 +48,14 @@ Plans:
   3. Captured actions include semantic hints (role, aria-label, text, data-attribute) not fragile XPath
   4. Recording works inside iframes (same-origin and cross-origin where possible)
   5. Captured action sequence is available for script generation
-**Plans**: TBD
+**Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] TBD during planning
+- [ ] 02-01-PLAN.md — Recording types, hint utilities, and hint generator (port from POC)
+- [ ] 02-02-PLAN.md — Visual feedback overlay system
+- [ ] 02-03-PLAN.md — Event capture, navigation capture, and RecordingManager orchestrator
+- [ ] 02-04-PLAN.md — Side Panel controls, iframe injection, and message wiring
+- [ ] 02-05-PLAN.md — E2E verification checkpoint
 
 ### Phase 3: Side Panel
 **Goal**: Professional UI for managing and editing BSL scripts
@@ -126,12 +130,12 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 3/3 | ✅ Complete | 2026-01-29 |
-| 2. Recording | 0/TBD | Ready to plan | - |
+| 1. Foundation | 3/3 | Complete | 2026-01-29 |
+| 2. Recording | 0/5 | Ready to execute | - |
 | 3. Side Panel | 0/TBD | Not started | - |
 | 4. Playback | 0/TBD | Not started | - |
 | 5. LLM Integration | 0/TBD | Not started | - |
 | 6. Contextual Triggers | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-01-29 after Phase 1 completion*
+*Last updated: 2026-01-29 after Phase 2 planning*
