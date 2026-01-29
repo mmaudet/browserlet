@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 Phase: 4 of 6 (Playback)
 Plan: 2 of 7
 Status: In progress
-Last activity: 2026-01-29 — Completed 04-02-PLAN.md (Humanizer)
+Last activity: 2026-01-29 — Completed 04-01-PLAN.md (Playback Types and Step Parser)
 
 Progress: [█████░░░░░] 50% (3 of 6 phases complete, Phase 4: 2/7 plans)
 
@@ -92,6 +92,9 @@ Recent decisions affecting current work:
 - @json2csv/plainjs Parser for CSV export functionality
 
 **Phase 4 decisions (in progress):**
+- Re-export SemanticHint from playback/types.ts for convenience
+- Separate step parser (stepParser.ts) from script parser (parser.ts) for single responsibility
+- Validate target requirement per action type (7 require target, navigate requires value)
 - Box-Muller transform for Gaussian distribution (natural timing feel)
 - DEFAULT_CONFIG ranges: 500-2000ms base, 50-150ms typing, 100-300ms scroll
 - Normalize Gaussian to 0-1 with (gaussian + 3) / 6 clamping
@@ -177,6 +180,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29T12:33:05Z
-Stopped at: Completed 04-02-PLAN.md (Humanizer)
+Last session: 2026-01-29T12:33:38Z
+Stopped at: Completed 04-01-PLAN.md (Playback Types and Step Parser)
 Resume file: None
