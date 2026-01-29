@@ -78,7 +78,7 @@ function App() {
       div({ style: 'display: flex; gap: 8px; align-items: center;' },
         ImportButton({ onImport: (script) => navigateTo('editor', script) }),
         button({
-          style: 'background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px 8px; color: #666;',
+          style: 'background: none; border: none; cursor: pointer; font-size: 24px; padding: 4px 8px; color: #666;',
           title: chrome.i18n.getMessage('settings') || 'Settings',
           onclick: () => navigateTo('settings')
         }, '\u2699') // Gear icon
