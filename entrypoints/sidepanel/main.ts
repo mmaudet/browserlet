@@ -116,16 +116,21 @@ function App() {
                   goBack();
                 }
               }, '← ' + (chrome.i18n.getMessage('back') || 'Back')),
-              div({ style: 'display: flex; gap: 8px;' },
-                ExportButton({ script })
-              )
+              // Export button with reactive script getter
+              () => {
+                const currentScript = editorScript.val;
+                return currentScript
+                  ? div({ style: 'display: flex; gap: 8px;' }, ExportButton({ script: currentScript }))
+                  : div();
+              }
             ),
             // Editor
             div({ style: 'flex: 1;' },
               ScriptEditor({
                 script,
                 onSave: (updated) => {
-                  // Script already saved by auto-save
+                  // Update editorScript so export gets latest version
+                  editorScript.val = updated;
                 }
               })
             )

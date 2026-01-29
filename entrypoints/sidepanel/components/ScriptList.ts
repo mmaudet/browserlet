@@ -1,6 +1,8 @@
 import van from 'vanjs-core';
 import type { Script } from '../../../utils/types';
 import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId } from '../stores/scripts';
+import { startExecution } from '../stores/execution';
+import { navigateTo } from '../router';
 
 const { div, input, span, button } = van.tags;
 
@@ -9,14 +11,14 @@ interface ScriptListProps {
   onNewScript?: () => void;
 }
 
-function ScriptItem({ script, isSelected, onSelect }: {
+function ScriptItem({ script, isSelected, onSelect, onRun }: {
   script: Script;
   isSelected: boolean;
   onSelect: () => void;
+  onRun: () => void;
 }) {
   return div({
     class: () => `script-item ${isSelected ? 'selected' : ''}`,
-    onclick: onSelect,
     style: `
       padding: 12px;
       border-bottom: 1px solid #f0f0f0;
@@ -25,11 +27,26 @@ function ScriptItem({ script, isSelected, onSelect }: {
       transition: background 0.15s;
     `
   },
-    div({ style: 'display: flex; justify-content: space-between; align-items: flex-start;' },
-      span({ style: 'font-weight: 500; color: #333;' }, script.name),
-      script.target_app ? span({
-        style: 'font-size: 10px; background: #e0e0e0; padding: 2px 6px; border-radius: 4px; color: #666;'
-      }, script.target_app) : ''
+    div({ style: 'display: flex; justify-content: space-between; align-items: center;' },
+      div({
+        style: 'flex: 1; min-width: 0;',
+        onclick: onSelect
+      },
+        div({ style: 'display: flex; justify-content: space-between; align-items: flex-start;' },
+          span({ style: 'font-weight: 500; color: #333;' }, script.name),
+          script.target_app ? span({
+            style: 'font-size: 10px; background: #e0e0e0; padding: 2px 6px; border-radius: 4px; color: #666;'
+          }, script.target_app) : ''
+        )
+      ),
+      button({
+        onclick: (e: Event) => {
+          e.stopPropagation();
+          onRun();
+        },
+        style: 'padding: 6px 12px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 8px;',
+        title: chrome.i18n.getMessage('runScript') || 'Run Script'
+      }, '▶')
     ),
     script.description ? div({
       style: 'font-size: 12px; color: #666; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'
@@ -95,6 +112,10 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
               onSelect: () => {
                 selectScript(script.id);
                 onScriptSelect?.(script);
+              },
+              onRun: () => {
+                startExecution(script);
+                navigateTo('execution');
               }
             })
           )

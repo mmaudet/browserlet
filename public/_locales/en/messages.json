@@ -230,5 +230,77 @@
   "lastSaved": {
     "message": "Saved",
     "description": "Status when script was last saved"
+  },
+  "scripts": {
+    "message": "Scripts",
+    "description": "Tab label for scripts"
+  },
+  "record": {
+    "message": "Record",
+    "description": "Tab label for recording"
+  },
+  "run": {
+    "message": "Run",
+    "description": "Tab label for execution"
+  },
+  "recording": {
+    "message": "Recording",
+    "description": "Recording section title"
+  },
+  "recordingActive": {
+    "message": "Recording...",
+    "description": "Status when recording is active"
+  },
+  "idle": {
+    "message": "Ready",
+    "description": "Status when not recording"
+  },
+  "capturedActions": {
+    "message": "Captured Actions",
+    "description": "Title for captured actions list"
+  },
+  "noActionsYet": {
+    "message": "No actions recorded yet",
+    "description": "Empty state for actions list"
+  },
+  "noExecution": {
+    "message": "No execution in progress",
+    "description": "Status when no script is running"
+  },
+  "executionHint": {
+    "message": "Select a script and click Run to execute it",
+    "description": "Hint for execution view"
+  },
+  "noPage": {
+    "message": "No page detected",
+    "description": "When no active tab is found"
+  },
+  "newScript": {
+    "message": "New Script",
+    "description": "Tooltip for new script button"
+  },
+  "noResults": {
+    "message": "No scripts found",
+    "description": "When search returns no results"
+  },
+  "noScripts": {
+    "message": "No scripts yet. Create one to get started!",
+    "description": "When script list is empty"
+  },
+  "import": {
+    "message": "Import",
+    "description": "Import button label"
+  },
+  "export": {
+    "message": "Export",
+    "description": "Export button label"
+  },
+  "importing": {
+    "message": "Importing...",
+    "description": "Status while importing"
+  },
+  "exportFailed": {
+    "message": "Export failed",
+    "description": "Error when export fails"
   }
 }

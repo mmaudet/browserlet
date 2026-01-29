@@ -53,15 +53,35 @@ export function ExecutionView() {
   return div({ class: 'execution-view', style: 'padding: 16px;' },
     // Header
     div({ style: 'margin-bottom: 16px;' },
-      () => currentScript.val
-        ? div(
+      span({ style: 'font-weight: 500; font-size: 16px;' },
+        chrome.i18n.getMessage('executionTitle') || 'Execution'
+      )
+    ),
+
+    // Idle state - show instructions
+    () => executionStatus.val === 'idle' && !isExecuting.val ? div({
+      style: 'text-align: center; padding: 40px 20px; color: #666;'
+    },
+      div({ style: 'font-size: 48px; margin-bottom: 16px;' }, '▶️'),
+      div({ style: 'font-size: 14px; margin-bottom: 8px;' },
+        chrome.i18n.getMessage('noExecution') || 'No execution in progress'
+      ),
+      div({ style: 'font-size: 12px; color: #999;' },
+        chrome.i18n.getMessage('executionHint') || 'Select a script and click "Run" to execute it'
+      )
+    ) : null,
+
+    // Active execution header
+    () => currentScript.val && executionStatus.val !== 'idle'
+      ? div({ style: 'margin-bottom: 16px;' },
+          div(
             span({ style: 'font-weight: 500; color: #333;' }, currentScript.val.name),
             span({ style: 'margin-left: 8px; font-size: 12px; color: #666;' },
               () => `${chrome.i18n.getMessage('executionStep', [String(currentStep.val), String(totalSteps.val)]) || `Step ${currentStep.val} / ${totalSteps.val}`}`
             )
           )
-        : span({ style: 'color: #999;' }, chrome.i18n.getMessage('executionTitle') || 'No execution in progress')
-    ),
+        )
+      : null,
 
     // Progress bar
     () => isExecuting.val || executionStatus.val !== 'idle' ? div({

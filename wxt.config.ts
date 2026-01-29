@@ -11,7 +11,7 @@ export default defineConfig({
     description: '__MSG_appDescription__',
     default_locale: 'en',
     version: '0.1.0',
-    permissions: ['storage', 'sidePanel'],
+    permissions: ['storage', 'sidePanel', 'tabs', 'activeTab'],
     side_panel: {
       default_path: 'sidepanel.html',
     },

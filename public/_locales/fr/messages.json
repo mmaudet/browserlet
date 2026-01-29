@@ -230,5 +230,77 @@
   "lastSaved": {
     "message": "Enregistre",
     "description": "Statut quand le script a ete enregistre"
+  },
+  "scripts": {
+    "message": "Scripts",
+    "description": "Onglet pour les scripts"
+  },
+  "record": {
+    "message": "Enregistrer",
+    "description": "Onglet pour l'enregistrement"
+  },
+  "run": {
+    "message": "Executer",
+    "description": "Onglet pour l'execution"
+  },
+  "recording": {
+    "message": "Enregistrement",
+    "description": "Titre de la section enregistrement"
+  },
+  "recordingActive": {
+    "message": "Enregistrement...",
+    "description": "Statut quand l'enregistrement est actif"
+  },
+  "idle": {
+    "message": "Pret",
+    "description": "Statut quand l'enregistrement n'est pas actif"
+  },
+  "capturedActions": {
+    "message": "Actions capturees",
+    "description": "Titre de la liste des actions capturees"
+  },
+  "noActionsYet": {
+    "message": "Aucune action enregistree",
+    "description": "Etat vide pour la liste des actions"
+  },
+  "noExecution": {
+    "message": "Aucune execution en cours",
+    "description": "Statut quand aucun script n'est en cours d'execution"
+  },
+  "executionHint": {
+    "message": "Selectionnez un script et cliquez sur Executer",
+    "description": "Indication pour la vue d'execution"
+  },
+  "noPage": {
+    "message": "Aucune page detectee",
+    "description": "Quand aucun onglet actif n'est trouve"
+  },
+  "newScript": {
+    "message": "Nouveau script",
+    "description": "Info-bulle pour le bouton nouveau script"
+  },
+  "noResults": {
+    "message": "Aucun script trouve",
+    "description": "Quand la recherche ne retourne aucun resultat"
+  },
+  "noScripts": {
+    "message": "Aucun script. Creez-en un pour commencer !",
+    "description": "Quand la liste des scripts est vide"
+  },
+  "import": {
+    "message": "Importer",
+    "description": "Libelle du bouton importer"
+  },
+  "export": {
+    "message": "Exporter",
+    "description": "Libelle du bouton exporter"
+  },
+  "importing": {
+    "message": "Importation...",
+    "description": "Statut pendant l'importation"
+  },
+  "exportFailed": {
+    "message": "Echec de l'export",
+    "description": "Erreur quand l'export echoue"
   }
 }
