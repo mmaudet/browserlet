@@ -141,7 +141,7 @@ export function LLMSettings() {
       ),
       select({
         style: selectStyle,
-        value: llmConfigStore.provider,
+        value: () => llmConfigStore.provider.val,
         onchange: handleProviderChange,
       },
         option({ value: 'claude' }, 'Claude API (Anthropic)'),
@@ -160,7 +160,7 @@ export function LLMSettings() {
           type: 'password',
           style: inputStyle,
           placeholder: 'sk-ant-...',
-          value: llmConfigStore.claudeApiKey,
+          value: () => llmConfigStore.claudeApiKey.val,
           oninput: handleApiKeyChange,
         }),
         p({ style: 'margin: 6px 0 0 0; font-size: 11px; color: #666;' },
@@ -175,7 +175,7 @@ export function LLMSettings() {
         ),
         select({
           style: selectStyle,
-          value: llmConfigStore.claudeModel,
+          value: () => llmConfigStore.claudeModel.val,
           onchange: handleClaudeModelChange,
         },
           ...CLAUDE_MODELS.map(m => option({ value: m.value }, m.label))
@@ -194,7 +194,7 @@ export function LLMSettings() {
           type: 'text',
           style: inputStyle,
           placeholder: 'http://localhost:11434',
-          value: llmConfigStore.ollamaHost,
+          value: () => llmConfigStore.ollamaHost.val,
           oninput: handleOllamaHostChange,
         })
       ),
@@ -208,7 +208,7 @@ export function LLMSettings() {
           type: 'text',
           style: inputStyle,
           placeholder: 'llama3.1',
-          value: llmConfigStore.ollamaModel,
+          value: () => llmConfigStore.ollamaModel.val,
           oninput: handleOllamaModelChange,
         })
       ),
