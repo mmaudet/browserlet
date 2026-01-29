@@ -24,7 +24,16 @@ export type MessageType =
   // LLM messages
   | 'GENERATE_BSL'
   | 'CONFIGURE_LLM'
-  | 'GET_LLM_STATUS';
+  | 'GET_LLM_STATUS'
+  // Trigger messages
+  | 'CONTEXT_MATCH'
+  | 'GET_TRIGGERS'
+  | 'SAVE_TRIGGER'
+  | 'DELETE_TRIGGER'
+  | 'GET_SUGGESTED_SCRIPTS'
+  | 'SET_SITE_OVERRIDE'
+  | 'TRIGGERS_UPDATED'
+  | 'STOP_TRIGGERS';
 
 export interface Message {
   type: MessageType;

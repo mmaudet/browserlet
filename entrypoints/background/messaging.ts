@@ -2,6 +2,9 @@ import type { AppState, Message, MessageResponse, PingResponse, CapturedAction }
 import { getState, setState, setRecordingState, addRecordedAction } from './storage';
 import { getLLMService } from './llm';
 import type { LLMConfig } from './llm/providers/types';
+import { getTriggerEngine, initializeTriggerEngine, broadcastTriggerUpdate } from './triggers';
+import type { ContextState, TriggerConfig } from '../../utils/triggers/types';
+import { getAllTriggers, saveTrigger, deleteTrigger, setSiteOverride } from '../../utils/storage/triggers';
 
 // Storage key for persisted execution state
 const EXECUTION_STATE_KEY = 'browserlet_execution_state';
@@ -147,6 +150,56 @@ async function processMessage(
       const llmService = getLLMService();
       const status = llmService.getStatus();
       return { success: true, data: status };
+    }
+
+    case 'CONTEXT_MATCH': {
+      const context = message.payload as ContextState;
+      const tabId = _sender.tab?.id;
+      if (tabId) {
+        await getTriggerEngine().handleContextMatch(tabId, context);
+      }
+      return { success: true };
+    }
+
+    case 'GET_TRIGGERS': {
+      // Ensure trigger engine is initialized before returning triggers
+      // Handles race condition where content script requests before background ready
+      await initializeTriggerEngine();
+      const triggers = await getAllTriggers();
+      return { success: true, data: triggers };
+    }
+
+    case 'SAVE_TRIGGER': {
+      const trigger = message.payload as TriggerConfig;
+      await saveTrigger(trigger);
+      await broadcastTriggerUpdate();
+      return { success: true };
+    }
+
+    case 'DELETE_TRIGGER': {
+      const triggerId = message.payload as string;
+      await deleteTrigger(triggerId);
+      await broadcastTriggerUpdate();
+      return { success: true };
+    }
+
+    case 'GET_SUGGESTED_SCRIPTS': {
+      const tabId = _sender.tab?.id;
+      if (tabId) {
+        const scriptIds = await getTriggerEngine().getSuggestedScripts(tabId);
+        return { success: true, data: scriptIds };
+      }
+      return { success: true, data: [] };
+    }
+
+    case 'SET_SITE_OVERRIDE': {
+      const { scriptId, url, enabled } = message.payload as {
+        scriptId: string;
+        url: string;
+        enabled: boolean;
+      };
+      await setSiteOverride(scriptId, url, enabled);
+      return { success: true };
     }
 
     default:
