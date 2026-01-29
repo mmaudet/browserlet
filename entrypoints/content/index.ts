@@ -1,11 +1,33 @@
 import { sendMessageSafe } from './messaging';
 import { isContextValid } from '../../utils/context-check';
+import { RecordingManager } from './recording';
+
+// Singleton instance
+let recordingManager: RecordingManager | null = null;
 
 export default defineContentScript({
   matches: ['<all_urls>'],
+  allFrames: true,
 
   main() {
     console.log('[Browserlet] Content script loaded on:', window.location.href);
+
+    // Initialize recording manager
+    recordingManager = new RecordingManager();
+
+    // Set up event handler to forward actions to service worker
+    recordingManager.onEvent(async (event) => {
+      if (event.type === 'action_captured' && event.action) {
+        try {
+          await sendMessageSafe({
+            type: 'ACTION_CAPTURED',
+            payload: event.action
+          });
+        } catch (error) {
+          console.error('[Browserlet] Failed to send action:', error);
+        }
+      }
+    });
 
     // Verify communication with service worker on load
     verifyConnection();
@@ -25,6 +47,16 @@ async function verifyConnection(): Promise<void> {
     const response = await sendMessageSafe({ type: 'PING' });
     if (response.success) {
       console.log('[Browserlet] Service worker connection verified');
+
+      // Check if recording is already active (page refresh during recording)
+      const stateResponse = await sendMessageSafe({ type: 'GET_STATE' });
+      if (stateResponse.success && stateResponse.data) {
+        const state = stateResponse.data as { recordingState?: string };
+        if (state.recordingState === 'recording' && recordingManager) {
+          console.log('[Browserlet] Resuming recording after page load');
+          recordingManager.start();
+        }
+      }
     } else {
       console.warn('[Browserlet] Service worker responded with error:', response.error);
     }
@@ -51,6 +83,20 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
     case 'STORAGE_CHANGED':
       // Storage change notification from service worker
       console.log('[Browserlet] Storage changed:', message.payload);
+      return { success: true };
+
+    case 'START_RECORDING':
+      if (recordingManager) {
+        recordingManager.start();
+        console.log('[Browserlet] Recording started');
+      }
+      return { success: true };
+
+    case 'STOP_RECORDING':
+      if (recordingManager) {
+        const session = recordingManager.stop();
+        console.log('[Browserlet] Recording stopped, actions:', session?.actions.length ?? 0);
+      }
       return { success: true };
 
     default:
