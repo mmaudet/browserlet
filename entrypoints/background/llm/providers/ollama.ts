@@ -30,10 +30,13 @@ export class OllamaProvider implements LLMProvider {
    * @param model - Model to use (default: llama3.1)
    */
   constructor(host?: string, model?: string) {
+    const actualHost = host ?? 'http://localhost:11434';
+    const actualModel = model ?? 'llama3.1';
+    console.log('[Ollama] Provider created with host:', actualHost, 'model:', actualModel);
     this.client = new Ollama({
-      host: host ?? 'http://localhost:11434',
+      host: actualHost,
     });
-    this.model = model ?? 'llama3.1';
+    this.model = actualModel;
   }
 
   /**
@@ -56,20 +59,46 @@ export class OllamaProvider implements LLMProvider {
    * @throws Error if API call fails or generated BSL is invalid YAML
    */
   async generateBSL(actions: CapturedAction[]): Promise<string> {
-    const prompt = buildBSLPrompt(actions);
+    console.log('[Ollama] generateBSL called with', actions.length, 'actions');
+    console.log('[Ollama] Using model:', this.model);
 
+    const prompt = buildBSLPrompt(actions);
+    console.log('[Ollama] Prompt length:', prompt.length, 'chars');
+
+    console.log('[Ollama] Sending request...');
     const response = await this.client.chat({
       model: this.model,
       messages: [{ role: 'user', content: prompt }],
       stream: false,
     });
+    console.log('[Ollama] Response received');
 
-    const bslContent = response.message.content;
+    let bslContent = response.message.content;
+    console.log('[Ollama] Raw response length:', bslContent.length);
+
+    // Extract YAML from markdown code blocks if present
+    const yamlBlockMatch = bslContent.match(/```(?:yaml|yml)?\s*\n([\s\S]*?)\n```/);
+    if (yamlBlockMatch) {
+      console.log('[Ollama] Extracted YAML from code block');
+      bslContent = yamlBlockMatch[1];
+    } else {
+      // Try to find YAML content starting with "name:" if no code block
+      const yamlStartMatch = bslContent.match(/(name:\s*[\s\S]*)/);
+      if (yamlStartMatch) {
+        console.log('[Ollama] Extracted YAML starting from "name:"');
+        bslContent = yamlStartMatch[1];
+      }
+    }
+
+    bslContent = bslContent.trim();
 
     // Validate YAML structure
     try {
       yaml.load(bslContent);
-    } catch {
+      console.log('[Ollama] YAML validation passed');
+    } catch (parseError) {
+      console.error('[Ollama] YAML validation failed:', parseError);
+      console.error('[Ollama] Content was:', bslContent.substring(0, 500));
       throw new Error('LLM generated invalid BSL');
     }
 

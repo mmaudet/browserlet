@@ -55,7 +55,8 @@ export class LLMService {
       provider: config.provider,
       hasApiKey: !!config.claudeApiKey,
       apiKeyLength: config.claudeApiKey?.length ?? 0,
-      model: config.claudeModel ?? config.ollamaModel
+      model: config.provider === 'claude' ? config.claudeModel : config.ollamaModel,
+      ollamaHost: config.provider === 'ollama' ? config.ollamaHost : undefined
     });
 
     this.config = config;
