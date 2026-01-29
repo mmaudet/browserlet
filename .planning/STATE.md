@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-29)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** Phase 5 - LLM Integration
+**Current focus:** Phase 6 - Contextual Triggers
 
 ## Current Position
 
-Phase: 5 of 6 (LLM Integration)
-Plan: 4 of 5
+Phase: 6 of 6 (Contextual Triggers)
+Plan: 1 of 6
 Status: In progress
-Last activity: 2026-01-29 — Completed 05-04-PLAN.md (LLM Message Handlers & Settings)
+Last activity: 2026-01-29 — Completed 06-01-PLAN.md (Trigger Types & Storage)
 
-Progress: [████████░░] 80% (4 of 6 phases complete, Phase 5: 4/5 plans)
+Progress: [████████░░] 84% (5 of 6 phases complete, Phase 6: 1/6 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 2.9 min
-- Total execution time: 0.34 hours
+- Total plans completed: 7
+- Average duration: 2.5 min
+- Total execution time: 0.37 hours
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [████████░░] 80% (4 of 6 phases complete, Phase 5:
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 8 min | 2.7 min |
 | 02-recording | 5 | ~15 min | 3 min |
+| 06-contextual-triggers | 1 | 1.7 min | 1.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (3 min), 02-01 (4 min), 02-03 (2.4 min), 02-04 (4.7 min)
-- Trend: Consistent
+- Last 5 plans: 02-01 (4 min), 02-03 (2.4 min), 02-04 (4.7 min), 06-01 (1.7 min)
+- Trend: Improving (faster execution)
 
 *Updated after each plan completion*
 
@@ -138,6 +139,13 @@ Recent decisions affecting current work:
 - Test Connection button for Ollama to verify local server
 - LLM config storage key: browserlet_llm_config
 
+**Phase 6 decisions (in progress):**
+- Trigger mode: suggest (show in sidepanel) vs auto_execute (run immediately)
+- Cooldown default 300000ms (5 min) for auto_execute spam prevention
+- Per-site overrides stored with domain-keyed pattern for granular control
+- All trigger conditions use AND logic (all must match)
+- Reuse SemanticHint from recording for element detection consistency
+
 ### Pending Todos
 
 None.
@@ -156,6 +164,10 @@ None.
 **Phase 5 (LLM Integration):**
 - Provider comparison needed (rate limits, accuracy, cost per selector)
 - Prompt engineering for selector hints to be validated
+- Pre-existing TypeScript errors in LLM providers need resolution
+
+**Phase 6 (Contextual Triggers):**
+- No blockers for 06-02 (Detection Engine) or 06-03 (Trigger UI)
 
 ## Completed Phases
 
@@ -219,6 +231,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29T15:24:40Z
-Stopped at: Completed 05-04-PLAN.md (LLM Message Handlers & Settings)
+Last session: 2026-01-29T20:00:09Z
+Stopped at: Completed 06-01-PLAN.md (Trigger Types & Storage)
 Resume file: None
