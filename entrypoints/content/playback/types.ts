@@ -3,7 +3,7 @@
  */
 
 // Re-export SemanticHint from recording for convenience
-export { SemanticHint, HintType } from '../recording/types';
+export type { SemanticHint, HintType } from '../recording/types';
 import type { SemanticHint } from '../recording/types';
 
 // BSL action types (8 actions for playback)

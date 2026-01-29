@@ -302,5 +302,17 @@
   "exportFailed": {
     "message": "Echec de l'export",
     "description": "Erreur quand l'export echoue"
+  },
+  "waitingAuth": {
+    "message": "En attente d'authentification...",
+    "description": "Statut en attente d'authentification utilisateur"
+  },
+  "authRequired": {
+    "message": "Authentification requise",
+    "description": "Titre quand l'authentification est necessaire"
+  },
+  "authContinue": {
+    "message": "Veuillez vous connecter a l'application cible. L'execution reprendra automatiquement.",
+    "description": "Message expliquant la reprise automatique apres auth"
   }
 }

@@ -6,7 +6,7 @@ import {
   stopExecution, resetExecution
 } from '../stores/execution';
 
-const { div, button, span, pre } = van.tags;
+const { div, button, span, pre, p } = van.tags;
 
 export function ExecutionView() {
   const copySuccess = van.state<string | null>(null);
@@ -98,6 +98,7 @@ export function ExecutionView() {
         span(() => {
           const status = executionStatus.val;
           if (status === 'running') return chrome.i18n.getMessage('executionRunning') || 'Running...';
+          if (status === 'waiting_auth') return chrome.i18n.getMessage('waitingAuth') || 'Waiting for authentication...';
           if (status === 'completed') return chrome.i18n.getMessage('executionComplete') || 'Completed';
           if (status === 'failed') return chrome.i18n.getMessage('executionFailed') || 'Failed';
           if (status === 'stopped') return chrome.i18n.getMessage('stopExecution') || 'Stopped';
@@ -112,11 +113,24 @@ export function ExecutionView() {
       style: 'padding: 12px; background: #ffebee; border-radius: 6px; color: #c62828; font-size: 13px; margin-bottom: 16px;'
     }, executionError.val) : null,
 
-    // Controls
-    () => isExecuting.val ? div({ style: 'margin-bottom: 16px;' },
+    // Auth required message
+    () => executionStatus.val === 'waiting_auth' ? div({
+      class: 'auth-required',
+      style: 'background-color: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 16px;'
+    },
+      p({ style: 'margin: 0 0 8px 0; font-weight: 500;' },
+        chrome.i18n.getMessage('authRequired') || 'Authentication required'
+      ),
+      p({ style: 'margin: 0; font-size: 13px; color: #666;' },
+        chrome.i18n.getMessage('authContinue') || 'Please log in to the target application. Execution will resume automatically.'
+      )
+    ) : null,
+
+    // Controls - show stop button when running or waiting for auth
+    () => (executionStatus.val === 'running' || executionStatus.val === 'waiting_auth') ? div({ style: 'margin-bottom: 16px;' },
       button({
-        class: 'btn btn-danger',
-        style: 'width: 100%; padding: 10px; background: #f44336; color: white; border: none; border-radius: 6px; cursor: pointer;',
+        class: 'stop-btn',
+        style: 'width: 100%; padding: 10px; background-color: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer;',
         onclick: stopExecution
       }, chrome.i18n.getMessage('stopExecution') || 'Stop')
     ) : executionStatus.val !== 'idle' ? div({ style: 'margin-bottom: 16px;' },

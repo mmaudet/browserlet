@@ -302,5 +302,17 @@
   "exportFailed": {
     "message": "Export failed",
     "description": "Error when export fails"
+  },
+  "waitingAuth": {
+    "message": "Waiting for authentication...",
+    "description": "Status when waiting for user to authenticate"
+  },
+  "authRequired": {
+    "message": "Authentication required",
+    "description": "Title when authentication is needed"
+  },
+  "authContinue": {
+    "message": "Please log in to the target application. Execution will resume automatically.",
+    "description": "Message explaining auth will auto-resume"
   }
 }
