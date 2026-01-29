@@ -182,7 +182,8 @@ export function LLMSettings() {
     ),
 
     // Claude-specific settings
-    () => llmConfigStore.provider.val === 'claude' ? div(
+    div(
+      { style: () => llmConfigStore.provider.val === 'claude' ? '' : 'display: none;' },
       // API Key input
       div({ style: sectionStyle },
         label({ style: labelStyle },
@@ -215,10 +216,11 @@ export function LLMSettings() {
           }, m.label))
         )
       )
-    ) : null,
+    ),
 
     // Ollama-specific settings
-    () => llmConfigStore.provider.val === 'ollama' ? div(
+    div(
+      { style: () => llmConfigStore.provider.val === 'ollama' ? '' : 'display: none;' },
       // Host input
       div({ style: sectionStyle },
         label({ style: labelStyle },
@@ -246,7 +248,7 @@ export function LLMSettings() {
         ),
         () => connectionStatus.val ? span({
           style: `margin-left: 12px; font-size: 13px; color: ${connectionStatus.val.startsWith('Connected') ? '#28a745' : '#dc3545'};`
-        }, connectionStatus.val) : null
+        }, connectionStatus.val) : span()
       ),
 
       // Model selection (populated after connection test)
@@ -279,7 +281,7 @@ export function LLMSettings() {
               )
             )
       )
-    ) : null,
+    ),
 
     // Save button
     div({ style: sectionStyle },
@@ -320,12 +322,13 @@ export function LLMSettings() {
     ),
 
     // Info note for Claude
-    () => llmConfigStore.provider.val === 'claude' ? div({ style: infoStyle },
+    div(
+      { style: () => llmConfigStore.provider.val === 'claude' ? infoStyle : 'display: none;' },
       p({ style: 'margin: 0;' },
         chrome.i18n.getMessage('sessionKeyNote') ||
         'Note: Your API key is encrypted and stored locally. After browser restart, you will need to re-enter your API key for security.'
       )
-    ) : null,
+    ),
 
     // Reset section
     div({ style: 'margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee;' },
