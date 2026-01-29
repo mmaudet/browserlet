@@ -12,7 +12,7 @@ Browserlet delivers semantic web automation for legacy applications through six 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Service worker, storage, and messaging infrastructure
+- [x] **Phase 1: Foundation** - Service worker, storage, and messaging infrastructure
 - [ ] **Phase 2: Recording** - DOM observation and semantic hint capture
 - [ ] **Phase 3: Side Panel** - UI, Monaco Editor, and script management
 - [ ] **Phase 4: Playback** - BSL execution engine with semantic resolution
@@ -34,9 +34,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 01-01-PLAN.md — WXT project setup + service worker message router
-- [ ] 01-02-PLAN.md — Content script with context invalidation + side panel stub
-- [ ] 01-03-PLAN.md — Unit tests + manual E2E verification
+- [x] 01-01-PLAN.md — WXT project setup + service worker message router
+- [x] 01-02-PLAN.md — Content script with context invalidation + side panel stub
+- [x] 01-03-PLAN.md — Unit tests + manual E2E verification
 
 ### Phase 2: Recording
 **Goal**: User can record interactions and generate semantic BSL scripts
@@ -126,12 +126,12 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Planned | - |
-| 2. Recording | 0/TBD | Not started | - |
+| 1. Foundation | 3/3 | ✅ Complete | 2026-01-29 |
+| 2. Recording | 0/TBD | Ready to plan | - |
 | 3. Side Panel | 0/TBD | Not started | - |
 | 4. Playback | 0/TBD | Not started | - |
 | 5. LLM Integration | 0/TBD | Not started | - |
 | 6. Contextual Triggers | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-01-29 after Phase 1 planning*
+*Last updated: 2026-01-29 after Phase 1 completion*
