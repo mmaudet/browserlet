@@ -237,15 +237,118 @@ export class PlaybackManager {
    * @param index - Step index for error messages
    */
   private async executeStep(step: BSLStep, index: number): Promise<void> {
-    // TODO: Implement in Task 3
-    throw new Error('Not implemented');
+    let element: Element | undefined;
+
+    // Resolve element for actions that need a target
+    if (step.target?.hints && step.target.hints.length > 0) {
+      const timeout = parseTimeout(step.timeout);
+
+      try {
+        const result = await waitForElement(step.target.hints, timeout);
+
+        if (result.element) {
+          element = result.element;
+        } else {
+          // Try fallback selector if available
+          if (step.target.fallback_selector) {
+            const fallbackElement = document.querySelector(step.target.fallback_selector);
+            if (fallbackElement) {
+              element = fallbackElement;
+            } else {
+              throw new Error(
+                `Element not found. Hints: [${result.matchedHints.join(', ')}] matched with ${Math.round(result.confidence * 100)}% confidence. ` +
+                `Fallback selector "${step.target.fallback_selector}" also failed.`
+              );
+            }
+          } else {
+            throw new Error(
+              `Element not found. Hints: [${result.matchedHints.join(', ')}] matched with ${Math.round(result.confidence * 100)}% confidence (< 70% threshold). ` +
+              `Failed hints: [${result.failedHints.join(', ')}].`
+            );
+          }
+        }
+      } catch (error) {
+        // Try fallback selector on timeout
+        if (step.target.fallback_selector) {
+          const fallbackElement = document.querySelector(step.target.fallback_selector);
+          if (fallbackElement) {
+            element = fallbackElement;
+          } else {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            throw new Error(
+              `${message} Fallback selector "${step.target.fallback_selector}" also failed.`
+            );
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    // Execute the action
+    const result = await this.actionExecutor.execute(step, element);
+
+    // Store extract results if action has output
+    if (step.action === 'extract' && step.output?.variable) {
+      this.results.set(step.output.variable, result);
+    }
+
+    // Wait for page load after navigate action
+    if (step.action === 'navigate') {
+      await this.waitForPageLoad();
+    }
   }
 
   /**
    * Check session and wait for authentication if needed
    */
   private async checkSession(): Promise<void> {
-    // TODO: Implement in Task 3
+    // Skip if no session_check configured
+    if (!this.script?.session_check) {
+      return;
+    }
+
+    // Check if authenticated
+    if (this.sessionDetector.isAuthenticated()) {
+      return; // All good, continue execution
+    }
+
+    // Not authenticated - pause execution and wait
+    this.setState('waiting_auth');
+
+    // Wait for user to authenticate
+    await this.sessionDetector.waitForAuthentication();
+
+    // Resume execution
+    this.setState('running');
+  }
+
+  /**
+   * Wait for page to fully load after navigation
+   * Uses document.readyState for reliable detection
+   */
+  private waitForPageLoad(): Promise<void> {
+    return new Promise((resolve) => {
+      // If already complete, resolve immediately
+      if (document.readyState === 'complete') {
+        resolve();
+        return;
+      }
+
+      // Otherwise wait for load event
+      const onLoad = () => {
+        window.removeEventListener('load', onLoad);
+        resolve();
+      };
+
+      window.addEventListener('load', onLoad);
+
+      // Timeout fallback (10 seconds)
+      setTimeout(() => {
+        window.removeEventListener('load', onLoad);
+        resolve();
+      }, 10000);
+    });
   }
 }
 
