@@ -220,3 +220,137 @@ export async function executeWaitFor(hints: SemanticHint[], timeoutMs: number): 
 export function executeNavigate(url: string): void {
   window.location.href = url;
 }
+
+/**
+ * Execute a scroll action to bring an element into view (ACT-07)
+ * Uses smooth scrolling for natural appearance
+ */
+export async function executeScroll(element: Element): Promise<void> {
+  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  // Wait for scroll to complete
+  await scrollSettleDelay();
+}
+
+/**
+ * Execute a hover action on an element (ACT-08)
+ * Dispatches mouseenter -> mouseover -> mousemove sequence
+ * Does NOT dispatch mouseleave (hover persists)
+ */
+export function executeHover(element: Element): void {
+  // Calculate center coordinates
+  const rect = element.getBoundingClientRect();
+  const clientX = rect.left + rect.width / 2;
+  const clientY = rect.top + rect.height / 2;
+
+  // Dispatch mouseenter (doesn't bubble)
+  element.dispatchEvent(new MouseEvent('mouseenter', {
+    bubbles: false,
+    cancelable: false,
+    clientX,
+    clientY,
+    view: window,
+  }));
+
+  // Dispatch mouseover (bubbles)
+  element.dispatchEvent(new MouseEvent('mouseover', {
+    bubbles: true,
+    cancelable: true,
+    clientX,
+    clientY,
+    view: window,
+  }));
+
+  // Dispatch mousemove (bubbles)
+  element.dispatchEvent(new MouseEvent('mousemove', {
+    bubbles: true,
+    cancelable: true,
+    clientX,
+    clientY,
+    view: window,
+  }));
+}
+
+/**
+ * Parse timeout string to milliseconds
+ * Supports formats: "10s", "30s", "5000ms", "5000"
+ */
+function parseTimeout(timeout?: string): number {
+  if (!timeout) {
+    return 10000; // Default 10s
+  }
+
+  if (timeout.endsWith('ms')) {
+    return parseInt(timeout.slice(0, -2), 10);
+  }
+
+  if (timeout.endsWith('s')) {
+    return parseInt(timeout.slice(0, -1), 10) * 1000;
+  }
+
+  return parseInt(timeout, 10);
+}
+
+/**
+ * ActionExecutor class - unified interface for all 8 BSL actions
+ * Wraps individual functions with config management
+ */
+export class ActionExecutor {
+  constructor(private config: HumanizerConfig = DEFAULT_CONFIG) {}
+
+  /**
+   * Execute a BSL step action
+   * @param step - The BSL step to execute
+   * @param element - The resolved element (not needed for navigate/wait_for)
+   * @returns Result of the action (extract returns data, others return void/element)
+   */
+  async execute(step: BSLStep, element?: Element): Promise<unknown> {
+    switch (step.action) {
+      case 'click':
+        if (!element) throw new Error('click action requires element');
+        return executeClick(element);
+
+      case 'type':
+        if (!element) throw new Error('type action requires element');
+        if (!step.value) throw new Error('type action requires value');
+        return executeType(element, step.value, this.config);
+
+      case 'select':
+        if (!element) throw new Error('select action requires element');
+        if (!step.value) throw new Error('select action requires value');
+        return executeSelect(element, step.value);
+
+      case 'extract':
+        if (!element) throw new Error('extract action requires element');
+        return executeExtract(element, step.output?.transform);
+
+      case 'wait_for':
+        if (!step.target?.hints) throw new Error('wait_for action requires target hints');
+        return executeWaitFor(step.target.hints, parseTimeout(step.timeout));
+
+      case 'navigate':
+        if (!step.value) throw new Error('navigate action requires value');
+        return executeNavigate(step.value);
+
+      case 'scroll':
+        if (!element) throw new Error('scroll action requires element');
+        return executeScroll(element);
+
+      case 'hover':
+        if (!element) throw new Error('hover action requires element');
+        return executeHover(element);
+
+      default: {
+        const exhaustiveCheck: never = step.action;
+        throw new Error(`Unknown action: ${exhaustiveCheck}`);
+      }
+    }
+  }
+
+  /**
+   * Update humanizer config
+   */
+  setConfig(config: Partial<HumanizerConfig>): void {
+    this.config = { ...this.config, ...config };
+  }
+}
