@@ -141,11 +141,16 @@ export function LLMSettings() {
       ),
       select({
         style: selectStyle,
-        value: () => llmConfigStore.provider.val,
         onchange: handleProviderChange,
       },
-        option({ value: 'claude' }, 'Claude API (Anthropic)'),
-        option({ value: 'ollama' }, 'Ollama (Local)')
+        option({
+          value: 'claude',
+          selected: () => llmConfigStore.provider.val === 'claude'
+        }, 'Claude API (Anthropic)'),
+        option({
+          value: 'ollama',
+          selected: () => llmConfigStore.provider.val === 'ollama'
+        }, 'Ollama (Local)')
       )
     ),
 
@@ -175,10 +180,12 @@ export function LLMSettings() {
         ),
         select({
           style: selectStyle,
-          value: () => llmConfigStore.claudeModel.val,
           onchange: handleClaudeModelChange,
         },
-          ...CLAUDE_MODELS.map(m => option({ value: m.value }, m.label))
+          ...CLAUDE_MODELS.map(m => option({
+            value: m.value,
+            selected: () => llmConfigStore.claudeModel.val === m.value
+          }, m.label))
         )
       )
     ) : null,
