@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 5 of 6 (LLM Integration)
-Plan: 3 of 5
+Plan: 4 of 5
 Status: In progress
-Last activity: 2026-01-29 — Completed 05-03-PLAN.md (LLM Providers)
+Last activity: 2026-01-29 — Completed 05-04-PLAN.md (LLM Message Handlers & Settings)
 
-Progress: [███████░░░] 72% (4 of 6 phases complete, Phase 5: 3/5 plans)
+Progress: [████████░░] 80% (4 of 6 phases complete, Phase 5: 4/5 plans)
 
 ## Performance Metrics
 
@@ -132,6 +132,11 @@ Recent decisions affecting current work:
 - Haiku model for cost-efficient availability checks
 - No rate limiting for Ollama (local resource)
 - GenerateBSLResult includes usedLLM flag for UI feedback
+- API key encrypted before storage, decrypted on load (never stored plaintext)
+- needsApiKey flag tracks when re-entry required after browser restart
+- VanJS reactive pattern for LLM config store (matching existing stores)
+- Test Connection button for Ollama to verify local server
+- LLM config storage key: browserlet_llm_config
 
 ### Pending Todos
 
@@ -214,6 +219,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29T15:20:37Z
-Stopped at: Completed 05-03-PLAN.md (LLM Providers)
+Last session: 2026-01-29T15:24:40Z
+Stopped at: Completed 05-04-PLAN.md (LLM Message Handlers & Settings)
 Resume file: None
