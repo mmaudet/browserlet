@@ -30,9 +30,31 @@ export function LLMSettings() {
   const saveSuccess = van.state(false);
   const testingConnection = van.state(false);
   const connectionStatus = van.state<string | null>(null);
+  const ollamaModels = van.state<string[]>([]);
+  const loadingModels = van.state(false);
 
   // Initialize on mount
   loadLLMConfig().catch(console.error);
+
+  // Fetch Ollama models from the API
+  const fetchOllamaModels = async () => {
+    loadingModels.val = true;
+    try {
+      const host = llmConfigStore.ollamaHost.val;
+      const response = await fetch(`${host}/api/tags`, { method: 'GET' });
+      if (response.ok) {
+        const data = await response.json();
+        const models = (data.models || []).map((m: { name: string }) => m.name);
+        ollamaModels.val = models;
+        return models;
+      }
+    } catch (error) {
+      console.error('Failed to fetch Ollama models:', error);
+    } finally {
+      loadingModels.val = false;
+    }
+    return [];
+  };
 
   const handleSave = async () => {
     saveSuccess.val = false;
@@ -78,14 +100,15 @@ export function LLMSettings() {
     testingConnection.val = true;
     connectionStatus.val = null;
     try {
-      const host = llmConfigStore.ollamaHost.val;
-      const response = await fetch(`${host}/api/tags`, { method: 'GET' });
-      if (response.ok) {
-        const data = await response.json();
-        const models = data.models?.length ?? 0;
-        connectionStatus.val = `Connected! ${models} model(s) available.`;
+      const models = await fetchOllamaModels();
+      if (models.length > 0) {
+        connectionStatus.val = `Connected! ${models.length} model(s) available.`;
+        // Auto-select first model if none selected
+        if (!llmConfigStore.ollamaModel.val || !models.includes(llmConfigStore.ollamaModel.val)) {
+          llmConfigStore.ollamaModel.val = models[0];
+        }
       } else {
-        connectionStatus.val = `Connection failed: ${response.status}`;
+        connectionStatus.val = 'Connected but no models found. Run: ollama pull llama3.1';
       }
     } catch (error) {
       connectionStatus.val = 'Connection failed: Cannot reach Ollama server';
@@ -206,25 +229,11 @@ export function LLMSettings() {
         })
       ),
 
-      // Model input
-      div({ style: sectionStyle },
-        label({ style: labelStyle },
-          chrome.i18n.getMessage('ollamaModel') || 'Model Name'
-        ),
-        input({
-          type: 'text',
-          style: inputStyle,
-          placeholder: 'llama3.1',
-          value: () => llmConfigStore.ollamaModel.val,
-          oninput: handleOllamaModelChange,
-        })
-      ),
-
-      // Test connection button
+      // Test connection button (before model selection)
       div({ style: 'margin-bottom: 16px;' },
         button({
           style: () => testingConnection.val ? btnSecondaryStyle + btnDisabledStyle : btnSecondaryStyle,
-          disabled: testingConnection,
+          disabled: () => testingConnection.val,
           onclick: testOllamaConnection,
         },
           () => testingConnection.val
@@ -234,6 +243,37 @@ export function LLMSettings() {
         () => connectionStatus.val ? span({
           style: `margin-left: 12px; font-size: 13px; color: ${connectionStatus.val.startsWith('Connected') ? '#28a745' : '#dc3545'};`
         }, connectionStatus.val) : null
+      ),
+
+      // Model selection (populated after connection test)
+      div({ style: sectionStyle },
+        label({ style: labelStyle },
+          chrome.i18n.getMessage('ollamaModel') || 'Model'
+        ),
+        () => ollamaModels.val.length > 0
+          ? select({
+              style: selectStyle,
+              onchange: (e: Event) => {
+                llmConfigStore.ollamaModel.val = (e.target as HTMLSelectElement).value;
+              },
+            },
+              ...ollamaModels.val.map(model => option({
+                value: model,
+                selected: () => llmConfigStore.ollamaModel.val === model
+              }, model))
+            )
+          : div(
+              input({
+                type: 'text',
+                style: inputStyle,
+                placeholder: 'llama3.1',
+                value: () => llmConfigStore.ollamaModel.val,
+                oninput: handleOllamaModelChange,
+              }),
+              p({ style: 'margin: 6px 0 0 0; font-size: 11px; color: #666;' },
+                'Click "Test Connection" to load available models'
+              )
+            )
       )
     ) : null,
 
