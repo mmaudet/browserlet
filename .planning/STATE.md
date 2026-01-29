@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 4 of 6 (Playback)
-Plan: 2 of 7
+Plan: 3 of 7
 Status: In progress
-Last activity: 2026-01-29 — Completed 04-01-PLAN.md (Playback Types and Step Parser)
+Last activity: 2026-01-29 — Completed 04-03-PLAN.md (Semantic Resolver)
 
-Progress: [█████░░░░░] 50% (3 of 6 phases complete, Phase 4: 2/7 plans)
+Progress: [█████░░░░░] 50% (3 of 6 phases complete, Phase 4: 3/7 plans)
 
 ## Performance Metrics
 
@@ -98,6 +98,10 @@ Recent decisions affecting current work:
 - Box-Muller transform for Gaussian distribution (natural timing feel)
 - DEFAULT_CONFIG ranges: 500-2000ms base, 50-150ms typing, 100-300ms scroll
 - Normalize Gaussian to 0-1 with (gaussian + 3) / 6 clamping
+- Hint weights: data_attribute/role/type=1.0, aria_label/name=0.9, id=0.85, text_contains=0.8, placeholder_contains=0.7, near_label=0.6, class_contains=0.5
+- 0.7 confidence threshold for valid element matches
+- MutationObserver with childList/subtree/attributes for dynamic DOM detection
+- isElementInteractable checks visibility + disabled + aria-disabled + dimensions
 
 ### Pending Todos
 
@@ -180,6 +184,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29T12:33:38Z
-Stopped at: Completed 04-01-PLAN.md (Playback Types and Step Parser)
+Last session: 2026-01-29T12:40:24Z
+Stopped at: Completed 04-03-PLAN.md (Semantic Resolver)
 Resume file: None
