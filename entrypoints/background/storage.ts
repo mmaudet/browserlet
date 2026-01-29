@@ -29,3 +29,17 @@ export async function initializeState(): Promise<void> {
     });
   }
 }
+
+export async function setRecordingState(state: 'idle' | 'recording' | 'paused'): Promise<AppState> {
+  return setState({ recordingState: state });
+}
+
+export async function addRecordedAction(action: AppState['recordedActions'][0]): Promise<void> {
+  const state = await getState();
+  const actions = [...state.recordedActions, action];
+  await setState({ recordedActions: actions });
+}
+
+export async function clearRecordedActions(): Promise<void> {
+  await setState({ recordedActions: [], recordingState: 'idle' });
+}

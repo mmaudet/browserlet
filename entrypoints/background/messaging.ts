@@ -1,5 +1,5 @@
-import type { AppState, Message, MessageResponse, PingResponse } from '../../utils/types';
-import { getState, setState } from './storage';
+import type { AppState, Message, MessageResponse, PingResponse, CapturedAction } from '../../utils/types';
+import { getState, setState, setRecordingState, addRecordedAction } from './storage';
 
 export function handleMessage(
   message: Message,
@@ -32,6 +32,49 @@ async function processMessage(
     case 'SET_STATE': {
       const updated = await setState(message.payload as Partial<AppState>);
       return { success: true, data: updated };
+    }
+
+    case 'START_RECORDING': {
+      // Update state
+      const updated = await setRecordingState('recording');
+
+      // Broadcast to all tabs to start recording
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        if (tab.id) {
+          try {
+            await chrome.tabs.sendMessage(tab.id, { type: 'START_RECORDING' });
+          } catch {
+            // Tab might not have content script
+          }
+        }
+      }
+
+      return { success: true, data: updated };
+    }
+
+    case 'STOP_RECORDING': {
+      const updated = await setRecordingState('idle');
+
+      // Broadcast to all tabs to stop recording
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        if (tab.id) {
+          try {
+            await chrome.tabs.sendMessage(tab.id, { type: 'STOP_RECORDING' });
+          } catch {
+            // Tab might not have content script
+          }
+        }
+      }
+
+      return { success: true, data: updated };
+    }
+
+    case 'ACTION_CAPTURED': {
+      const action = message.payload as CapturedAction;
+      await addRecordedAction(action);
+      return { success: true };
     }
 
     default:
