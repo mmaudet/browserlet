@@ -11,6 +11,8 @@ import { ContextZone } from './components/ContextZone';
 import { ImportButton, ExportButton } from './components/ImportExport';
 import { saveScript } from '../../utils/storage/scripts';
 import type { Script } from '../../utils/types';
+import { SuggestedScripts } from './components/SuggestedScripts';
+import { suggestedScriptIds, loadTriggers } from './stores/triggers';
 
 const { div, button, span, nav } = van.tags;
 
@@ -89,6 +91,25 @@ function App() {
     div({ style: 'padding: 12px 16px 0;' },
       ContextZone()
     ),
+
+    // Suggested scripts (contextual triggers)
+    () => suggestedScriptIds.val.length > 0
+      ? div({ style: 'padding: 8px 16px; background: #e3f2fd; border-bottom: 1px solid #90caf9;' },
+          SuggestedScripts({
+            onRunScript: (script) => {
+              navigateTo('execution');
+              chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+                if (tabs[0]?.id) {
+                  await chrome.tabs.sendMessage(tabs[0].id, {
+                    type: 'EXECUTE_SCRIPT',
+                    payload: { content: script.content }
+                  });
+                }
+              });
+            }
+          })
+        )
+      : null,
 
     // Navigation
     NavTabs(),
@@ -187,6 +208,9 @@ async function init() {
 
   // Load scripts
   await loadScripts();
+
+  // Load triggers for context-aware suggestions
+  loadTriggers();
 
   // Load LLM configuration from storage
   try {
