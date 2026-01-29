@@ -118,6 +118,11 @@ Recent decisions affecting current work:
 - Fallback selector tried on both low confidence and timeout
 
 **Phase 5 decisions (in progress):**
+- AES-GCM 256-bit encryption for API keys
+- Session key stored in chrome.storage.session (cleared on browser restart)
+- 12-byte IV (96 bits) for AES-GCM as recommended
+- Base64 encoding for ciphertext and IV storage
+- JWK format for key serialization
 - 10 hint types ordered by reliability: data_attribute most stable, id least reliable
 - RateLimiter only retries 429 errors with exponential backoff and jitter
 - Fallback generator uses top 3 hints for resilience
