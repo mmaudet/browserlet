@@ -160,3 +160,22 @@ export function isConfigValid(): boolean {
   }
   return true; // Ollama doesn't require credentials
 }
+
+/**
+ * Reset LLM configuration to defaults
+ * Clears stored config and resets store state
+ */
+export async function resetLLMConfig(): Promise<void> {
+  // Remove from storage
+  await chrome.storage.local.remove(STORAGE_KEY);
+
+  // Reset store to defaults
+  llmConfigStore.provider.val = 'claude';
+  llmConfigStore.claudeApiKey.val = '';
+  llmConfigStore.claudeModel.val = 'claude-sonnet-4-5-20250929';
+  llmConfigStore.ollamaHost.val = 'http://localhost:11434';
+  llmConfigStore.ollamaModel.val = 'llama3.1';
+  llmConfigStore.isConfigured.val = false;
+  llmConfigStore.needsApiKey.val = false;
+  llmConfigStore.saveError.val = null;
+}

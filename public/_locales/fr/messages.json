@@ -414,5 +414,17 @@
   "loadModelsHint": {
     "message": "Cliquez sur \"Tester la connexion\" pour charger les modeles disponibles",
     "description": "Indication pour charger les modeles Ollama"
+  },
+  "resetSettings": {
+    "message": "Reinitialiser",
+    "description": "Bouton pour reinitialiser les parametres LLM"
+  },
+  "resetConfirm": {
+    "message": "Etes-vous sur de vouloir reinitialiser tous les parametres LLM ?",
+    "description": "Message de confirmation pour la reinitialisation"
+  },
+  "resetSuccess": {
+    "message": "Configuration reinitialisee avec succes !",
+    "description": "Message apres reinitialisation reussie"
   }
 }

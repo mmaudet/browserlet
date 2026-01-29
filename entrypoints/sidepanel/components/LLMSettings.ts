@@ -9,6 +9,7 @@ import {
   saveLLMConfig,
   loadLLMConfig,
   isConfigValid,
+  resetLLMConfig,
 } from '../stores/llmConfig';
 import type { ProviderName } from '../../background/llm/providers/types';
 
@@ -28,6 +29,7 @@ const CLAUDE_MODELS = [
 export function LLMSettings() {
   // Local state for feedback
   const saveSuccess = van.state(false);
+  const resetSuccess = van.state(false);
   const testingConnection = van.state(false);
   const connectionStatus = van.state<string | null>(null);
   const ollamaModels = van.state<string[]>([]);
@@ -126,6 +128,7 @@ export function LLMSettings() {
   const btnPrimaryStyle = 'width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;';
   const btnPrimarySmallStyle = 'padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;';
   const btnSecondaryStyle = 'padding: 8px 16px; background-color: #e0e0e0; color: #333; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;';
+  const btnDangerStyle = 'padding: 8px 16px; background-color: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;';
   const btnDisabledStyle = 'opacity: 0.6; cursor: not-allowed;';
   const warningStyle = 'background-color: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 6px; margin-bottom: 16px;';
   const successStyle = 'background-color: #d4edda; border: 1px solid #28a745; padding: 12px; border-radius: 6px; margin-bottom: 16px; color: #155724;';
@@ -322,6 +325,27 @@ export function LLMSettings() {
         chrome.i18n.getMessage('sessionKeyNote') ||
         'Note: Your API key is encrypted and stored locally. After browser restart, you will need to re-enter your API key for security.'
       )
-    ) : null
+    ) : null,
+
+    // Reset section
+    div({ style: 'margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee;' },
+      () => resetSuccess.val ? div({ style: successStyle },
+        chrome.i18n.getMessage('resetSuccess') || 'Configuration reset successfully!'
+      ) : null,
+      button({
+        style: btnDangerStyle,
+        onclick: async () => {
+          if (confirm(chrome.i18n.getMessage('resetConfirm') || 'Are you sure you want to reset all LLM settings?')) {
+            await resetLLMConfig();
+            ollamaModels.val = [];
+            connectionStatus.val = null;
+            resetSuccess.val = true;
+            setTimeout(() => { resetSuccess.val = false; }, 3000);
+          }
+        },
+      },
+        chrome.i18n.getMessage('resetSettings') || 'Reset Settings'
+      )
+    )
   );
 }

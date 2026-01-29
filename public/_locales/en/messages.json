@@ -414,5 +414,17 @@
   "loadModelsHint": {
     "message": "Click \"Test Connection\" to load available models",
     "description": "Hint to load Ollama models"
+  },
+  "resetSettings": {
+    "message": "Reset Settings",
+    "description": "Button to reset LLM settings"
+  },
+  "resetConfirm": {
+    "message": "Are you sure you want to reset all LLM settings?",
+    "description": "Confirmation message for reset"
+  },
+  "resetSuccess": {
+    "message": "Configuration reset successfully!",
+    "description": "Message after successful reset"
   }
 }
