@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 1 of 6 (Foundation)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-01-29 - Completed 01-01-PLAN.md (WXT Project & Service Worker)
+Last activity: 2026-01-29 - Completed 01-02-PLAN.md (Content Script & Side Panel)
 
-Progress: [==========] 100% (Plan 01-01)
+Progress: [====================] 100% (Plans 01-01, 01-02)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 3 min
-- Total execution time: 0.05 hours
+- Total plans completed: 2
+- Average duration: 2.5 min
+- Total execution time: 0.08 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation | 1 | 3 min | 3 min |
+| 01-foundation | 2 | 5 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min)
-- Trend: Not established (need more data)
+- Last 5 plans: 01-01 (3 min), 01-02 (2 min)
+- Trend: Accelerating
 
 *Updated after each plan completion*
 
@@ -55,6 +55,12 @@ Recent decisions affecting current work:
 - chrome.storage.local as single source of truth - service worker is stateless router
 - Top-level synchronous listener registration for service worker reliability
 
+**Phase 1 Plan 02 decisions:**
+- chrome.runtime?.id check for context validation - catches extension update/reload
+- Exponential backoff 100/200/400ms for retry - fast initial retry, graceful degradation
+- User-dismissible banner for context invalidation - non-blocking UX
+- chrome.storage.onChanged for side panel updates - no explicit messaging needed
+
 ### Pending Todos
 
 None yet.
@@ -76,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-29T06:38:28Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-01-29T06:41:56Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
