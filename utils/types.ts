@@ -9,7 +9,14 @@ export type MessageType =
   | 'START_RECORDING'
   | 'STOP_RECORDING'
   | 'RECORDING_STATE_CHANGED'
-  | 'ACTION_CAPTURED';
+  | 'ACTION_CAPTURED'
+  // Playback messages
+  | 'EXECUTE_SCRIPT'
+  | 'STOP_EXECUTION'
+  | 'EXECUTION_PROGRESS'
+  | 'EXECUTION_COMPLETED'
+  | 'EXECUTION_FAILED'
+  | 'AUTH_REQUIRED';
 
 export interface Message {
   type: MessageType;

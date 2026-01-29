@@ -1,9 +1,32 @@
 import { sendMessageSafe } from './messaging';
 import { isContextValid } from '../../utils/context-check';
 import { RecordingManager } from './recording';
+import { PlaybackManager } from './playback';
 
-// Singleton instance
+// Singleton instances
 let recordingManager: RecordingManager | null = null;
+let playbackManager: PlaybackManager | null = null;
+
+/**
+ * Get or create the PlaybackManager singleton
+ * Sets up event forwarding to sidepanel on first call
+ */
+function getPlaybackManager(): PlaybackManager {
+  if (!playbackManager) {
+    playbackManager = new PlaybackManager();
+    playbackManager.onEvent((event) => {
+      // Forward events to sidepanel
+      const messageType = event.type === 'progress' ? 'EXECUTION_PROGRESS' :
+                          event.type === 'auth_required' ? 'AUTH_REQUIRED' :
+                          event.type === 'error' ? 'EXECUTION_FAILED' : 'STATE_CHANGED';
+      chrome.runtime.sendMessage({
+        type: messageType,
+        payload: event
+      }).catch(() => {}); // Ignore if no listener
+    });
+  }
+  return playbackManager;
+}
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -98,6 +121,26 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
         console.log('[Browserlet] Recording stopped, actions:', session?.actions.length ?? 0);
       }
       return { success: true };
+
+    case 'EXECUTE_SCRIPT': {
+      const { content } = message.payload as { content: string };
+      const manager = getPlaybackManager();
+      // Execute async, send result when done
+      manager.execute(content).then((result) => {
+        chrome.runtime.sendMessage({
+          type: result.status === 'completed' ? 'EXECUTION_COMPLETED' : 'EXECUTION_FAILED',
+          payload: result
+        }).catch(() => {}); // Ignore if no listener
+      });
+      console.log('[Browserlet] Script execution started');
+      return { success: true };
+    }
+
+    case 'STOP_EXECUTION': {
+      getPlaybackManager().stop();
+      console.log('[Browserlet] Execution stopped');
+      return { success: true };
+    }
 
     default:
       return { success: false, error: `Unknown message type: ${message.type}` };
