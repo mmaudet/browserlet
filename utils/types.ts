@@ -16,7 +16,11 @@ export type MessageType =
   | 'EXECUTION_PROGRESS'
   | 'EXECUTION_COMPLETED'
   | 'EXECUTION_FAILED'
-  | 'AUTH_REQUIRED';
+  | 'AUTH_REQUIRED'
+  // Execution state persistence (for cross-page navigation)
+  | 'SAVE_EXECUTION_STATE'
+  | 'GET_EXECUTION_STATE'
+  | 'CLEAR_EXECUTION_STATE';
 
 export interface Message {
   type: MessageType;

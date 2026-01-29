@@ -183,6 +183,12 @@ chrome.runtime.onMessage.addListener((message) => {
 
     case 'EXECUTION_FAILED': {
       const error = message.payload?.error || 'Execution failed';
+      const step = message.payload?.step;
+      console.log('[Browserlet] Execution failed:', { error, step, payload: message.payload });
+      // Update step if provided
+      if (typeof step === 'number') {
+        currentStep.val = step;
+      }
       failExecution(error);
       break;
     }

@@ -67,3 +67,11 @@ export interface ResolverResult {
   matchedHints: string[];
   failedHints: string[];
 }
+
+// Persisted execution state for cross-page navigation
+export interface PersistedExecutionState {
+  yamlContent: string;
+  currentStep: number;
+  results: Record<string, unknown>;
+  timestamp: number;
+}

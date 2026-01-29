@@ -80,11 +80,51 @@ async function verifyConnection(): Promise<void> {
           recordingManager.start();
         }
       }
+
+      // Check for persisted execution state (resume after navigation)
+      await checkAndResumeExecution();
     } else {
       console.warn('[Browserlet] Service worker responded with error:', response.error);
     }
   } catch (error) {
     console.error('[Browserlet] Failed to connect to service worker:', error);
+  }
+}
+
+/**
+ * Check for persisted execution state and resume if found
+ * This handles cross-page navigation during script execution
+ */
+async function checkAndResumeExecution(): Promise<void> {
+  try {
+    const persistedState = await PlaybackManager.getPersistedState();
+
+    if (persistedState) {
+      console.log('[Browserlet] Found persisted execution state, resuming from step', persistedState.currentStep + 1);
+
+      // Clear the persisted state immediately to prevent re-entry
+      await PlaybackManager.clearPersistedState();
+
+      // Wait a moment for the page to stabilize
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Get or create the PlaybackManager and resume execution
+      const manager = getPlaybackManager();
+      const result = await manager.execute(persistedState.yamlContent, {
+        startStep: persistedState.currentStep,
+        previousResults: persistedState.results,
+      });
+
+      // Send completion/failure message
+      chrome.runtime.sendMessage({
+        type: result.status === 'completed' ? 'EXECUTION_COMPLETED' : 'EXECUTION_FAILED',
+        payload: result
+      }).catch(() => {}); // Ignore if no listener
+    }
+  } catch (error) {
+    console.error('[Browserlet] Error resuming execution:', error);
+    // Clear state on error to prevent stuck executions
+    await PlaybackManager.clearPersistedState();
   }
 }
 

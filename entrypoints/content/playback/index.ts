@@ -13,6 +13,7 @@ import type {
   ExecutionResult,
   ParsedScript,
   BSLStep,
+  PersistedExecutionState,
 } from './types';
 
 // Modules
@@ -47,6 +48,7 @@ export class PlaybackManager {
   private script: ParsedScript | null = null;
   private abortController: AbortController | null = null;
   private results: Map<string, unknown> = new Map();
+  private yamlContent: string = '';
 
   private actionExecutor: ActionExecutor;
   private sessionDetector: SessionDetector;
@@ -57,6 +59,58 @@ export class PlaybackManager {
     this.config = config;
     this.actionExecutor = new ActionExecutor(config);
     this.sessionDetector = new SessionDetector();
+  }
+
+  /**
+   * Save execution state to storage before navigation (via service worker)
+   */
+  private async saveStateForNavigation(nextStep: number): Promise<void> {
+    const state: PersistedExecutionState = {
+      yamlContent: this.yamlContent,
+      currentStep: nextStep,
+      results: Object.fromEntries(this.results),
+      timestamp: Date.now(),
+    };
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'SAVE_EXECUTION_STATE',
+        payload: state
+      });
+      console.log('[Browserlet] Saved execution state for navigation, resuming at step', nextStep);
+    } catch (error) {
+      console.error('[Browserlet] Failed to save execution state:', error);
+    }
+  }
+
+  /**
+   * Check for and retrieve persisted execution state (via service worker)
+   */
+  static async getPersistedState(): Promise<PersistedExecutionState | null> {
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: 'GET_EXECUTION_STATE'
+      });
+      if (response.success && response.data) {
+        return response.data as PersistedExecutionState;
+      }
+      return null;
+    } catch (error) {
+      console.error('[Browserlet] Failed to get execution state:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Clear persisted execution state (via service worker)
+   */
+  static async clearPersistedState(): Promise<void> {
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'CLEAR_EXECUTION_STATE'
+      });
+    } catch (error) {
+      console.error('[Browserlet] Failed to clear execution state:', error);
+    }
   }
 
   /**
@@ -105,9 +159,13 @@ export class PlaybackManager {
   /**
    * Execute a BSL script from YAML content
    * @param yamlContent - YAML string containing BSL script
+   * @param options - Optional execution options (for resuming after navigation)
    * @returns Execution result with status and any errors
    */
-  async execute(yamlContent: string): Promise<ExecutionResult> {
+  async execute(
+    yamlContent: string,
+    options?: { startStep?: number; previousResults?: Record<string, unknown> }
+  ): Promise<ExecutionResult> {
     // Don't start if already running
     if (this.state === 'running') {
       return {
@@ -115,6 +173,9 @@ export class PlaybackManager {
         error: 'Execution already in progress',
       };
     }
+
+    // Store YAML content for potential navigation persistence
+    this.yamlContent = yamlContent;
 
     // Parse the script
     try {
@@ -139,16 +200,35 @@ export class PlaybackManager {
       });
     }
 
-    // Reset state
-    this.currentStep = 0;
+    // Reset or resume state
+    const startStep = options?.startStep ?? 0;
+    this.currentStep = startStep;
     this.results.clear();
+
+    // Restore previous results if resuming
+    if (options?.previousResults) {
+      for (const [key, value] of Object.entries(options.previousResults)) {
+        this.results.set(key, value);
+      }
+    }
+
     this.setState('running');
 
     const totalSteps = this.script.steps.length;
 
-    // Execute steps sequentially
+    // If resuming, emit initial progress
+    if (startStep > 0) {
+      console.log('[Browserlet] Resuming execution from step', startStep + 1);
+      this.emit({
+        type: 'progress',
+        step: startStep,
+        totalSteps,
+      });
+    }
+
+    // Execute steps sequentially (starting from startStep for resume)
     try {
-      for (let i = 0; i < totalSteps; i++) {
+      for (let i = startStep; i < totalSteps; i++) {
         // Check if aborted
         if (this.abortController.signal.aborted) {
           this.setState('stopped');
@@ -285,17 +365,22 @@ export class PlaybackManager {
       }
     }
 
+    // For navigate action, save state BEFORE navigation (page will reload)
+    if (step.action === 'navigate') {
+      // Save state so we can resume on the new page
+      await this.saveStateForNavigation(index + 1);
+      // Execute navigate - this will destroy the current script context
+      await this.actionExecutor.execute(step, element);
+      // This line will likely never be reached as the page navigates
+      return;
+    }
+
     // Execute the action
     const result = await this.actionExecutor.execute(step, element);
 
     // Store extract results if action has output
     if (step.action === 'extract' && step.output?.variable) {
       this.results.set(step.output.variable, result);
-    }
-
-    // Wait for page load after navigate action
-    if (step.action === 'navigate') {
-      await this.waitForPageLoad();
     }
   }
 
@@ -323,33 +408,6 @@ export class PlaybackManager {
     this.setState('running');
   }
 
-  /**
-   * Wait for page to fully load after navigation
-   * Uses document.readyState for reliable detection
-   */
-  private waitForPageLoad(): Promise<void> {
-    return new Promise((resolve) => {
-      // If already complete, resolve immediately
-      if (document.readyState === 'complete') {
-        resolve();
-        return;
-      }
-
-      // Otherwise wait for load event
-      const onLoad = () => {
-        window.removeEventListener('load', onLoad);
-        resolve();
-      };
-
-      window.addEventListener('load', onLoad);
-
-      // Timeout fallback (10 seconds)
-      setTimeout(() => {
-        window.removeEventListener('load', onLoad);
-        resolve();
-      }, 10000);
-    });
-  }
 }
 
 // Re-export all types and modules for convenient imports

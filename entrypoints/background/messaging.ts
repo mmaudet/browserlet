@@ -1,6 +1,17 @@
 import type { AppState, Message, MessageResponse, PingResponse, CapturedAction } from '../../utils/types';
 import { getState, setState, setRecordingState, addRecordedAction } from './storage';
 
+// Storage key for persisted execution state
+const EXECUTION_STATE_KEY = 'browserlet_execution_state';
+
+// Type for persisted execution state
+interface PersistedExecutionState {
+  yamlContent: string;
+  currentStep: number;
+  results: Record<string, unknown>;
+  timestamp: number;
+}
+
 export function handleMessage(
   message: Message,
   sender: chrome.runtime.MessageSender,
@@ -74,6 +85,35 @@ async function processMessage(
     case 'ACTION_CAPTURED': {
       const action = message.payload as CapturedAction;
       await addRecordedAction(action);
+      return { success: true };
+    }
+
+    case 'SAVE_EXECUTION_STATE': {
+      const state = message.payload as PersistedExecutionState;
+      await chrome.storage.local.set({ [EXECUTION_STATE_KEY]: state });
+      console.log('[Browserlet] Saved execution state, resuming at step', state.currentStep);
+      return { success: true };
+    }
+
+    case 'GET_EXECUTION_STATE': {
+      const data = await chrome.storage.local.get(EXECUTION_STATE_KEY);
+      const state = data[EXECUTION_STATE_KEY] as PersistedExecutionState | undefined;
+
+      if (!state) {
+        return { success: true, data: null };
+      }
+
+      // Check if state is stale (more than 30 seconds old)
+      if (Date.now() - state.timestamp > 30000) {
+        await chrome.storage.local.remove(EXECUTION_STATE_KEY);
+        return { success: true, data: null };
+      }
+
+      return { success: true, data: state };
+    }
+
+    case 'CLEAR_EXECUTION_STATE': {
+      await chrome.storage.local.remove(EXECUTION_STATE_KEY);
       return { success: true };
     }
 
