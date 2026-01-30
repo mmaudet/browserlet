@@ -7,7 +7,7 @@ import van from 'vanjs-core';
 import type { TriggerConfig as TriggerConfigType, TriggerCondition, TriggerMode } from '../../../utils/triggers/types';
 import { getTriggers } from '../../../utils/storage/triggers';
 
-const { div, h3, label, input, select, option, button, span, textarea } = van.tags;
+const { div, h3, label, input, select, option, button, span } = van.tags;
 
 // Helper to get i18n messages
 const msg = (key: string, substitutions?: string[]): string =>
@@ -109,24 +109,24 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
   // Initial load
   loadTriggers();
 
-  return div({ class: 'trigger-config p-4' },
+  return div({ style: 'padding: 16px;' },
     // Header
-    div({ class: 'flex justify-between items-center mb-4' },
-      h3({ class: 'text-lg font-semibold' }, msg('triggerConfigTitle')),
+    div({ style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;' },
+      h3({ style: 'font-size: 16px; font-weight: 600; margin: 0;' }, msg('triggerConfigTitle')),
       button({
-        class: 'text-gray-500 hover:text-gray-700',
+        style: 'background: none; border: none; cursor: pointer; font-size: 20px; color: #666; padding: 4px 8px;',
         onclick: onClose
       }, '\u00D7')
     ),
 
     // Form
-    div({ class: 'space-y-4 mb-6' },
+    div({ style: 'display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;' },
       // URL Pattern
       div(
-        label({ class: 'block text-sm font-medium mb-1' }, msg('triggerUrlPattern')),
+        label({ style: 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 4px;' }, msg('triggerUrlPattern')),
         input({
           type: 'text',
-          class: 'w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500',
+          style: 'width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box;',
           placeholder: msg('triggerUrlPatternPlaceholder'),
           value: urlPattern,
           oninput: (e: Event) => { urlPattern.val = (e.target as HTMLInputElement).value; }
@@ -135,9 +135,9 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
 
       // Mode
       div(
-        label({ class: 'block text-sm font-medium mb-1' }, msg('triggerModeLabel')),
+        label({ style: 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 4px;' }, msg('triggerModeLabel')),
         select({
-          class: 'w-full px-3 py-2 border rounded',
+          style: 'width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box;',
           value: mode,
           onchange: (e: Event) => { mode.val = (e.target as HTMLSelectElement).value as TriggerMode; }
         },
@@ -148,10 +148,10 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
 
       // Cooldown (only for auto-execute)
       () => mode.val === 'auto_execute' ? div(
-        label({ class: 'block text-sm font-medium mb-1' }, msg('triggerCooldown')),
+        label({ style: 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 4px;' }, msg('triggerCooldown')),
         input({
           type: 'number',
-          class: 'w-full px-3 py-2 border rounded',
+          style: 'width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box;',
           min: 1,
           max: 60,
           value: cooldownMin,
@@ -160,56 +160,56 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
       ) : null,
 
       // Enabled
-      div({ class: 'flex items-center gap-2' },
+      div({ style: 'display: flex; align-items: center; gap: 8px;' },
         input({
           type: 'checkbox',
           id: 'trigger-enabled',
           checked: enabled,
           onchange: (e: Event) => { enabled.val = (e.target as HTMLInputElement).checked; }
         }),
-        label({ for: 'trigger-enabled', class: 'text-sm' }, msg('triggerEnabled'))
+        label({ for: 'trigger-enabled', style: 'font-size: 14px;' }, msg('triggerEnabled'))
       ),
 
       // Buttons
-      div({ class: 'flex gap-2' },
+      div({ style: 'display: flex; gap: 8px;' },
         button({
-          class: 'flex-1 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50',
+          style: () => `flex: 1; padding: 10px 16px; background: ${isSaving.val || !urlPattern.val.trim() ? '#ccc' : '#4285f4'}; color: white; border: none; border-radius: 6px; cursor: ${isSaving.val || !urlPattern.val.trim() ? 'not-allowed' : 'pointer'}; font-size: 14px;`,
           disabled: () => isSaving.val || !urlPattern.val.trim(),
           onclick: saveTrigger
         }, () => editingId.val ? msg('triggerSave') : msg('triggerSave')),
 
         () => editingId.val ? button({
-          class: 'px-4 py-2 border rounded hover:bg-gray-100',
+          style: 'padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; font-size: 14px;',
           onclick: resetForm
         }, 'Cancel') : null
       )
     ),
 
     // Existing triggers list
-    div({ class: 'border-t pt-4' },
-      h3({ class: 'text-sm font-medium mb-2' }, 'Existing Triggers'),
+    div({ style: 'border-top: 1px solid #eee; padding-top: 16px;' },
+      h3({ style: 'font-size: 14px; font-weight: 500; margin: 0 0 12px 0;' }, 'Existing Triggers'),
 
       () => isLoading.val
-        ? div({ class: 'text-gray-500 text-sm' }, 'Loading...')
+        ? div({ style: 'color: #999; font-size: 14px;' }, 'Loading...')
         : triggers.val.length === 0
-          ? div({ class: 'text-gray-500 text-sm' }, 'No triggers configured')
-          : div({ class: 'space-y-2' },
+          ? div({ style: 'color: #999; font-size: 14px;' }, 'No triggers configured')
+          : div({ style: 'display: flex; flex-direction: column; gap: 8px;' },
               ...triggers.val.map(trigger =>
-                div({ class: 'flex items-center justify-between p-2 bg-gray-50 rounded' },
-                  div({ class: 'flex-1' },
-                    span({ class: 'text-sm font-medium' }, trigger.name),
+                div({ style: 'display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f5f5f5; border-radius: 6px;' },
+                  div({ style: 'flex: 1; min-width: 0;' },
+                    span({ style: 'font-size: 14px; font-weight: 500;' }, trigger.name),
                     span({
-                      class: `ml-2 text-xs px-2 py-0.5 rounded ${trigger.mode === 'suggest' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`
+                      style: `margin-left: 8px; font-size: 11px; padding: 2px 8px; border-radius: 4px; ${trigger.mode === 'suggest' ? 'background: #e3f2fd; color: #1976d2;' : 'background: #fff3e0; color: #e65100;'}`
                     }, trigger.mode),
-                    !trigger.enabled ? span({ class: 'ml-2 text-xs text-gray-400' }, '(disabled)') : null
+                    !trigger.enabled ? span({ style: 'margin-left: 8px; font-size: 11px; color: #999;' }, '(disabled)') : null
                   ),
-                  div({ class: 'flex gap-1' },
+                  div({ style: 'display: flex; gap: 4px;' },
                     button({
-                      class: 'text-xs px-2 py-1 text-blue-600 hover:bg-blue-50 rounded',
+                      style: 'font-size: 12px; padding: 4px 8px; color: #1976d2; background: none; border: none; cursor: pointer; border-radius: 4px;',
                       onclick: () => editTrigger(trigger)
                     }, 'Edit'),
                     button({
-                      class: 'text-xs px-2 py-1 text-red-600 hover:bg-red-50 rounded',
+                      style: 'font-size: 12px; padding: 4px 8px; color: #d32f2f; background: none; border: none; cursor: pointer; border-radius: 4px;',
                       onclick: () => deleteTrigger(trigger.id)
                     }, msg('triggerDelete'))
                   )
