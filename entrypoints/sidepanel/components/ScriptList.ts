@@ -43,10 +43,9 @@ function ScriptItem({ script, isSelected, onSelect, onRun, onConfigureTriggers }
       ),
       div({ style: 'display: flex; gap: 4px; align-items: center;' },
         button({
-          class: 'p-1 text-gray-400 hover:text-gray-600',
           style: 'background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px 8px; color: #666;',
           title: chrome.i18n.getMessage('configureTriggers') || 'Configure triggers',
-          onclick: (e: Event) => {
+          onclick: function(e: Event) {
             e.stopPropagation();
             onConfigureTriggers();
           }
@@ -141,24 +140,24 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
       }
     ),
 
-    // Trigger config modal
-    () => showTriggerConfig.val
-      ? div({
-          class: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50',
-          style: 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 50;',
-          onclick: () => { showTriggerConfig.val = null; }
-        },
-          div({
-            class: 'bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto',
-            style: 'background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 28rem; width: 100%; max-height: 80vh; overflow-y: auto;',
-            onclick: (e: Event) => e.stopPropagation()
-          },
-            TriggerConfig({
+    // Trigger config modal - use style binding for visibility
+    div({
+      style: () => showTriggerConfig.val
+        ? 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;'
+        : 'display: none;',
+      onclick: () => { showTriggerConfig.val = null; }
+    },
+      div({
+        style: 'background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 28rem; width: calc(100% - 32px); max-height: 80vh; overflow-y: auto; margin: 16px;',
+        onclick: (e: Event) => e.stopPropagation()
+      },
+        () => showTriggerConfig.val
+          ? TriggerConfig({
               scriptId: showTriggerConfig.val,
               onClose: () => { showTriggerConfig.val = null; }
             })
-          )
-        )
-      : null
+          : div()
+      )
+    )
   );
 }
