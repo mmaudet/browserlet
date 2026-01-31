@@ -46,7 +46,9 @@ export type MessageType =
   | 'SAVE_PASSWORDS'
   | 'DELETE_PASSWORD'
   // Content script password capture (sent directly to content script)
-  | 'GET_CAPTURED_PASSWORDS';
+  | 'GET_CAPTURED_PASSWORDS'
+  | 'START_PASSWORD_CAPTURE'
+  | 'STOP_PASSWORD_CAPTURE';
 
 export interface Message {
   type: MessageType;

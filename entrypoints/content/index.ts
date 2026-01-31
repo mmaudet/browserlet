@@ -4,10 +4,12 @@ import { RecordingManager } from './recording';
 import { PlaybackManager } from './playback';
 import { initializeTriggers, handleTriggerMessage } from './triggers';
 import { showAutoExecuteNotification, showCompletionNotification } from './triggers/inPageNotification';
+import { PasswordCapture } from './recording/passwordCapture';
 
 // Singleton instances
 let recordingManager: RecordingManager | null = null;
 let playbackManager: PlaybackManager | null = null;
+let standaloneCapturer: PasswordCapture | null = null;
 
 /**
  * Get or create the PlaybackManager singleton
@@ -174,6 +176,23 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
         const capturedPasswords = recordingManager.getCapturedPasswords();
         console.log('[Browserlet] Returning captured passwords:', capturedPasswords.length);
         return { success: true, data: capturedPasswords };
+      }
+      return { success: true, data: [] };
+
+    case 'START_PASSWORD_CAPTURE':
+      if (!standaloneCapturer) {
+        standaloneCapturer = new PasswordCapture();
+      }
+      standaloneCapturer.start(() => {}); // callback not needed for standalone
+      console.log('[Browserlet] Standalone password capture started');
+      return { success: true };
+
+    case 'STOP_PASSWORD_CAPTURE':
+      if (standaloneCapturer) {
+        const captured = standaloneCapturer.stop();
+        standaloneCapturer = null;
+        console.log('[Browserlet] Standalone capture stopped, got', captured.length, 'passwords');
+        return { success: true, data: captured };
       }
       return { success: true, data: [] };
 
