@@ -1,22 +1,22 @@
-import van from 'vanjs-core';
+import { signal, computed } from '@preact/signals';
 import type { Script, ExecutionRecord } from '../../../utils/types';
 import { addExecutionRecord, updateExecutionRecord } from '../../../utils/storage/history';
 import { parseSteps } from '../../../utils/yaml/stepParser';
 
 // Execution state
-export const isExecuting = van.state(false);
-export const currentScript = van.state<Script | null>(null);
-export const currentStep = van.state(0);
-export const totalSteps = van.state(0);
-export const executionStatus = van.state<'idle' | 'running' | 'completed' | 'failed' | 'stopped' | 'waiting_auth'>('idle');
-export const executionResults = van.state<unknown[]>([]);
-export const executionError = van.state<string | null>(null);
-export const currentRecordId = van.state<string | null>(null);
+export const isExecuting = signal(false);
+export const currentScript = signal<Script | null>(null);
+export const currentStep = signal(0);
+export const totalSteps = signal(0);
+export const executionStatus = signal<'idle' | 'running' | 'completed' | 'failed' | 'stopped' | 'waiting_auth'>('idle');
+export const executionResults = signal<unknown[]>([]);
+export const executionError = signal<string | null>(null);
+export const currentRecordId = signal<string | null>(null);
 
 // Progress percentage derived
-export const progressPercent = van.derive(() => {
-  if (totalSteps.val === 0) return 0;
-  return Math.round((currentStep.val / totalSteps.val) * 100);
+export const progressPercent = computed(() => {
+  if (totalSteps.value === 0) return 0;
+  return Math.round((currentStep.value / totalSteps.value) * 100);
 });
 
 // Start execution - sends EXECUTE_SCRIPT to content script
@@ -32,13 +32,13 @@ export async function startExecution(script: Script): Promise<void> {
     stepCount = 1;
   }
 
-  isExecuting.val = true;
-  currentScript.val = script;
-  currentStep.val = 0;
-  totalSteps.val = stepCount;
-  executionStatus.val = 'running';
-  executionResults.val = [];
-  executionError.val = null;
+  isExecuting.value = true;
+  currentScript.value = script;
+  currentStep.value = 0;
+  totalSteps.value = stepCount;
+  executionStatus.value = 'running';
+  executionResults.value = [];
+  executionError.value = null;
 
   // Create execution record
   const record = await addExecutionRecord({
@@ -49,7 +49,7 @@ export async function startExecution(script: Script): Promise<void> {
     currentStep: 0,
     totalSteps: stepCount
   });
-  currentRecordId.val = record.id;
+  currentRecordId.value = record.id;
 
   // Send to content script for execution
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -70,15 +70,15 @@ export async function startExecution(script: Script): Promise<void> {
 
 // Update progress (called by execution engine in Phase 4)
 export async function updateProgress(step: number, result?: unknown): Promise<void> {
-  currentStep.val = step;
+  currentStep.value = step;
 
   if (result !== undefined) {
-    executionResults.val = [...executionResults.val, result];
+    executionResults.value = [...executionResults.value, result];
   }
 
   // Update record
-  if (currentRecordId.val && currentScript.val) {
-    await updateExecutionRecord(currentScript.val.id, currentRecordId.val, {
+  if (currentRecordId.value && currentScript.value) {
+    await updateExecutionRecord(currentScript.value.id, currentRecordId.value, {
       currentStep: step,
       status: 'running'
     });
@@ -87,31 +87,31 @@ export async function updateProgress(step: number, result?: unknown): Promise<vo
 
 // Complete execution
 export async function completeExecution(results?: unknown): Promise<void> {
-  isExecuting.val = false;
-  executionStatus.val = 'completed';
-  currentStep.val = totalSteps.val;
+  isExecuting.value = false;
+  executionStatus.value = 'completed';
+  currentStep.value = totalSteps.value;
 
   if (results !== undefined) {
-    executionResults.val = Array.isArray(results) ? results : [results];
+    executionResults.value = Array.isArray(results) ? results : [results];
   }
 
-  if (currentRecordId.val && currentScript.val) {
-    await updateExecutionRecord(currentScript.val.id, currentRecordId.val, {
+  if (currentRecordId.value && currentScript.value) {
+    await updateExecutionRecord(currentScript.value.id, currentRecordId.value, {
       status: 'completed',
       completedAt: Date.now(),
-      results: executionResults.val
+      results: executionResults.value
     });
   }
 }
 
 // Fail execution
 export async function failExecution(error: string): Promise<void> {
-  isExecuting.val = false;
-  executionStatus.val = 'failed';
-  executionError.val = error;
+  isExecuting.value = false;
+  executionStatus.value = 'failed';
+  executionError.value = error;
 
-  if (currentRecordId.val && currentScript.val) {
-    await updateExecutionRecord(currentScript.val.id, currentRecordId.val, {
+  if (currentRecordId.value && currentScript.value) {
+    await updateExecutionRecord(currentScript.value.id, currentRecordId.value, {
       status: 'failed',
       completedAt: Date.now(),
       error
@@ -131,11 +131,11 @@ export async function stopExecution(): Promise<void> {
     }
   }
 
-  isExecuting.val = false;
-  executionStatus.val = 'stopped';
+  isExecuting.value = false;
+  executionStatus.value = 'stopped';
 
-  if (currentRecordId.val && currentScript.val) {
-    await updateExecutionRecord(currentScript.val.id, currentRecordId.val, {
+  if (currentRecordId.value && currentScript.value) {
+    await updateExecutionRecord(currentScript.value.id, currentRecordId.value, {
       status: 'stopped',
       completedAt: Date.now()
     });
@@ -144,14 +144,14 @@ export async function stopExecution(): Promise<void> {
 
 // Reset to idle
 export function resetExecution(): void {
-  isExecuting.val = false;
-  currentScript.val = null;
-  currentStep.val = 0;
-  totalSteps.val = 0;
-  executionStatus.val = 'idle';
-  executionResults.val = [];
-  executionError.val = null;
-  currentRecordId.val = null;
+  isExecuting.value = false;
+  currentScript.value = null;
+  currentStep.value = 0;
+  totalSteps.value = 0;
+  executionStatus.value = 'idle';
+  executionResults.value = [];
+  executionError.value = null;
+  currentRecordId.value = null;
 }
 
 // Listen for execution events from content script
@@ -160,14 +160,14 @@ chrome.runtime.onMessage.addListener((message) => {
     case 'EXECUTION_PROGRESS': {
       const { step, totalSteps: total } = message.payload || {};
       if (typeof step === 'number') {
-        currentStep.val = step;
+        currentStep.value = step;
       }
       if (typeof total === 'number') {
-        totalSteps.val = total;
+        totalSteps.value = total;
       }
       // Update record
-      if (currentRecordId.val && currentScript.val && typeof step === 'number') {
-        updateExecutionRecord(currentScript.val.id, currentRecordId.val, {
+      if (currentRecordId.value && currentScript.value && typeof step === 'number') {
+        updateExecutionRecord(currentScript.value.id, currentRecordId.value, {
           currentStep: step,
           status: 'running'
         });
@@ -187,14 +187,14 @@ chrome.runtime.onMessage.addListener((message) => {
       console.log('[Browserlet] Execution failed:', { error, step, payload: message.payload });
       // Update step if provided
       if (typeof step === 'number') {
-        currentStep.val = step;
+        currentStep.value = step;
       }
       failExecution(error);
       break;
     }
 
     case 'AUTH_REQUIRED': {
-      executionStatus.val = 'waiting_auth';
+      executionStatus.value = 'waiting_auth';
       break;
     }
   }

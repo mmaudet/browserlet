@@ -1,9 +1,9 @@
 /**
  * LLM Configuration Store with encrypted API key storage
- * Uses VanJS reactive pattern for state management
+ * Uses Preact Signals for reliable cross-module state management
  */
 
-import van from 'vanjs-core';
+import { signal } from '@preact/signals';
 import {
   encryptApiKey,
   decryptApiKey,
@@ -30,32 +30,33 @@ interface StoredLLMConfig {
 
 /**
  * Reactive LLM configuration state
+ * Using Preact Signals for reliable cross-module reactivity
  */
 export const llmConfigStore = {
   /** Selected provider */
-  provider: van.state<ProviderName>('claude'),
+  provider: signal<ProviderName>('claude'),
   /** Decrypted Claude API key (in memory only) */
-  claudeApiKey: van.state<string>(''),
+  claudeApiKey: signal<string>(''),
   /** Claude model */
-  claudeModel: van.state<string>('claude-sonnet-4-5-20250514'),
+  claudeModel: signal<string>('claude-sonnet-4-5-20250514'),
   /** Ollama server host */
-  ollamaHost: van.state<string>('http://localhost:11434'),
+  ollamaHost: signal<string>('http://localhost:11434'),
   /** Ollama model name */
-  ollamaModel: van.state<string>('llama3.1'),
+  ollamaModel: signal<string>('llama3.1'),
   /** OpenAI-compatible API endpoint */
-  openaiEndpoint: van.state<string>('https://api.openai.com/v1/chat/completions'),
+  openaiEndpoint: signal<string>('https://api.openai.com/v1/chat/completions'),
   /** Decrypted OpenAI API key (in memory only) */
-  openaiApiKey: van.state<string>(''),
+  openaiApiKey: signal<string>(''),
   /** OpenAI-compatible model name */
-  openaiModel: van.state<string>('gpt-4o'),
+  openaiModel: signal<string>('gpt-4o'),
   /** Whether LLM is configured and ready */
-  isConfigured: van.state<boolean>(false),
+  isConfigured: signal<boolean>(false),
   /** True if encrypted key exists but can't decrypt (new session key) */
-  needsApiKey: van.state<boolean>(false),
+  needsApiKey: signal<boolean>(false),
   /** Save in progress */
-  isSaving: van.state<boolean>(false),
+  isSaving: signal<boolean>(false),
   /** Last save error */
-  saveError: van.state<string | null>(null),
+  saveError: signal<string | null>(null),
 };
 
 /**
@@ -68,46 +69,46 @@ export async function loadLLMConfig(): Promise<void> {
 
   if (!stored) {
     // No config stored, use defaults
-    llmConfigStore.isConfigured.val = false;
+    llmConfigStore.isConfigured.value = false;
     return;
   }
 
   // Load basic config values
-  llmConfigStore.provider.val = stored.provider ?? 'claude';
-  llmConfigStore.claudeModel.val = stored.claudeModel ?? 'claude-sonnet-4-5-20250929';
-  llmConfigStore.ollamaHost.val = stored.ollamaHost ?? 'http://localhost:11434';
-  llmConfigStore.ollamaModel.val = stored.ollamaModel ?? 'llama3.1';
-  llmConfigStore.openaiEndpoint.val = stored.openaiEndpoint ?? 'https://api.openai.com/v1/chat/completions';
-  llmConfigStore.openaiModel.val = stored.openaiModel ?? 'gpt-4o';
+  llmConfigStore.provider.value = stored.provider ?? 'claude';
+  llmConfigStore.claudeModel.value = stored.claudeModel ?? 'claude-sonnet-4-5-20250929';
+  llmConfigStore.ollamaHost.value = stored.ollamaHost ?? 'http://localhost:11434';
+  llmConfigStore.ollamaModel.value = stored.ollamaModel ?? 'llama3.1';
+  llmConfigStore.openaiEndpoint.value = stored.openaiEndpoint ?? 'https://api.openai.com/v1/chat/completions';
+  llmConfigStore.openaiModel.value = stored.openaiModel ?? 'gpt-4o';
 
   // Handle API key decryption for Claude
   if (stored.provider === 'claude' && stored.encryptedApiKey) {
     try {
       const decrypted = await decryptApiKey(stored.encryptedApiKey);
-      llmConfigStore.claudeApiKey.val = decrypted;
-      llmConfigStore.needsApiKey.val = false;
-      llmConfigStore.isConfigured.val = true;
+      llmConfigStore.claudeApiKey.value = decrypted;
+      llmConfigStore.needsApiKey.value = false;
+      llmConfigStore.isConfigured.value = true;
     } catch {
       // Decryption failed - likely new session key after browser restart
-      llmConfigStore.claudeApiKey.val = '';
-      llmConfigStore.needsApiKey.val = true;
-      llmConfigStore.isConfigured.val = false;
+      llmConfigStore.claudeApiKey.value = '';
+      llmConfigStore.needsApiKey.value = true;
+      llmConfigStore.isConfigured.value = false;
     }
   } else if (stored.provider === 'ollama') {
     // Ollama doesn't need credentials
-    llmConfigStore.needsApiKey.val = false;
-    llmConfigStore.isConfigured.val = true;
+    llmConfigStore.needsApiKey.value = false;
+    llmConfigStore.isConfigured.value = true;
   } else if (stored.provider === 'openai' && stored.encryptedOpenaiApiKey) {
     try {
       const decrypted = await decryptApiKey(stored.encryptedOpenaiApiKey);
-      llmConfigStore.openaiApiKey.val = decrypted;
-      llmConfigStore.needsApiKey.val = false;
-      llmConfigStore.isConfigured.val = true;
+      llmConfigStore.openaiApiKey.value = decrypted;
+      llmConfigStore.needsApiKey.value = false;
+      llmConfigStore.isConfigured.value = true;
     } catch {
       // Decryption failed - likely new session key after browser restart
-      llmConfigStore.openaiApiKey.val = '';
-      llmConfigStore.needsApiKey.val = true;
-      llmConfigStore.isConfigured.val = false;
+      llmConfigStore.openaiApiKey.value = '';
+      llmConfigStore.needsApiKey.value = true;
+      llmConfigStore.isConfigured.value = false;
     }
   }
 }
@@ -116,33 +117,35 @@ export async function loadLLMConfig(): Promise<void> {
  * Save LLM configuration to storage
  * Encrypts API key before storing
  * Also sends CONFIGURE_LLM message to service worker
- * @param providerOverride - Optional provider override (workaround for VanJS cross-module state issues)
+ * @param providerOverride - Optional provider override (legacy parameter, Preact Signals fixes cross-module issues)
  */
 export async function saveLLMConfig(providerOverride?: ProviderName): Promise<void> {
-  llmConfigStore.isSaving.val = true;
-  llmConfigStore.saveError.val = null;
+  llmConfigStore.isSaving.value = true;
+  llmConfigStore.saveError.value = null;
 
   // Use override if provided, otherwise fall back to store value
-  const provider = providerOverride ?? llmConfigStore.provider.val;
+  // Note: providerOverride is kept for API compatibility but Preact Signals
+  // should now work reliably without needing workarounds
+  const provider = providerOverride ?? llmConfigStore.provider.value;
 
   try {
     const storedConfig: StoredLLMConfig = {
       provider: provider,
-      claudeModel: llmConfigStore.claudeModel.val,
-      ollamaHost: llmConfigStore.ollamaHost.val,
-      ollamaModel: llmConfigStore.ollamaModel.val,
-      openaiEndpoint: llmConfigStore.openaiEndpoint.val,
-      openaiModel: llmConfigStore.openaiModel.val,
+      claudeModel: llmConfigStore.claudeModel.value,
+      ollamaHost: llmConfigStore.ollamaHost.value,
+      ollamaModel: llmConfigStore.ollamaModel.value,
+      openaiEndpoint: llmConfigStore.openaiEndpoint.value,
+      openaiModel: llmConfigStore.openaiModel.value,
     };
 
     // Encrypt API key if Claude provider and key is provided
-    if (provider === 'claude' && llmConfigStore.claudeApiKey.val) {
-      storedConfig.encryptedApiKey = await encryptApiKey(llmConfigStore.claudeApiKey.val);
+    if (provider === 'claude' && llmConfigStore.claudeApiKey.value) {
+      storedConfig.encryptedApiKey = await encryptApiKey(llmConfigStore.claudeApiKey.value);
     }
 
     // Encrypt API key if OpenAI provider and key is provided
-    if (provider === 'openai' && llmConfigStore.openaiApiKey.val) {
-      storedConfig.encryptedOpenaiApiKey = await encryptApiKey(llmConfigStore.openaiApiKey.val);
+    if (provider === 'openai' && llmConfigStore.openaiApiKey.value) {
+      storedConfig.encryptedOpenaiApiKey = await encryptApiKey(llmConfigStore.openaiApiKey.value);
     }
 
     // Save to storage
@@ -159,33 +162,33 @@ export async function saveLLMConfig(providerOverride?: ProviderName): Promise<vo
       throw new Error(response.error ?? 'Failed to configure LLM service');
     }
 
-    llmConfigStore.needsApiKey.val = false;
-    llmConfigStore.isConfigured.val = true;
+    llmConfigStore.needsApiKey.value = false;
+    llmConfigStore.isConfigured.value = true;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    llmConfigStore.saveError.val = errorMessage;
+    llmConfigStore.saveError.value = errorMessage;
     throw error;
   } finally {
-    llmConfigStore.isSaving.val = false;
+    llmConfigStore.isSaving.value = false;
   }
 }
 
 /**
  * Get LLM configuration for sending to service worker
  * Includes decrypted API key (for in-memory use only)
- * @param providerOverride - Optional provider override (workaround for VanJS cross-module state issues)
+ * @param providerOverride - Optional provider override (legacy parameter, Preact Signals fixes cross-module issues)
  */
 export function getLLMConfigForServiceWorker(providerOverride?: ProviderName): LLMConfig {
-  const provider = providerOverride ?? llmConfigStore.provider.val;
+  const provider = providerOverride ?? llmConfigStore.provider.value;
   return {
     provider: provider,
-    claudeApiKey: provider === 'claude' ? llmConfigStore.claudeApiKey.val : undefined,
-    claudeModel: llmConfigStore.claudeModel.val,
-    ollamaHost: llmConfigStore.ollamaHost.val,
-    ollamaModel: llmConfigStore.ollamaModel.val,
-    openaiEndpoint: llmConfigStore.openaiEndpoint.val,
-    openaiApiKey: provider === 'openai' ? llmConfigStore.openaiApiKey.val : undefined,
-    openaiModel: llmConfigStore.openaiModel.val,
+    claudeApiKey: provider === 'claude' ? llmConfigStore.claudeApiKey.value : undefined,
+    claudeModel: llmConfigStore.claudeModel.value,
+    ollamaHost: llmConfigStore.ollamaHost.value,
+    ollamaModel: llmConfigStore.ollamaModel.value,
+    openaiEndpoint: llmConfigStore.openaiEndpoint.value,
+    openaiApiKey: provider === 'openai' ? llmConfigStore.openaiApiKey.value : undefined,
+    openaiModel: llmConfigStore.openaiModel.value,
   };
 }
 
@@ -194,11 +197,11 @@ export function getLLMConfigForServiceWorker(providerOverride?: ProviderName): L
  * Claude requires API key, Ollama just needs to be selected
  */
 export function isConfigValid(): boolean {
-  if (llmConfigStore.provider.val === 'claude') {
-    return !!llmConfigStore.claudeApiKey.val;
+  if (llmConfigStore.provider.value === 'claude') {
+    return !!llmConfigStore.claudeApiKey.value;
   }
-  if (llmConfigStore.provider.val === 'openai') {
-    return !!llmConfigStore.openaiApiKey.val && !!llmConfigStore.openaiEndpoint.val;
+  if (llmConfigStore.provider.value === 'openai') {
+    return !!llmConfigStore.openaiApiKey.value && !!llmConfigStore.openaiEndpoint.value;
   }
   return true; // Ollama doesn't require credentials
 }
@@ -212,17 +215,17 @@ export async function resetLLMConfig(): Promise<void> {
   await chrome.storage.local.remove(STORAGE_KEY);
 
   // Reset store to defaults
-  llmConfigStore.provider.val = 'claude';
-  llmConfigStore.claudeApiKey.val = '';
-  llmConfigStore.claudeModel.val = 'claude-sonnet-4-5-20250929';
-  llmConfigStore.ollamaHost.val = 'http://localhost:11434';
-  llmConfigStore.ollamaModel.val = 'llama3.1';
-  llmConfigStore.openaiEndpoint.val = 'https://api.openai.com/v1/chat/completions';
-  llmConfigStore.openaiApiKey.val = '';
-  llmConfigStore.openaiModel.val = 'gpt-4o';
-  llmConfigStore.isConfigured.val = false;
-  llmConfigStore.needsApiKey.val = false;
-  llmConfigStore.saveError.val = null;
+  llmConfigStore.provider.value = 'claude';
+  llmConfigStore.claudeApiKey.value = '';
+  llmConfigStore.claudeModel.value = 'claude-sonnet-4-5-20250929';
+  llmConfigStore.ollamaHost.value = 'http://localhost:11434';
+  llmConfigStore.ollamaModel.value = 'llama3.1';
+  llmConfigStore.openaiEndpoint.value = 'https://api.openai.com/v1/chat/completions';
+  llmConfigStore.openaiApiKey.value = '';
+  llmConfigStore.openaiModel.value = 'gpt-4o';
+  llmConfigStore.isConfigured.value = false;
+  llmConfigStore.needsApiKey.value = false;
+  llmConfigStore.saveError.value = null;
 }
 
 // Listen for storage changes to sync LLM config across views
