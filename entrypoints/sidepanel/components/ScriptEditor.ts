@@ -14,6 +14,12 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T 
   }) as T;
 }
 
+// Extract name from YAML content
+function extractNameFromYaml(content: string): string | null {
+  const match = content.match(/^name:\s*["']?([^"'\n]+)["']?\s*$/m);
+  return match?.[1]?.trim() || null;
+}
+
 interface ScriptEditorProps {
   script: Script;
   onSave?: (script: Script) => void;
@@ -92,9 +98,13 @@ export function ScriptEditor({ script, onSave, onClose }: ScriptEditorProps) {
       isSaving.val = true;
       try {
         const content = editorInstance?.getValue() || '';
+        // Extract name from YAML content to sync with script.name
+        const nameFromYaml = extractNameFromYaml(content);
         const updated = await saveScript({
           ...script,
           content,
+          // Update name if it changed in YAML
+          name: nameFromYaml || script.name,
           id: script.id
         });
         lastSaved.val = updated.updatedAt;
