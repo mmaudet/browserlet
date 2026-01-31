@@ -105,7 +105,15 @@ async function handleRenameScript(script: Script): Promise<void> {
   const promptMessage = chrome.i18n.getMessage('renameScriptPrompt') || 'Enter new name:';
   const newName = prompt(promptMessage, script.name);
   if (newName && newName.trim() && newName !== script.name) {
-    const updated = await saveScript({ ...script, name: newName.trim() });
+    const trimmedName = newName.trim();
+    // Update name in BSL content (YAML) as well
+    let updatedContent = script.content;
+    if (updatedContent) {
+      // Replace the name field in YAML - escape quotes for YAML string
+      const escapedName = trimmedName.replace(/"/g, '\\"');
+      updatedContent = updatedContent.replace(/^name:.*$/m, `name: "${escapedName}"`);
+    }
+    const updated = await saveScript({ ...script, name: trimmedName, content: updatedContent });
     updateScriptInState(updated);
   }
 }
