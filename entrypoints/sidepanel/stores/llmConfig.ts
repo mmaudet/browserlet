@@ -179,3 +179,11 @@ export async function resetLLMConfig(): Promise<void> {
   llmConfigStore.needsApiKey.val = false;
   llmConfigStore.saveError.val = null;
 }
+
+// Listen for storage changes to sync LLM config across views
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes[STORAGE_KEY]) {
+    // Reload config when it changes in storage
+    loadLLMConfig().catch(console.error);
+  }
+});

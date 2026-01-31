@@ -364,6 +364,7 @@ export function RecordingView() {
 
       const configured = llmConfigStore.isConfigured.val && isConfigValid();
       const provider = llmConfigStore.provider.val;
+      const needsApiKey = llmConfigStore.needsApiKey.val;
 
       if (configured) {
         const providerName = provider === 'claude' ? 'Claude (Anthropic)' : 'Ollama';
@@ -373,6 +374,16 @@ export function RecordingView() {
           span({ style: 'width: 8px; height: 8px; background: #4caf50; border-radius: 50%;' }),
           span({},
             chrome.i18n.getMessage('llmActive') || `LLM active: ${providerName}`
+          )
+        );
+      } else if (needsApiKey) {
+        // API key exists but can't be decrypted (session expired)
+        return div({
+          style: 'display: flex; align-items: center; gap: 8px; background: #fff3cd; border: 1px solid #ffc107; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: #856404;'
+        },
+          span({ style: 'width: 8px; height: 8px; background: #ff9800; border-radius: 50%;' }),
+          span({},
+            chrome.i18n.getMessage('llmNeedsApiKey') || 'API key expired - please re-enter in Settings'
           )
         );
       } else {
