@@ -14,6 +14,7 @@ import { saveScript } from '../../utils/storage/scripts';
 import type { Script } from '../../utils/types';
 import { SuggestedScripts } from './components/SuggestedScripts';
 import { suggestedScriptIds, loadTriggers } from './stores/triggers';
+import { CredentialManager } from './components/CredentialManager';
 
 // Navigation tabs
 function NavTabs() {
@@ -181,6 +182,38 @@ function ContentRouter() {
     );
   }
 
+  if (view === 'credentials') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Credentials toolbar with back button */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-start',
+          padding: '8px 12px',
+          background: 'white',
+          borderBottom: '1px solid #ddd'
+        }}>
+          <button
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: '#666'
+            }}
+            onClick={() => goBack()}
+          >
+            ← {chrome.i18n.getMessage('back') || 'Back'}
+          </button>
+        </div>
+        {/* Credentials content */}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          <CredentialManager />
+        </div>
+      </div>
+    );
+  }
+
   return <div />;
 }
 
@@ -200,6 +233,20 @@ function App() {
         <span style={{ fontWeight: 600, fontSize: '16px' }}>Browserlet</span>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <ImportButton onImport={(script) => navigateTo('editor', script)} />
+          <button
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '18px',
+              padding: '4px 8px',
+              color: '#666'
+            }}
+            title={chrome.i18n.getMessage('manageCredentials') || 'Manage Credentials'}
+            onClick={() => navigateTo('credentials')}
+          >
+            {'\uD83D\uDD12'}
+          </button>
           <button
             style={{
               background: 'none',
