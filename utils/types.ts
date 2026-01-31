@@ -33,7 +33,10 @@ export type MessageType =
   | 'GET_SUGGESTED_SCRIPTS'
   | 'SET_SITE_OVERRIDE'
   | 'TRIGGERS_UPDATED'
-  | 'STOP_TRIGGERS';
+  | 'STOP_TRIGGERS'
+  // In-page notifications (cross-platform, works on macOS)
+  | 'SHOW_AUTO_EXECUTE_NOTIFICATION'
+  | 'SHOW_COMPLETION_NOTIFICATION';
 
 export interface Message {
   type: MessageType;

@@ -7,7 +7,8 @@ import type { TriggerConfig, ContextState } from '../../../utils/triggers/types'
 import type { Script } from '../../../utils/types';
 import { getAllTriggers, getSiteOverride } from '../../../utils/storage/triggers';
 import { getScripts } from '../../../utils/storage/scripts';
-import { notifyAutoExecution, notifyExecutionComplete } from './notifications';
+// Note: Chrome notifications with buttons don't work on macOS
+// We use in-page notifications in content script instead
 
 // Storage key for suggested scripts per tab
 const SUGGESTED_KEY_PREFIX = 'suggested_scripts_';
@@ -62,14 +63,21 @@ export class TriggerEngine {
     tabId: number,
     context: ContextState
   ): Promise<void> {
+    console.log('[Browserlet] handleContextMatch called, matches:', context.matches, 'triggers:', context.matchedTriggers?.length);
+
     if (!context.matches || !context.matchedTriggers) {
       // Context no longer matches - clear suggestions
+      console.log('[Browserlet] No matches, clearing suggestions');
       await this.clearSuggestions(tabId);
       return;
     }
 
     const tab = await chrome.tabs.get(tabId);
-    if (!tab.url) return;
+    if (!tab.url) {
+      console.log('[Browserlet] No tab URL');
+      return;
+    }
+    console.log('[Browserlet] Processing for tab:', tabId, 'url:', tab.url);
 
     // Group by mode
     const suggestTriggers: TriggerConfig[] = [];
@@ -93,9 +101,11 @@ export class TriggerEngine {
     }
 
     // Handle suggest mode - update badge and store suggestions
+    console.log('[Browserlet] suggestTriggers:', suggestTriggers.length, 'autoExecuteTriggers:', autoExecuteTriggers.length);
     if (suggestTriggers.length > 0) {
       await this.handleSuggestMode(tabId, suggestTriggers);
     } else {
+      console.log('[Browserlet] No suggest triggers, clearing');
       await this.clearSuggestions(tabId);
     }
 
@@ -113,21 +123,28 @@ export class TriggerEngine {
     triggers: TriggerConfig[]
   ): Promise<void> {
     const scriptIds = Array.from(new Set(triggers.map(t => t.scriptId)));
+    console.log('[Browserlet] handleSuggestMode, scriptIds:', scriptIds, 'tabId:', tabId);
 
     // Update badge
-    await chrome.action.setBadgeText({
-      text: String(scriptIds.length),
-      tabId
-    });
-    await chrome.action.setBadgeBackgroundColor({
-      color: '#4285f4', // Blue
-      tabId
-    });
+    try {
+      await chrome.action.setBadgeText({
+        text: String(scriptIds.length),
+        tabId
+      });
+      await chrome.action.setBadgeBackgroundColor({
+        color: '#4285f4', // Blue
+        tabId
+      });
+      console.log('[Browserlet] Badge set to:', scriptIds.length);
+    } catch (error) {
+      console.error('[Browserlet] Failed to set badge:', error);
+    }
 
     // Store suggested scripts for sidepanel
     await chrome.storage.session.set({
       [`${SUGGESTED_KEY_PREFIX}${tabId}`]: scriptIds
     });
+    console.log('[Browserlet] Stored suggestions for tab', tabId);
   }
 
   /**
@@ -155,8 +172,19 @@ export class TriggerEngine {
     // Set cooldown
     this.setCooldown(trigger, url);
 
-    // Show notification
-    await notifyAutoExecution(script.name, script.id, tabId, url);
+    // Show in-page notification (works on all platforms including macOS)
+    try {
+      await chrome.tabs.sendMessage(tabId, {
+        type: 'SHOW_AUTO_EXECUTE_NOTIFICATION',
+        payload: {
+          scriptName: script.name,
+          scriptId: script.id,
+          url
+        }
+      });
+    } catch (error) {
+      console.warn('[Browserlet] Failed to show notification:', error);
+    }
 
     // Execute script
     try {

@@ -3,6 +3,7 @@ import { isContextValid } from '../../utils/context-check';
 import { RecordingManager } from './recording';
 import { PlaybackManager } from './playback';
 import { initializeTriggers, handleTriggerMessage } from './triggers';
+import { showAutoExecuteNotification, showCompletionNotification } from './triggers/inPageNotification';
 
 // Singleton instances
 let recordingManager: RecordingManager | null = null;
@@ -195,6 +196,43 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
     case 'STOP_TRIGGERS':
       handleTriggerMessage(message);
       return { success: true };
+
+    case 'SHOW_AUTO_EXECUTE_NOTIFICATION': {
+      const { scriptName, scriptId, url } = message.payload as {
+        scriptName: string;
+        scriptId: string;
+        url: string;
+      };
+      showAutoExecuteNotification({
+        scriptName,
+        scriptId,
+        onStop: () => {
+          getPlaybackManager().stop();
+          console.log('[Browserlet] Execution stopped via notification');
+        },
+        onDisableSite: async () => {
+          try {
+            await chrome.runtime.sendMessage({
+              type: 'SET_SITE_OVERRIDE',
+              payload: { scriptId, url, enabled: false }
+            });
+            console.log('[Browserlet] Site disabled for script:', scriptId);
+          } catch (error) {
+            console.error('[Browserlet] Failed to disable site:', error);
+          }
+        }
+      });
+      return { success: true };
+    }
+
+    case 'SHOW_COMPLETION_NOTIFICATION': {
+      const { scriptName, success } = message.payload as {
+        scriptName: string;
+        success: boolean;
+      };
+      showCompletionNotification(scriptName, success);
+      return { success: true };
+    }
 
     default:
       return { success: false, error: `Unknown message type: ${message.type}` };
