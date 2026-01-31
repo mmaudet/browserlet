@@ -87,19 +87,66 @@ function generateIntent(action: CapturedAction, index: number): string {
 }
 
 /**
+ * Deduplicate consecutive actions on the same target
+ * Keeps only the last input/type action for each target
+ */
+function deduplicateActions(actions: CapturedAction[]): CapturedAction[] {
+  const result: CapturedAction[] = [];
+
+  for (let i = 0; i < actions.length; i++) {
+    const current = actions[i];
+    if (!current) continue;
+
+    const next = actions[i + 1];
+
+    // If this is an input action and the next one is also input on the same target,
+    // skip this one and keep the later one (which has the more complete value)
+    if (current.type === 'input' && next?.type === 'input') {
+      // Check if same target by comparing hints
+      const currentName = current.hints.find(h => h.type === 'name')?.value;
+      const nextName = next.hints.find(h => h.type === 'name')?.value;
+
+      if (currentName && currentName === nextName) {
+        // Skip this action, the next one will have more complete value
+        continue;
+      }
+    }
+
+    // Also skip click immediately followed by type on same element (redundant)
+    if (current.type === 'click' && next?.type === 'input') {
+      const currentName = current.hints.find(h => h.type === 'name')?.value;
+      const nextName = next.hints.find(h => h.type === 'name')?.value;
+
+      if (currentName && currentName === nextName) {
+        // Skip the click, the type action is sufficient
+        continue;
+      }
+    }
+
+    result.push(current);
+  }
+
+  return result;
+}
+
+/**
  * Generate basic BSL script from captured actions without LLM
  *
  * This fallback generator:
  * - Maps action types to BSL actions
  * - Uses top 3 hints from captured actions
  * - Creates basic intent descriptions
+ * - Deduplicates consecutive actions on same target
  * - Produces valid YAML output
  *
  * @param actions - Array of captured user actions
  * @returns Valid BSL YAML string
  */
 export function generateBasicBSL(actions: CapturedAction[]): string {
-  const steps: BSLStep[] = actions.map((action, index) => {
+  // Deduplicate consecutive actions on same target
+  const dedupedActions = deduplicateActions(actions);
+
+  const steps: BSLStep[] = dedupedActions.map((action, index) => {
     const stepIndex = index + 1;
     const bslAction = mapActionType(action.type);
 

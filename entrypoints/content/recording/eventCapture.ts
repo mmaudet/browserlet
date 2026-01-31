@@ -14,7 +14,7 @@ export class EventCapture {
 
   // Debounce input events to avoid capturing every keystroke
   private inputDebounceMap = new Map<Element, number>();
-  private readonly INPUT_DEBOUNCE_MS = 500;
+  private readonly INPUT_DEBOUNCE_MS = 1500; // Increased from 500ms to reduce duplicates
 
   /**
    * Start capturing events.
