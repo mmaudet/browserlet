@@ -1,3 +1,15 @@
+/**
+ * Password storage utilities.
+ *
+ * Security model:
+ * - When master password is set up: credentials encrypted with PBKDF2-derived key
+ * - When no master password: fallback to session key (v1.1 compatibility)
+ * - All encryption handled by encryption.ts (encryptApiKey/decryptApiKey)
+ *
+ * Note: If user saves a credential while vault is locked after master password setup,
+ * encryptApiKey will throw "Vault is locked" - this is correct behavior.
+ */
+
 import { encryptApiKey, decryptApiKey } from '../crypto/encryption';
 import type { StoredPassword } from './types';
 
