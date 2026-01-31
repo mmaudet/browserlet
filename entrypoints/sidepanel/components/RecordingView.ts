@@ -356,19 +356,35 @@ export function RecordingView() {
     // Status message
     StatusMessage(),
 
-    // LLM not configured warning (only when not recording and LLM not configured)
+    // LLM status indicator (always visible when not generating)
     () => {
+      if (isGeneratingBSL.val || generationStatus.val) {
+        return span();
+      }
+
       const configured = llmConfigStore.isConfigured.val && isConfigValid();
-      if (!isRecording.val && !configured && !isGeneratingBSL.val && !generationStatus.val) {
+      const provider = llmConfigStore.provider.val;
+
+      if (configured) {
+        const providerName = provider === 'claude' ? 'Claude (Anthropic)' : 'Ollama';
         return div({
-          style: 'background: #fff3cd; border: 1px solid #ffc107; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: #856404;'
+          style: 'display: flex; align-items: center; gap: 8px; background: #e8f5e9; border: 1px solid #c8e6c9; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: #2e7d32;'
         },
-          p({ style: 'margin: 0;' },
-            chrome.i18n.getMessage('llmNotConfigured') || 'LLM not configured - scripts will use basic generation'
+          span({ style: 'width: 8px; height: 8px; background: #4caf50; border-radius: 50%;' }),
+          span({},
+            chrome.i18n.getMessage('llmActive') || `LLM active: ${providerName}`
+          )
+        );
+      } else {
+        return div({
+          style: 'display: flex; align-items: center; gap: 8px; background: #fff3cd; border: 1px solid #ffc107; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: #856404;'
+        },
+          span({ style: 'width: 8px; height: 8px; background: #ff9800; border-radius: 50%;' }),
+          span({},
+            chrome.i18n.getMessage('llmNotConfiguredShort') || 'Basic mode (LLM not configured)'
           )
         );
       }
-      return span();
     },
 
     // Record button
