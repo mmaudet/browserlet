@@ -3,7 +3,7 @@
  * Allows configuring LLM provider, API keys, and model selection
  */
 
-import { signal } from '@preact/signals';
+import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import {
   llmConfigStore,
@@ -42,28 +42,28 @@ const infoStyle = { backgroundColor: '#e7f3ff', border: '1px solid #0066cc', pad
  * Provides UI for configuring LLM provider and credentials
  */
 export function LLMSettings() {
-  // Local state for feedback
-  const saveSuccess = signal(false);
-  const resetSuccess = signal(false);
-  const testingConnection = signal(false);
-  const connectionStatus = signal<string | null>(null);
-  const ollamaModels = signal<string[]>([]);
-  const loadingModels = signal(false);
+  // Local state for feedback - use useSignal() to persist across renders
+  const saveSuccess = useSignal(false);
+  const resetSuccess = useSignal(false);
+  const testingConnection = useSignal(false);
+  const connectionStatus = useSignal<string | null>(null);
+  const ollamaModels = useSignal<string[]>([]);
+  const loadingModels = useSignal(false);
 
   // OpenAI models state
-  const openaiModels = signal<string[]>([]);
-  const openaiModelsLoading = signal(false);
-  const openaiModelsStatus = signal<string | null>(null);
-  const openaiModelSearch = signal<string>('');
+  const openaiModels = useSignal<string[]>([]);
+  const openaiModelsLoading = useSignal(false);
+  const openaiModelsStatus = useSignal<string | null>(null);
+  const openaiModelSearch = useSignal<string>('');
 
   // Claude/Anthropic models state
-  const claudeModels = signal<string[]>([]);
-  const claudeModelsLoading = signal(false);
-  const claudeModelsStatus = signal<string | null>(null);
-  const claudeModelSearch = signal<string>('');
+  const claudeModels = useSignal<string[]>([]);
+  const claudeModelsLoading = useSignal(false);
+  const claudeModelsStatus = useSignal<string | null>(null);
+  const claudeModelSearch = useSignal<string>('');
 
   // Save button visibility
-  const showSaveButton = signal(false);
+  const showSaveButton = useSignal(false);
 
   // Initialize on mount
   useEffect(() => {
@@ -683,8 +683,15 @@ export function LLMSettings() {
               {formatLabelWithColon(chrome.i18n.getMessage('providerLabel') || 'Provider') + ' '}
             </span>
             <span>
-              {llmConfigStore.provider.value === 'openai' ? 'OpenAI Compatible' :
-               llmConfigStore.provider.value === 'claude' ? 'Anthropic (Claude)' : 'Ollama'}
+              {(() => {
+                const provider = llmConfigStore.provider.value;
+                const providerName = provider === 'openai' ? 'OpenAI Compatible' :
+                                     provider === 'claude' ? 'Anthropic (Claude)' : 'Ollama';
+                const modelName = provider === 'openai' ? llmConfigStore.openaiModel.value :
+                                  provider === 'claude' ? llmConfigStore.claudeModel.value :
+                                  llmConfigStore.ollamaModel.value;
+                return modelName ? `${providerName} - ${modelName}` : providerName;
+              })()}
             </span>
           </div>
         </div>

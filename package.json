@@ -44,7 +44,6 @@
     "monaco-yaml": "^5.4.0",
     "ollama": "^0.6.3",
     "preact": "^10.28.2",
-    "vanjs-core": "^1.6.0",
     "vite-plugin-monaco-editor": "^1.1.0"
   }
 }
