@@ -7,6 +7,11 @@
 // Parser utilities
 import { parseSteps, parseTimeout } from '../../../utils/yaml/stepParser';
 
+// Password utilities for credential validation
+import { extractCredentialRefs } from '../../../utils/passwords/substitution';
+import { getVaultState } from '../../../utils/passwords/vault';
+import { getPasswords } from '../../../utils/passwords/storage';
+
 // Types
 import type {
   PlaybackState,
@@ -187,6 +192,46 @@ export class PlaybackManager {
         status: 'failed',
         error: message,
       };
+    }
+
+    // Pre-flight credential validation: extract all credential references from all steps
+    const allCredentialNames = new Set<string>();
+    for (const step of this.script.steps) {
+      if (step.value) {
+        const refs = extractCredentialRefs(step.value);
+        refs.forEach(ref => allCredentialNames.add(ref.name));
+      }
+    }
+
+    // If credentials are needed, validate vault and credentials exist
+    if (allCredentialNames.size > 0) {
+      // Check vault is unlocked
+      const vaultState = await getVaultState();
+      if (vaultState.isLocked) {
+        this.emit({ type: 'auth_required' });
+        return {
+          status: 'failed',
+          error: 'Password vault is locked. Unlock the vault to run scripts with credential references.',
+        };
+      }
+
+      // Fetch all passwords and validate references
+      const passwords = await getPasswords();
+      const passwordIds = new Set(passwords.map(p => p.id));
+
+      const missing: string[] = [];
+      for (const credName of allCredentialNames) {
+        if (!passwordIds.has(credName)) {
+          missing.push(credName);
+        }
+      }
+
+      if (missing.length > 0) {
+        return {
+          status: 'failed',
+          error: `Missing credentials: ${missing.join(', ')}. Add these in the Credential Manager before running this script.`,
+        };
+      }
     }
 
     // Set up abort controller for stop functionality
