@@ -9,8 +9,7 @@ import type { BSLStep, SemanticHint } from './types';
 import { waitForElement } from './semanticResolver';
 
 // Password utilities for credential injection
-import { substituteCredentials, extractCredentialRefs } from '../../../utils/passwords/substitution';
-import type { StoredPassword } from '../../../utils/passwords/types';
+import { extractCredentialRefs } from '../../../utils/passwords/substitution';
 
 /**
  * Execute a click action on an element (ACT-01)
@@ -323,11 +322,16 @@ export class ActionExecutor {
         const credRefs = extractCredentialRefs(step.value);
 
         if (credRefs.length > 0) {
-          // Fetch passwords via messaging (content scripts can't access storage directly)
+          // Substitute credentials via background (content scripts can't access storage)
           // Note: Pre-flight check in PlaybackManager already validated credentials exist
-          const passwordsResponse = await chrome.runtime.sendMessage({ type: 'GET_PASSWORDS' });
-          const passwords = (passwordsResponse?.data as StoredPassword[]) || [];
-          valueToType = await substituteCredentials(step.value, passwords);
+          const response = await chrome.runtime.sendMessage({
+            type: 'SUBSTITUTE_CREDENTIALS',
+            payload: step.value
+          });
+          if (!response?.success) {
+            throw new Error(response?.error || 'Failed to substitute credentials');
+          }
+          valueToType = response.data as string;
         }
 
         return executeType(element, valueToType, this.config);

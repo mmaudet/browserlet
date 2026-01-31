@@ -48,7 +48,9 @@ export type MessageType =
   // Content script password capture (sent directly to content script)
   | 'GET_CAPTURED_PASSWORDS'
   | 'START_PASSWORD_CAPTURE'
-  | 'STOP_PASSWORD_CAPTURE';
+  | 'STOP_PASSWORD_CAPTURE'
+  // Credential substitution (for content script playback)
+  | 'SUBSTITUTE_CREDENTIALS';
 
 export interface Message {
   type: MessageType;

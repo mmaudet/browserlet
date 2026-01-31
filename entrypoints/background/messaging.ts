@@ -235,7 +235,8 @@ async function processMessage(
     case 'GET_PASSWORDS':
     case 'SAVE_PASSWORD':
     case 'SAVE_PASSWORDS':
-    case 'DELETE_PASSWORD': {
+    case 'DELETE_PASSWORD':
+    case 'SUBSTITUTE_CREDENTIALS': {
       const result = await handlePasswordMessage(message.type, message.payload);
       return result;
     }

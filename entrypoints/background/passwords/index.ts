@@ -1,5 +1,6 @@
 import { getPasswords, savePassword, deletePassword } from '../../../utils/passwords/storage';
 import { getVaultState, unlockVault, lockVault } from '../../../utils/passwords/vault';
+import { substituteCredentials } from '../../../utils/passwords/substitution';
 import { resetAutoLockTimer, clearAutoLockTimer, setupAutoLockListener } from './autoLock';
 import type { DetectedPassword } from '../../../utils/passwords/types';
 
@@ -63,6 +64,13 @@ export async function handlePasswordMessage(
         const id = payload as string;
         await deletePassword(id);
         return { success: true };
+      }
+
+      case 'SUBSTITUTE_CREDENTIALS': {
+        const text = payload as string;
+        const passwords = await getPasswords();
+        const substituted = await substituteCredentials(text, passwords);
+        return { success: true, data: substituted };
       }
 
       default:
