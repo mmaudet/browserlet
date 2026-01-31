@@ -19,7 +19,7 @@ const { div, button, span, nav } = van.tags;
 
 // Navigation tabs
 function NavTabs() {
-  const tabs: Array<{ id: typeof currentView.val; label: string; icon: string }> = [
+  const tabs: Array<{ id: typeof currentView.value; label: string; icon: string }> = [
     { id: 'list', label: chrome.i18n.getMessage('scripts') || 'Scripts', icon: '📋' },
     { id: 'recording', label: chrome.i18n.getMessage('record') || 'Record', icon: '🔴' },
     { id: 'execution', label: chrome.i18n.getMessage('run') || 'Run', icon: '▶️' }
@@ -31,12 +31,12 @@ function NavTabs() {
     ...tabs.map(tab =>
       button({
         style: () => `flex: 1; padding: 12px 8px; border: none; background: none; cursor: pointer; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; ${
-          currentView.val === tab.id || (currentView.val === 'editor' && tab.id === 'list')
+          currentView.value === tab.id || (currentView.value === 'editor' && tab.id === 'list')
             ? 'color: #4285f4; border-bottom: 2px solid #4285f4;'
             : 'color: #666;'
         }`,
         onclick: () => {
-          if (currentView.val === 'editor') {
+          if (currentView.value === 'editor') {
             disposeEditor();
           }
           navigateTo(tab.id);
@@ -96,7 +96,7 @@ function App() {
     // Suggested scripts (contextual triggers)
     // Always render container, use style binding for visibility (VanJS reactivity pattern)
     div({
-      style: () => suggestedScriptIds.val.length > 0
+      style: () => suggestedScriptIds.value.length > 0
         ? 'padding: 8px 16px; background: #e3f2fd; border-bottom: 1px solid #90caf9;'
         : 'display: none;'
     },
@@ -121,7 +121,7 @@ function App() {
     // Content area
     div({ style: 'flex: 1; overflow: hidden; display: flex; flex-direction: column;' },
       () => {
-        const view = currentView.val;
+        const view = currentView.value;
 
         if (view === 'list') {
           return ScriptList({
@@ -131,7 +131,7 @@ function App() {
         }
 
         if (view === 'editor') {
-          const script = editorScript.val;
+          const script = editorScript.value;
           if (!script) {
             navigateTo('list');
             return div();
@@ -150,7 +150,7 @@ function App() {
               }, '← ' + (chrome.i18n.getMessage('back') || 'Back')),
               // Export button with reactive script getter
               () => {
-                const currentScript = editorScript.val;
+                const currentScript = editorScript.value;
                 return currentScript
                   ? div({ style: 'display: flex; gap: 8px;' }, ExportButton({ script: currentScript }))
                   : div();
@@ -162,7 +162,7 @@ function App() {
                 script,
                 onSave: (updated) => {
                   // Update editorScript so export gets latest version
-                  editorScript.val = updated;
+                  editorScript.value = updated;
                 }
               })
             )
@@ -220,13 +220,13 @@ async function init() {
   // Load triggers for context-aware suggestions
   console.log('[Browserlet Sidepanel] Loading triggers...');
   await loadTriggers();
-  console.log('[Browserlet Sidepanel] Triggers loaded, suggestedScriptIds:', suggestedScriptIds.val);
+  console.log('[Browserlet Sidepanel] Triggers loaded, suggestedScriptIds:', suggestedScriptIds.value);
 
   // Load LLM configuration from storage
   try {
     await loadLLMConfig();
     // If API key needs re-entry after browser restart, log it
-    if (llmConfigStore.needsApiKey.val) {
+    if (llmConfigStore.needsApiKey.value) {
       console.log('LLM API key needs re-entry after browser restart');
     }
   } catch (error) {
