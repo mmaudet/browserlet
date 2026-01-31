@@ -87,26 +87,28 @@ export async function getOrCreateSessionKey(): Promise<CryptoKey> {
 }
 
 /**
- * Encrypt an API key for secure storage.
+ * Encrypt plaintext using a provided CryptoKey.
  *
- * @param apiKey - The plaintext API key to encrypt
+ * This is the core encryption function that can be used with any AES-GCM key,
+ * including session keys and master password-derived keys.
+ *
+ * @param plaintext - The plaintext string to encrypt
+ * @param key - CryptoKey for AES-GCM encryption
  * @returns EncryptedData with base64-encoded ciphertext and IV
  */
-export async function encryptApiKey(apiKey: string): Promise<EncryptedData> {
-  const key = await getOrCreateSessionKey();
-
+export async function encryptWithKey(plaintext: string, key: CryptoKey): Promise<EncryptedData> {
   // Generate random IV (12 bytes / 96 bits for AES-GCM)
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
 
-  // Encode API key as UTF-8 bytes
+  // Encode plaintext as UTF-8 bytes
   const encoder = new TextEncoder();
-  const plaintext = encoder.encode(apiKey);
+  const plaintextBytes = encoder.encode(plaintext);
 
   // Encrypt
   const ciphertext = await crypto.subtle.encrypt(
     { name: ALGORITHM, iv },
     key,
-    plaintext
+    plaintextBytes
   );
 
   return {
@@ -116,7 +118,52 @@ export async function encryptApiKey(apiKey: string): Promise<EncryptedData> {
 }
 
 /**
+ * Decrypt data using a provided CryptoKey.
+ *
+ * This is the core decryption function that can be used with any AES-GCM key,
+ * including session keys and master password-derived keys.
+ *
+ * @param data - EncryptedData with base64-encoded ciphertext and IV
+ * @param key - CryptoKey for AES-GCM decryption
+ * @returns The decrypted plaintext string
+ * @throws Error if decryption fails (e.g., wrong key)
+ */
+export async function decryptWithKey(data: EncryptedData, key: CryptoKey): Promise<string> {
+  // Decode base64 data
+  const ciphertext = base64ToBuffer(data.ciphertext);
+  const iv = new Uint8Array(base64ToBuffer(data.iv));
+
+  // Decrypt
+  const plaintext = await crypto.subtle.decrypt(
+    { name: ALGORITHM, iv },
+    key,
+    ciphertext
+  );
+
+  // Decode UTF-8 bytes to string
+  const decoder = new TextDecoder();
+  return decoder.decode(plaintext);
+}
+
+/**
+ * Encrypt an API key for secure storage.
+ *
+ * Uses the session key for encryption. This maintains backward compatibility
+ * with existing code that uses session-based encryption.
+ *
+ * @param apiKey - The plaintext API key to encrypt
+ * @returns EncryptedData with base64-encoded ciphertext and IV
+ */
+export async function encryptApiKey(apiKey: string): Promise<EncryptedData> {
+  const key = await getOrCreateSessionKey();
+  return encryptWithKey(apiKey, key);
+}
+
+/**
  * Decrypt an API key from encrypted storage.
+ *
+ * Uses the session key for decryption. This maintains backward compatibility
+ * with existing code that uses session-based encryption.
  *
  * @param data - EncryptedData with base64-encoded ciphertext and IV
  * @returns The decrypted plaintext API key
@@ -125,21 +172,8 @@ export async function encryptApiKey(apiKey: string): Promise<EncryptedData> {
 export async function decryptApiKey(data: EncryptedData): Promise<string> {
   const key = await getOrCreateSessionKey();
 
-  // Decode base64 data
-  const ciphertext = base64ToBuffer(data.ciphertext);
-  const iv = new Uint8Array(base64ToBuffer(data.iv));
-
   try {
-    // Decrypt
-    const plaintext = await crypto.subtle.decrypt(
-      { name: ALGORITHM, iv },
-      key,
-      ciphertext
-    );
-
-    // Decode UTF-8 bytes to string
-    const decoder = new TextDecoder();
-    return decoder.decode(plaintext);
+    return await decryptWithKey(data, key);
   } catch (error) {
     throw new Error(
       'Failed to decrypt API key. The session key may have changed after browser restart. ' +
