@@ -23,6 +23,9 @@ interface StoredLLMConfig {
   ollamaHost?: string;
   ollamaModel?: string;
   encryptedApiKey?: EncryptedData;
+  openaiEndpoint?: string;
+  openaiModel?: string;
+  encryptedOpenaiApiKey?: EncryptedData;
 }
 
 /**
@@ -39,6 +42,12 @@ export const llmConfigStore = {
   ollamaHost: van.state<string>('http://localhost:11434'),
   /** Ollama model name */
   ollamaModel: van.state<string>('llama3.1'),
+  /** OpenAI-compatible API endpoint */
+  openaiEndpoint: van.state<string>('https://api.openai.com/v1/chat/completions'),
+  /** Decrypted OpenAI API key (in memory only) */
+  openaiApiKey: van.state<string>(''),
+  /** OpenAI-compatible model name */
+  openaiModel: van.state<string>('gpt-4o'),
   /** Whether LLM is configured and ready */
   isConfigured: van.state<boolean>(false),
   /** True if encrypted key exists but can't decrypt (new session key) */
@@ -68,6 +77,8 @@ export async function loadLLMConfig(): Promise<void> {
   llmConfigStore.claudeModel.val = stored.claudeModel ?? 'claude-sonnet-4-5-20250929';
   llmConfigStore.ollamaHost.val = stored.ollamaHost ?? 'http://localhost:11434';
   llmConfigStore.ollamaModel.val = stored.ollamaModel ?? 'llama3.1';
+  llmConfigStore.openaiEndpoint.val = stored.openaiEndpoint ?? 'https://api.openai.com/v1/chat/completions';
+  llmConfigStore.openaiModel.val = stored.openaiModel ?? 'gpt-4o';
 
   // Handle API key decryption for Claude
   if (stored.provider === 'claude' && stored.encryptedApiKey) {
@@ -86,6 +97,18 @@ export async function loadLLMConfig(): Promise<void> {
     // Ollama doesn't need credentials
     llmConfigStore.needsApiKey.val = false;
     llmConfigStore.isConfigured.val = true;
+  } else if (stored.provider === 'openai' && stored.encryptedOpenaiApiKey) {
+    try {
+      const decrypted = await decryptApiKey(stored.encryptedOpenaiApiKey);
+      llmConfigStore.openaiApiKey.val = decrypted;
+      llmConfigStore.needsApiKey.val = false;
+      llmConfigStore.isConfigured.val = true;
+    } catch {
+      // Decryption failed - likely new session key after browser restart
+      llmConfigStore.openaiApiKey.val = '';
+      llmConfigStore.needsApiKey.val = true;
+      llmConfigStore.isConfigured.val = false;
+    }
   }
 }
 
@@ -93,29 +116,40 @@ export async function loadLLMConfig(): Promise<void> {
  * Save LLM configuration to storage
  * Encrypts API key before storing
  * Also sends CONFIGURE_LLM message to service worker
+ * @param providerOverride - Optional provider override (workaround for VanJS cross-module state issues)
  */
-export async function saveLLMConfig(): Promise<void> {
+export async function saveLLMConfig(providerOverride?: ProviderName): Promise<void> {
   llmConfigStore.isSaving.val = true;
   llmConfigStore.saveError.val = null;
 
+  // Use override if provided, otherwise fall back to store value
+  const provider = providerOverride ?? llmConfigStore.provider.val;
+
   try {
     const storedConfig: StoredLLMConfig = {
-      provider: llmConfigStore.provider.val,
+      provider: provider,
       claudeModel: llmConfigStore.claudeModel.val,
       ollamaHost: llmConfigStore.ollamaHost.val,
       ollamaModel: llmConfigStore.ollamaModel.val,
+      openaiEndpoint: llmConfigStore.openaiEndpoint.val,
+      openaiModel: llmConfigStore.openaiModel.val,
     };
 
     // Encrypt API key if Claude provider and key is provided
-    if (llmConfigStore.provider.val === 'claude' && llmConfigStore.claudeApiKey.val) {
+    if (provider === 'claude' && llmConfigStore.claudeApiKey.val) {
       storedConfig.encryptedApiKey = await encryptApiKey(llmConfigStore.claudeApiKey.val);
+    }
+
+    // Encrypt API key if OpenAI provider and key is provided
+    if (provider === 'openai' && llmConfigStore.openaiApiKey.val) {
+      storedConfig.encryptedOpenaiApiKey = await encryptApiKey(llmConfigStore.openaiApiKey.val);
     }
 
     // Save to storage
     await chrome.storage.local.set({ [STORAGE_KEY]: storedConfig });
 
     // Configure the LLM service in the service worker
-    const config = getLLMConfigForServiceWorker();
+    const config = getLLMConfigForServiceWorker(provider);
     const response = await chrome.runtime.sendMessage({
       type: 'CONFIGURE_LLM',
       payload: config,
@@ -139,14 +173,19 @@ export async function saveLLMConfig(): Promise<void> {
 /**
  * Get LLM configuration for sending to service worker
  * Includes decrypted API key (for in-memory use only)
+ * @param providerOverride - Optional provider override (workaround for VanJS cross-module state issues)
  */
-export function getLLMConfigForServiceWorker(): LLMConfig {
+export function getLLMConfigForServiceWorker(providerOverride?: ProviderName): LLMConfig {
+  const provider = providerOverride ?? llmConfigStore.provider.val;
   return {
-    provider: llmConfigStore.provider.val,
-    claudeApiKey: llmConfigStore.provider.val === 'claude' ? llmConfigStore.claudeApiKey.val : undefined,
+    provider: provider,
+    claudeApiKey: provider === 'claude' ? llmConfigStore.claudeApiKey.val : undefined,
     claudeModel: llmConfigStore.claudeModel.val,
     ollamaHost: llmConfigStore.ollamaHost.val,
     ollamaModel: llmConfigStore.ollamaModel.val,
+    openaiEndpoint: llmConfigStore.openaiEndpoint.val,
+    openaiApiKey: provider === 'openai' ? llmConfigStore.openaiApiKey.val : undefined,
+    openaiModel: llmConfigStore.openaiModel.val,
   };
 }
 
@@ -157,6 +196,9 @@ export function getLLMConfigForServiceWorker(): LLMConfig {
 export function isConfigValid(): boolean {
   if (llmConfigStore.provider.val === 'claude') {
     return !!llmConfigStore.claudeApiKey.val;
+  }
+  if (llmConfigStore.provider.val === 'openai') {
+    return !!llmConfigStore.openaiApiKey.val && !!llmConfigStore.openaiEndpoint.val;
   }
   return true; // Ollama doesn't require credentials
 }
@@ -175,6 +217,9 @@ export async function resetLLMConfig(): Promise<void> {
   llmConfigStore.claudeModel.val = 'claude-sonnet-4-5-20250929';
   llmConfigStore.ollamaHost.val = 'http://localhost:11434';
   llmConfigStore.ollamaModel.val = 'llama3.1';
+  llmConfigStore.openaiEndpoint.val = 'https://api.openai.com/v1/chat/completions';
+  llmConfigStore.openaiApiKey.val = '';
+  llmConfigStore.openaiModel.val = 'gpt-4o';
   llmConfigStore.isConfigured.val = false;
   llmConfigStore.needsApiKey.val = false;
   llmConfigStore.saveError.val = null;

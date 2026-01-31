@@ -20,8 +20,8 @@
     "description": "Message quand aucun script ne correspond a la recherche"
   },
   "createNewScript": {
-    "message": "Creer un nouveau script",
-    "description": "Bouton pour creer un nouveau script"
+    "message": "Créer un nouveau script",
+    "description": "Bouton pour créer un nouveau script"
   },
   "recordingTitle": {
     "message": "Enregistrement",
@@ -36,8 +36,8 @@
     "description": "Bouton pour demarrer l'enregistrement"
   },
   "stopRecording": {
-    "message": "Arreter l'enregistrement",
-    "description": "Bouton pour arreter l'enregistrement"
+    "message": "Arrêter l'enregistrement",
+    "description": "Bouton pour arrêter l'enregistrement"
   },
   "pauseRecording": {
     "message": "Mettre en pause",
@@ -95,15 +95,15 @@
   },
   "runScript": {
     "message": "Executer le script",
-    "description": "Bouton pour executer le script"
+    "description": "Bouton pour exécuter le script"
   },
   "stopExecution": {
-    "message": "Arreter",
-    "description": "Bouton pour arreter l'execution"
+    "message": "Arrêter",
+    "description": "Bouton pour arrêter l'execution"
   },
   "executionRunning": {
     "message": "Execution en cours...",
-    "description": "Statut quand le script s'execute"
+    "description": "Statut quand le script s'exécute"
   },
   "executionStep": {
     "message": "Etape $CURRENT$ sur $TOTAL$",
@@ -120,12 +120,12 @@
     }
   },
   "executionComplete": {
-    "message": "Execution terminee",
-    "description": "Statut quand l'execution est terminee"
+    "message": "Exécution terminée",
+    "description": "Statut quand l'exécution est terminée"
   },
   "executionFailed": {
-    "message": "Execution echouee",
-    "description": "Statut quand l'execution a echoue"
+    "message": "Exécution échouée",
+    "description": "Statut quand l'exécution a échoué"
   },
   "copyJson": {
     "message": "Copier JSON",
@@ -208,15 +208,15 @@
     "description": "Titre erreur"
   },
   "success": {
-    "message": "Succes",
-    "description": "Titre succes"
+    "message": "Succès",
+    "description": "Titre succès"
   },
   "warning": {
     "message": "Attention",
     "description": "Titre avertissement"
   },
   "deleteScriptConfirm": {
-    "message": "Etes-vous sur de vouloir supprimer ce script ?",
+    "message": "Êtes-vous sûr de vouloir supprimer ce script ?",
     "description": "Message de confirmation pour la suppression d'un script"
   },
   "discardChangesConfirm": {
@@ -229,7 +229,7 @@
   },
   "lastSaved": {
     "message": "Enregistre",
-    "description": "Statut quand le script a ete enregistre"
+    "description": "Statut quand le script a été enregistré"
   },
   "scripts": {
     "message": "Scripts",
@@ -272,7 +272,7 @@
     "description": "Indication pour la vue d'execution"
   },
   "noPage": {
-    "message": "Aucune page detectee",
+    "message": "Aucune page détectée",
     "description": "Quand aucun onglet actif n'est trouve"
   },
   "newScript": {
@@ -284,7 +284,7 @@
     "description": "Quand la recherche ne retourne aucun resultat"
   },
   "noScripts": {
-    "message": "Aucun script. Creez-en un pour commencer !",
+    "message": "Aucun script. Créez-en un pour commencer !",
     "description": "Quand la liste des scripts est vide"
   },
   "import": {
@@ -301,7 +301,7 @@
   },
   "exportFailed": {
     "message": "Echec de l'export",
-    "description": "Erreur quand l'export echoue"
+    "description": "Erreur quand l'export échoue"
   },
   "waitingAuth": {
     "message": "En attente d'authentification...",
@@ -316,44 +316,44 @@
     "description": "Message expliquant la reprise automatique apres auth"
   },
   "settings": {
-    "message": "Parametres",
-    "description": "Bouton/titre de la vue parametres"
+    "message": "Paramètres",
+    "description": "Bouton/titre de la vue paramètres"
   },
   "llmSettingsTitle": {
     "message": "Configuration LLM",
-    "description": "Titre de la section parametres LLM"
+    "description": "Titre de la section paramètres LLM"
   },
   "llmProvider": {
     "message": "Fournisseur LLM",
     "description": "Libelle pour la selection du fournisseur LLM"
   },
   "apiKey": {
-    "message": "Cle API",
-    "description": "Libelle pour le champ de cle API"
+    "message": "Clé API",
+    "description": "Libellé pour le champ de clé API"
   },
   "apiKeyHint": {
-    "message": "Obtenez votre cle API sur console.anthropic.com",
-    "description": "Indication pour obtenir la cle API"
+    "message": "Obtenez votre clé API sur console.anthropic.com",
+    "description": "Indication pour obtenir la clé API"
   },
   "apiKeyRequired": {
-    "message": "Cle API requise",
-    "description": "Titre quand la cle API est necessaire"
+    "message": "Clé API requise",
+    "description": "Titre quand la clé API est nécessaire"
   },
   "apiKeyExpired": {
-    "message": "Votre cle API doit etre ressaisie apres le redemarrage du navigateur.",
-    "description": "Message expliquant l'expiration de la cle de session"
+    "message": "Votre clé API doit être ressaisie après le redémarrage du navigateur.",
+    "description": "Message expliquant l'expiration de la clé de session"
   },
   "llmModel": {
-    "message": "Modele",
-    "description": "Libelle pour la selection du modele"
+    "message": "Modèle",
+    "description": "Libellé pour la sélection du modèle"
   },
   "ollamaHost": {
     "message": "Hote Ollama",
     "description": "Libelle pour l'URL de l'hote Ollama"
   },
   "ollamaModel": {
-    "message": "Nom du modele",
-    "description": "Libelle pour le nom du modele Ollama"
+    "message": "Nom du modèle",
+    "description": "Libelle pour le nom du modèle Ollama"
   },
   "testConnection": {
     "message": "Tester la connexion",
@@ -364,15 +364,15 @@
     "description": "Statut pendant le test de connexion"
   },
   "saveSettings": {
-    "message": "Enregistrer les parametres",
-    "description": "Bouton pour enregistrer les parametres LLM"
+    "message": "Enregistrer les paramètres",
+    "description": "Bouton pour enregistrer les paramètres LLM"
   },
   "settingsSaved": {
-    "message": "Parametres enregistres avec succes !",
-    "description": "Message quand les parametres sont enregistres"
+    "message": "Paramètres enregistrés avec succès !",
+    "description": "Message quand les paramètres sont enregistrés"
   },
   "sessionKeyNote": {
-    "message": "Note : Votre cle API est chiffree et stockee localement. Apres le redemarrage du navigateur, vous devrez ressaisir votre cle API pour des raisons de securite.",
+    "message": "Note : Votre clé API est chiffrée et stockée localement. Après le redémarrage du navigateur, vous devrez ressaisir votre clé API pour des raisons de sécurité.",
     "description": "Note expliquant le comportement de la cle API de session"
   },
   "generatingBSL": {
@@ -380,12 +380,12 @@
     "description": "Statut pendant la generation du BSL depuis l'enregistrement"
   },
   "generatedWithLLM": {
-    "message": "Genere avec LLM",
-    "description": "Indicateur que le script a ete genere avec le LLM"
+    "message": "Généré avec LLM",
+    "description": "Indicateur que le script a été généré avec le LLM"
   },
   "generatedBasic": {
-    "message": "Genere (mode basique)",
-    "description": "Indicateur que le script a ete genere sans LLM"
+    "message": "Généré (mode basique)",
+    "description": "Indicateur que le script a été généré sans LLM"
   },
   "llmConfigured": {
     "message": "Utilisation du fournisseur LLM configure",
@@ -412,20 +412,20 @@
     "description": "Libelle pour le fournisseur"
   },
   "loadModelsHint": {
-    "message": "Cliquez sur \"Tester la connexion\" pour charger les modeles disponibles",
+    "message": "Cliquez sur \"Tester la connexion\" pour charger les modèles disponibles",
     "description": "Indication pour charger les modeles Ollama"
   },
   "resetSettings": {
-    "message": "Reinitialiser",
-    "description": "Bouton pour reinitialiser les parametres LLM"
+    "message": "Réinitialiser",
+    "description": "Bouton pour réinitialiser les paramètres LLM"
   },
   "resetConfirm": {
-    "message": "Etes-vous sur de vouloir reinitialiser tous les parametres LLM ?",
-    "description": "Message de confirmation pour la reinitialisation"
+    "message": "Êtes-vous sûr de vouloir réinitialiser tous les paramètres LLM ?",
+    "description": "Message de confirmation pour la réinitialisation"
   },
   "resetSuccess": {
-    "message": "Configuration reinitialisee avec succes !",
-    "description": "Message apres reinitialisation reussie"
+    "message": "Configuration réinitialisée avec succès !",
+    "description": "Message après réinitialisation réussie"
   },
   "triggerConfigTitle": {
     "message": "Configuration des triggers",
@@ -448,7 +448,7 @@
     "description": "Option mode suggestion"
   },
   "triggerModeAutoExecute": {
-    "message": "Auto-executer",
+    "message": "Auto-exécuter",
     "description": "Option mode auto-execution"
   },
   "triggerModeLabel": {
@@ -481,7 +481,7 @@
   },
   "suggestedScriptRun": {
     "message": "Executer",
-    "description": "Bouton executer script suggere"
+    "description": "Bouton exécuter script suggéré"
   },
   "notificationAutoExecuteTitle": {
     "message": "Script en auto-execution",
@@ -492,23 +492,87 @@
     "description": "Message notification avec nom du script"
   },
   "notificationStop": {
-    "message": "Arreter",
-    "description": "Bouton arreter dans notification"
+    "message": "Arrêter",
+    "description": "Bouton arrêter dans notification"
   },
   "notificationDisableSite": {
     "message": "Desactiver pour ce site",
     "description": "Bouton desactiver pour ce site"
   },
   "notificationCompleteTitle": {
-    "message": "Script termine",
+    "message": "Script terminé",
     "description": "Titre notification completion"
   },
   "notificationFailedTitle": {
-    "message": "Script echoue",
+    "message": "Script échoué",
     "description": "Titre notification echec"
   },
   "triggerCooldown": {
-    "message": "Delai de refroidissement (minutes)",
-    "description": "Label pour le parametre de cooldown"
+    "message": "Délai de refroidissement (minutes)",
+    "description": "Label pour le paramètre de cooldown"
+  },
+  "fetchModels": {
+    "message": "Récupérer les modèles",
+    "description": "Bouton pour récupérer la liste des modèles disponibles"
+  },
+  "loadingModels": {
+    "message": "Chargement des modèles...",
+    "description": "Statut pendant le chargement des modèles"
+  },
+  "searchModels": {
+    "message": "Rechercher un modèle...",
+    "description": "Placeholder pour la recherche de modèles"
+  },
+  "fetchModelsHint": {
+    "message": "Cliquez sur \"Récupérer les modèles\" pour charger la liste",
+    "description": "Indication pour récupérer les modèles"
+  },
+  "openaiEndpoint": {
+    "message": "Endpoint API",
+    "description": "Libellé pour l'endpoint OpenAI"
+  },
+  "openaiEndpointHint": {
+    "message": "Endpoint chat completions (OpenAI, Azure, OpenRouter, etc.)",
+    "description": "Indication pour l'endpoint"
+  },
+  "openaiModel": {
+    "message": "Modèle",
+    "description": "Libellé pour le modèle OpenAI"
+  },
+  "openaiModelHint": {
+    "message": "Nom du modèle (ex: gpt-4o, gpt-4-turbo, claude-3-5-sonnet)",
+    "description": "Indication pour le nom du modèle"
+  },
+  "openaiNote": {
+    "message": "Note : Fonctionne avec toute API compatible OpenAI (OpenAI, Azure OpenAI, OpenRouter, LLMs locaux). Votre clé API est chiffrée et stockée localement.",
+    "description": "Note explicative pour le provider OpenAI"
+  },
+  "dangerZone": {
+    "message": "Zone de danger",
+    "description": "Titre de la section danger"
+  },
+  "resetWarning": {
+    "message": "Ceci supprimera définitivement TOUTES les données de l'extension : scripts, paramètres, triggers et historique.",
+    "description": "Avertissement pour la réinitialisation"
+  },
+  "resetAllData": {
+    "message": "Réinitialiser toutes les données",
+    "description": "Bouton pour réinitialiser toutes les données"
+  },
+  "resetConfirmFull": {
+    "message": "ATTENTION : Ceci supprimera TOUTES vos données :\n\n- Tous les scripts sauvegardés\n- Configuration LLM\n- Paramètres des triggers\n- Historique d'exécution\n- Actions enregistrées\n\nCette action est irréversible. Continuer ?",
+    "description": "Message de confirmation pour la réinitialisation complète"
+  },
+  "languageLabel": {
+    "message": "Langue",
+    "description": "Libellé pour le sélecteur de langue"
+  },
+  "languageHint": {
+    "message": "Redémarrage de l'extension nécessaire pour appliquer le changement",
+    "description": "Indication pour le changement de langue"
+  },
+  "recordingNotAvailable": {
+    "message": "Enregistrement non disponible sur cette page (pages du navigateur, PDF ou extensions non supportés)",
+    "description": "Erreur lors de la tentative d'enregistrement sur des pages non supportées"
   }
 }

@@ -510,5 +510,69 @@
   "triggerCooldown": {
     "message": "Cooldown (minutes)",
     "description": "Label for cooldown setting"
+  },
+  "fetchModels": {
+    "message": "Fetch Available Models",
+    "description": "Button to fetch available models list"
+  },
+  "loadingModels": {
+    "message": "Loading models...",
+    "description": "Status while loading models"
+  },
+  "searchModels": {
+    "message": "Search models...",
+    "description": "Placeholder for model search"
+  },
+  "fetchModelsHint": {
+    "message": "Click \"Fetch Available Models\" to load the model list",
+    "description": "Hint to fetch models"
+  },
+  "openaiEndpoint": {
+    "message": "API Endpoint",
+    "description": "Label for OpenAI endpoint"
+  },
+  "openaiEndpointHint": {
+    "message": "Chat completions endpoint (OpenAI, Azure, OpenRouter, etc.)",
+    "description": "Hint for endpoint"
+  },
+  "openaiModel": {
+    "message": "Model",
+    "description": "Label for OpenAI model"
+  },
+  "openaiModelHint": {
+    "message": "Model name (e.g., gpt-4o, gpt-4-turbo, claude-3-5-sonnet)",
+    "description": "Hint for model name"
+  },
+  "openaiNote": {
+    "message": "Note: Works with any OpenAI-compatible API (OpenAI, Azure OpenAI, OpenRouter, local LLMs). Your API key is encrypted and stored locally.",
+    "description": "Explanatory note for OpenAI provider"
+  },
+  "dangerZone": {
+    "message": "Danger Zone",
+    "description": "Title for danger section"
+  },
+  "resetWarning": {
+    "message": "This will permanently delete ALL extension data: scripts, settings, triggers, and history.",
+    "description": "Warning for reset"
+  },
+  "resetAllData": {
+    "message": "Reset All Data",
+    "description": "Button to reset all data"
+  },
+  "resetConfirmFull": {
+    "message": "WARNING: This will delete ALL your data:\n\n- All saved scripts\n- LLM configuration\n- Trigger settings\n- Execution history\n- Recorded actions\n\nThis cannot be undone. Continue?",
+    "description": "Confirmation message for full reset"
+  },
+  "languageLabel": {
+    "message": "Language",
+    "description": "Label for language selector"
+  },
+  "languageHint": {
+    "message": "Extension restart required to apply change",
+    "description": "Hint for language change"
+  },
+  "recordingNotAvailable": {
+    "message": "Recording not available on this page (browser pages, PDFs, or extensions are not supported)",
+    "description": "Error when trying to record on unsupported pages"
   }
 }

@@ -242,6 +242,28 @@ export async function toggleRecording(): Promise<void> {
     } else {
       // Start recording - clear previous state
       generationStatus.val = null;
+
+      // First, check if we can communicate with the active tab
+      try {
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (activeTab?.id) {
+          try {
+            await chrome.tabs.sendMessage(activeTab.id, { type: 'PING' });
+          } catch {
+            // Content script not available on this page
+            generationStatus.val = {
+              type: 'error',
+              message: chrome.i18n.getMessage('recordingNotAvailable') ||
+                'Recording not available on this page (browser pages, PDFs, or extensions are not supported)'
+            };
+            return;
+          }
+        }
+      } catch (error) {
+        console.warn('Could not check active tab:', error);
+        // Continue anyway - the service worker will broadcast to all tabs
+      }
+
       await chrome.runtime.sendMessage({
         type: 'SET_STATE',
         payload: { recordedActions: [] }
@@ -367,7 +389,8 @@ export function RecordingView() {
       const needsApiKey = llmConfigStore.needsApiKey.val;
 
       if (configured) {
-        const providerName = provider === 'claude' ? 'Claude (Anthropic)' : 'Ollama';
+        const providerName = provider === 'openai' ? 'OpenAI Compatible' :
+                             provider === 'claude' ? 'Claude (Anthropic)' : 'Ollama';
         return div({
           style: 'display: flex; align-items: center; gap: 8px; background: #e8f5e9; border: 1px solid #c8e6c9; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: #2e7d32;'
         },
