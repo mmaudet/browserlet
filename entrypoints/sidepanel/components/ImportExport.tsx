@@ -1,11 +1,10 @@
-import van from 'vanjs-core';
+import { useRef } from 'preact/hooks';
+import { signal } from '@preact/signals';
 import { saveAs } from 'file-saver';
 import type { Script } from '../../../utils/types';
 import { parseScript, dumpScript } from '../../../utils/yaml/parser';
 import { saveScript } from '../../../utils/storage/scripts';
 import { loadScripts } from '../stores/scripts';
-
-const { button, input, div } = van.tags;
 
 interface ExportButtonProps {
   script: Script;
@@ -25,11 +24,15 @@ export function ExportButton({ script, className }: ExportButtonProps) {
     }
   };
 
-  return button({
-    class: className || 'btn btn-secondary',
-    onclick: handleExport,
-    title: chrome.i18n.getMessage('exportScript') || 'Export as YAML'
-  }, chrome.i18n.getMessage('export') || 'Export');
+  return (
+    <button
+      class={className || 'btn btn-secondary'}
+      onClick={handleExport}
+      title={chrome.i18n.getMessage('exportScript') || 'Export as YAML'}
+    >
+      {chrome.i18n.getMessage('export') || 'Export'}
+    </button>
+  );
 }
 
 interface ImportButtonProps {
@@ -38,23 +41,24 @@ interface ImportButtonProps {
 }
 
 export function ImportButton({ onImport, className }: ImportButtonProps) {
-  const isImporting = van.state(false);
-  const error = van.state<string | null>(null);
+  const isImporting = signal(false);
+  const error = signal<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: Event) => {
     const inputEl = e.target as HTMLInputElement;
     const file = inputEl.files?.[0];
     if (!file) return;
 
-    isImporting.val = true;
-    error.val = null;
+    isImporting.value = true;
+    error.value = null;
 
     try {
       const content = await readFileAsText(file);
       const result = parseScript(content);
 
       if (!result.success) {
-        error.val = result.error;
+        error.value = result.error;
         return;
       }
 
@@ -76,35 +80,42 @@ export function ImportButton({ onImport, className }: ImportButtonProps) {
       inputEl.value = '';
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      error.val = `Import failed: ${message}`;
+      error.value = `Import failed: ${message}`;
     } finally {
-      isImporting.val = false;
+      isImporting.value = false;
     }
   };
 
-  // Hidden file input + visible button
-  const fileInput = input({
-    type: 'file',
-    accept: '.yaml,.yml',
-    style: 'display: none;',
-    onchange: handleFileSelect
-  });
-
-  return div({ style: 'display: inline-block;' },
-    fileInput,
-    button({
-      class: className || 'btn btn-secondary',
-      onclick: () => (fileInput as HTMLInputElement).click(),
-      disabled: () => isImporting.val,
-      title: chrome.i18n.getMessage('importScript') || 'Import YAML file'
-    },
-      () => isImporting.val
-        ? chrome.i18n.getMessage('importing') || 'Importing...'
-        : chrome.i18n.getMessage('import') || 'Import'
-    ),
-    () => error.val
-      ? div({ style: 'color: #f44336; font-size: 12px; margin-top: 4px; max-width: 200px;' }, error.val)
-      : null
+  return (
+    <div style={{ display: 'inline-block' }}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".yaml,.yml"
+        style={{ display: 'none' }}
+        onChange={handleFileSelect}
+      />
+      <button
+        class={className || 'btn btn-secondary'}
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isImporting.value}
+        title={chrome.i18n.getMessage('importScript') || 'Import YAML file'}
+      >
+        {isImporting.value
+          ? chrome.i18n.getMessage('importing') || 'Importing...'
+          : chrome.i18n.getMessage('import') || 'Import'}
+      </button>
+      {error.value && (
+        <div style={{
+          color: '#f44336',
+          fontSize: '12px',
+          marginTop: '4px',
+          maxWidth: '200px'
+        }}>
+          {error.value}
+        </div>
+      )}
+    </div>
   );
 }
 
