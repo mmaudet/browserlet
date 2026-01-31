@@ -1,5 +1,6 @@
 import { useSignal, type Signal } from '@preact/signals';
 import type { StoredPassword } from '../../../utils/passwords/types';
+import type { CapturedPassword } from '../../../entrypoints/content/recording/passwordCapture';
 import { passwordStore, loadPasswords } from '../stores/passwords';
 import { scriptsState } from '../stores/scripts';
 import { deletePassword } from '../../../utils/passwords/storage';
@@ -248,6 +249,8 @@ async function handleUnlock(): Promise<void> {
 export function CredentialManager() {
   const editingId = useSignal<string | null>(null);
   const editPassword = useSignal('');
+  const captureMode = useSignal<'idle' | 'capturing' | 'confirming'>('idle');
+  const capturedCredentials = useSignal<CapturedPassword[]>([]);
 
   const { passwords, vaultState, isLoading, error } = passwordStore;
   const usageMap = buildUsageMap();
@@ -282,6 +285,43 @@ export function CredentialManager() {
   function handleCancelEdit(): void {
     editingId.value = null;
     editPassword.value = '';
+  }
+
+  async function handleStartCapture(): Promise<void> {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id) {
+      await chrome.tabs.sendMessage(tab.id, { type: 'START_PASSWORD_CAPTURE' });
+      captureMode.value = 'capturing';
+    }
+  }
+
+  async function handleStopCapture(): Promise<void> {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id) {
+      const response = await chrome.tabs.sendMessage(tab.id, { type: 'STOP_PASSWORD_CAPTURE' });
+      if (response.success && response.data?.length > 0) {
+        capturedCredentials.value = response.data;
+        captureMode.value = 'confirming';
+      } else {
+        captureMode.value = 'idle';
+        // Optionally show "no credentials captured" message
+      }
+    }
+  }
+
+  async function handleSaveCredentials(): Promise<void> {
+    const { savePassword } = await import('../../../utils/passwords/storage');
+    for (const cred of capturedCredentials.value) {
+      await savePassword(cred.url, cred.username, cred.password);
+    }
+    capturedCredentials.value = [];
+    captureMode.value = 'idle';
+    await loadPasswords(); // refresh list
+  }
+
+  function handleCancelCapture(): void {
+    capturedCredentials.value = [];
+    captureMode.value = 'idle';
   }
 
   // Locked state - show unlock button
@@ -349,8 +389,31 @@ export function CredentialManager() {
       {/* Header */}
       <div style={{ padding: '12px 16px', background: '#f5f5f5', borderBottom: '1px solid #ddd' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontWeight: 500, color: '#333' }}>
-            Stored Credentials
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ fontWeight: 500, color: '#333' }}>
+              Stored Credentials
+            </div>
+            <button
+              onClick={handleStartCapture}
+              disabled={captureMode.value !== 'idle'}
+              style={{
+                background: '#4caf50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                width: '24px',
+                height: '24px',
+                cursor: captureMode.value === 'idle' ? 'pointer' : 'not-allowed',
+                fontSize: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: captureMode.value === 'idle' ? 1 : 0.5,
+              }}
+              title="Add credential"
+            >
+              +
+            </button>
           </div>
           <div style={{ fontSize: '12px', color: '#666' }}>
             {passwords.value.length} credential{passwords.value.length === 1 ? '' : 's'}
@@ -358,9 +421,89 @@ export function CredentialManager() {
         </div>
       </div>
 
+      {/* Capturing mode banner */}
+      {captureMode.value === 'capturing' && (
+        <div style={{
+          padding: '12px',
+          background: '#e3f2fd',
+          borderBottom: '1px solid #90caf9',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <div>
+            <div style={{ fontWeight: 500, color: '#1976d2' }}>Capture Mode Active</div>
+            <div style={{ fontSize: '12px', color: '#666' }}>
+              Enter credentials on any login page, then click Done
+            </div>
+          </div>
+          <button
+            onClick={handleStopCapture}
+            style={{
+              padding: '6px 12px',
+              background: '#1976d2',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            Done
+          </button>
+        </div>
+      )}
+
+      {/* Confirming mode UI */}
+      {captureMode.value === 'confirming' && (
+        <div style={{ padding: '16px' }}>
+          <div style={{ fontWeight: 500, marginBottom: '12px' }}>Captured Credentials</div>
+          {capturedCredentials.value.map((cred, i) => (
+            <div key={i} style={{
+              padding: '12px',
+              background: '#f5f5f5',
+              borderRadius: '4px',
+              marginBottom: '8px',
+            }}>
+              <div style={{ fontWeight: 500 }}>{cred.username || '(no username)'}</div>
+              <div style={{ fontSize: '12px', color: '#666' }}>{cred.url}</div>
+            </div>
+          ))}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button
+              onClick={handleCancelCapture}
+              style={{
+                padding: '6px 12px',
+                background: '#f5f5f5',
+                color: '#666',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveCredentials}
+              style={{
+                padding: '6px 12px',
+                background: '#4caf50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+              }}
+            >
+              Save {capturedCredentials.value.length} Credential(s)
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Credential list */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        {passwords.value.length === 0 ? (
+        {captureMode.value === 'idle' && passwords.value.length === 0 ? (
           <div style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
             <div style={{ fontSize: '36px', marginBottom: '12px' }}>&#128273;</div>
             <div>No credentials stored.</div>
@@ -368,7 +511,7 @@ export function CredentialManager() {
               Credentials are captured during recording when you log into websites.
             </div>
           </div>
-        ) : (
+        ) : captureMode.value === 'idle' ? (
           <div>
             {passwords.value.map(credential => {
               const scriptNames = usageMap.get(credential.id) || [];
@@ -398,7 +541,7 @@ export function CredentialManager() {
               );
             })}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
