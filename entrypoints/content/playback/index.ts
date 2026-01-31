@@ -9,8 +9,8 @@ import { parseSteps, parseTimeout } from '../../../utils/yaml/stepParser';
 
 // Password utilities for credential validation
 import { extractCredentialRefs } from '../../../utils/passwords/substitution';
-import { getVaultState } from '../../../utils/passwords/vault';
-import { getPasswords } from '../../../utils/passwords/storage';
+import type { VaultState } from '../../../utils/passwords/types';
+import type { StoredPassword } from '../../../utils/passwords/types';
 
 // Types
 import type {
@@ -205,9 +205,10 @@ export class PlaybackManager {
 
     // If credentials are needed, validate vault and credentials exist
     if (allCredentialNames.size > 0) {
-      // Check vault is unlocked
-      const vaultState = await getVaultState();
-      if (vaultState.isLocked) {
+      // Check vault is unlocked (via messaging to background)
+      const vaultResponse = await chrome.runtime.sendMessage({ type: 'GET_VAULT_STATE' });
+      const vaultState = vaultResponse?.data as VaultState | undefined;
+      if (!vaultState || vaultState.isLocked) {
         this.emit({ type: 'auth_required' });
         return {
           status: 'failed',
@@ -215,8 +216,9 @@ export class PlaybackManager {
         };
       }
 
-      // Fetch all passwords and validate references
-      const passwords = await getPasswords();
+      // Fetch all passwords and validate references (via messaging to background)
+      const passwordsResponse = await chrome.runtime.sendMessage({ type: 'GET_PASSWORDS' });
+      const passwords = (passwordsResponse?.data as StoredPassword[]) || [];
       const passwordIds = new Set(passwords.map(p => p.id));
 
       const missing: string[] = [];

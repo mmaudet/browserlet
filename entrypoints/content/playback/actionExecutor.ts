@@ -10,7 +10,7 @@ import { waitForElement } from './semanticResolver';
 
 // Password utilities for credential injection
 import { substituteCredentials, extractCredentialRefs } from '../../../utils/passwords/substitution';
-import { getPasswords } from '../../../utils/passwords/storage';
+import type { StoredPassword } from '../../../utils/passwords/types';
 
 /**
  * Execute a click action on an element (ACT-01)
@@ -323,9 +323,10 @@ export class ActionExecutor {
         const credRefs = extractCredentialRefs(step.value);
 
         if (credRefs.length > 0) {
-          // Fetch passwords and substitute
+          // Fetch passwords via messaging (content scripts can't access storage directly)
           // Note: Pre-flight check in PlaybackManager already validated credentials exist
-          const passwords = await getPasswords();
+          const passwordsResponse = await chrome.runtime.sendMessage({ type: 'GET_PASSWORDS' });
+          const passwords = (passwordsResponse?.data as StoredPassword[]) || [];
           valueToType = await substituteCredentials(step.value, passwords);
         }
 
