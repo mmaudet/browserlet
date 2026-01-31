@@ -23,3 +23,9 @@ npm-debug.log*
 .env
 .env.local
 .env.*.local
+
+# Planning docs (local only)
+.planning/
+
+# PRD (local only)
+prd-browserlet.md
