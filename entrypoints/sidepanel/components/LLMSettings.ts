@@ -9,9 +9,9 @@ import {
   saveLLMConfig,
   loadLLMConfig,
   isConfigValid,
-  resetLLMConfig,
 } from '../stores/llmConfig';
 import type { ProviderName } from '../../background/llm/providers/types';
+import { resetAllExtensionData } from '../../../utils/storage/reset';
 
 const { div, label, input, select, option, button, span, p, h3 } = van.tags;
 
@@ -332,22 +332,37 @@ export function LLMSettings() {
 
     // Reset section
     div({ style: 'margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee;' },
+      h3({ style: 'margin: 0 0 8px 0; font-size: 14px; color: #d32f2f;' },
+        chrome.i18n.getMessage('dangerZone') || 'Danger Zone'
+      ),
+      p({ style: 'margin: 0 0 12px 0; font-size: 12px; color: #666;' },
+        chrome.i18n.getMessage('resetWarning') || 'This will permanently delete ALL extension data: scripts, settings, triggers, and history.'
+      ),
       () => resetSuccess.val ? div({ style: successStyle },
-        chrome.i18n.getMessage('resetSuccess') || 'Configuration reset successfully!'
+        chrome.i18n.getMessage('resetSuccess') || 'All data has been reset. Reloading...'
       ) : null,
       button({
         style: btnDangerStyle,
         onclick: async () => {
-          if (confirm(chrome.i18n.getMessage('resetConfirm') || 'Are you sure you want to reset all LLM settings?')) {
-            await resetLLMConfig();
+          const confirmMsg = chrome.i18n.getMessage('resetConfirmFull') ||
+            'WARNING: This will delete ALL your data:\n\n' +
+            '- All saved scripts\n' +
+            '- LLM configuration\n' +
+            '- Trigger settings\n' +
+            '- Execution history\n' +
+            '- Recorded actions\n\n' +
+            'This cannot be undone. Continue?';
+          if (confirm(confirmMsg)) {
+            await resetAllExtensionData();
             ollamaModels.val = [];
             connectionStatus.val = null;
             resetSuccess.val = true;
-            setTimeout(() => { resetSuccess.val = false; }, 3000);
+            // Reload the sidepanel after a short delay to refresh all state
+            setTimeout(() => { window.location.reload(); }, 1500);
           }
         },
       },
-        chrome.i18n.getMessage('resetSettings') || 'Reset Settings'
+        chrome.i18n.getMessage('resetAllData') || 'Reset All Data'
       )
     )
   );
