@@ -8,9 +8,10 @@ import { unlockVault } from '../../../utils/passwords/vault';
 import { extractCredentialRefs } from '../../../utils/passwords/substitution';
 
 /**
- * Build a map of credential ID -> script names that use it.
+ * Build a map of credential ID/alias -> script names that use it.
+ * Maps both the ID and alias (if set) to the same credential for lookup.
  */
-function buildUsageMap(): Map<string, string[]> {
+function buildUsageMap(passwords: StoredPassword[]): Map<string, string[]> {
   const usage = new Map<string, string[]>();
 
   for (const script of scriptsState.value) {
@@ -20,6 +21,18 @@ function buildUsageMap(): Map<string, string[]> {
       const scriptNames = usage.get(ref.name) || [];
       scriptNames.push(script.name);
       usage.set(ref.name, scriptNames);
+    }
+  }
+
+  // Also map aliases to the same usage
+  for (const password of passwords) {
+    if (password.alias && usage.has(password.alias)) {
+      const aliasUsage = usage.get(password.alias) || [];
+      const idUsage = usage.get(password.id) || [];
+      // Merge both usages
+      const combined = Array.from(new Set([...aliasUsage, ...idUsage]));
+      usage.set(password.id, combined);
+      usage.set(password.alias, combined);
     }
   }
 
@@ -54,6 +67,14 @@ interface CredentialItemProps {
 
 function CredentialItem({ credential, usageCount, scriptNames, onDelete, onEdit }: CredentialItemProps) {
   const showUsage = useSignal(false);
+  const copySuccess = useSignal(false);
+
+  async function handleCopy() {
+    const refName = credential.alias || credential.id;
+    await navigator.clipboard.writeText(`{{credential:${refName}}}`);
+    copySuccess.value = true;
+    setTimeout(() => { copySuccess.value = false; }, 2000);
+  }
 
   return (
     <div
@@ -67,7 +88,7 @@ function CredentialItem({ credential, usageCount, scriptNames, onDelete, onEdit 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontWeight: 500, color: '#333' }}>{credential.id}</span>
+            <span style={{ fontWeight: 500, color: '#333' }}>{credential.alias || credential.id}</span>
             {usageCount > 0 && (
               <button
                 style={{
@@ -86,6 +107,11 @@ function CredentialItem({ credential, usageCount, scriptNames, onDelete, onEdit 
               </button>
             )}
           </div>
+          {credential.alias && (
+            <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+              ID: {credential.id}
+            </div>
+          )}
           <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
             <span>{credential.username}</span>
             <span style={{ margin: '0 4px' }}>@</span>
@@ -98,6 +124,20 @@ function CredentialItem({ credential, usageCount, scriptNames, onDelete, onEdit 
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+          <button
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              padding: '4px 6px',
+              color: copySuccess.value ? '#4caf50' : '#666',
+            }}
+            title="Copy credential reference"
+            onClick={handleCopy}
+          >
+            {copySuccess.value ? '✓' : '📋'}
+          </button>
           <button
             style={{
               background: 'none',
@@ -163,11 +203,24 @@ function CredentialItem({ credential, usageCount, scriptNames, onDelete, onEdit 
 interface EditFormProps {
   credential: StoredPassword;
   editPassword: Signal<string>;
+  editAlias: Signal<string>;
   onSave: () => void;
   onCancel: () => void;
 }
 
-function EditForm({ credential, editPassword, onSave, onCancel }: EditFormProps) {
+function EditForm({ credential, editPassword, editAlias, onSave, onCancel }: EditFormProps) {
+  const aliasError = useSignal('');
+
+  function handleAliasInput(value: string) {
+    editAlias.value = value;
+    // Validate alias format
+    if (value && !/^[a-zA-Z0-9_-]*$/.test(value)) {
+      aliasError.value = 'Only alphanumeric, underscore, and hyphen allowed';
+    } else {
+      aliasError.value = '';
+    }
+  }
+
   return (
     <div
       style={{
@@ -177,13 +230,35 @@ function EditForm({ credential, editPassword, onSave, onCancel }: EditFormProps)
       }}
     >
       <div style={{ fontWeight: 500, color: '#333', marginBottom: '8px' }}>
-        Edit: {credential.id}
+        Edit: {credential.alias || credential.id}
       </div>
       <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
         {credential.username} @ {formatUrl(credential.url)}
       </div>
       <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px' }}>
-        Credential name cannot be changed. Delete and recreate to rename.
+        ID: {credential.id}
+      </div>
+      <div style={{ marginBottom: '12px' }}>
+        <label style={{ display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+          Alias (optional)
+        </label>
+        <input
+          type="text"
+          value={editAlias.value}
+          onInput={(e: Event) => { handleAliasInput((e.target as HTMLInputElement).value); }}
+          placeholder="e.g., linagora_pwd"
+          style={{
+            width: '100%',
+            padding: '8px',
+            border: aliasError.value ? '1px solid #d32f2f' : '1px solid #ddd',
+            borderRadius: '4px',
+            fontSize: '13px',
+            boxSizing: 'border-box',
+          }}
+        />
+        <div style={{ fontSize: '11px', color: aliasError.value ? '#d32f2f' : '#888', marginTop: '4px' }}>
+          {aliasError.value || 'Alphanumeric, underscores, and hyphens only'}
+        </div>
       </div>
       <div style={{ marginBottom: '12px' }}>
         <label style={{ display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
@@ -224,13 +299,14 @@ function EditForm({ credential, editPassword, onSave, onCancel }: EditFormProps)
         </button>
         <button
           onClick={onSave}
+          disabled={!!aliasError.value}
           style={{
             padding: '6px 12px',
-            background: '#4caf50',
+            background: aliasError.value ? '#ccc' : '#4caf50',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: 'pointer',
+            cursor: aliasError.value ? 'not-allowed' : 'pointer',
             fontSize: '12px',
           }}
         >
@@ -249,11 +325,12 @@ async function handleUnlock(): Promise<void> {
 export function CredentialManager() {
   const editingId = useSignal<string | null>(null);
   const editPassword = useSignal('');
+  const editAlias = useSignal('');
   const captureMode = useSignal<'idle' | 'capturing' | 'confirming'>('idle');
   const capturedCredentials = useSignal<CapturedPassword[]>([]);
 
   const { passwords, vaultState, isLoading, error } = passwordStore;
-  const usageMap = buildUsageMap();
+  const usageMap = buildUsageMap(passwords.value);
 
   async function handleDelete(credential: StoredPassword): Promise<void> {
     const usageCount = usageMap.get(credential.id)?.length || 0;
@@ -269,22 +346,31 @@ export function CredentialManager() {
   function handleStartEdit(credential: StoredPassword): void {
     editingId.value = credential.id;
     editPassword.value = '';
+    editAlias.value = credential.alias || '';
   }
 
   async function handleSaveEdit(credential: StoredPassword): Promise<void> {
+    const { updatePasswordAlias } = await import('../../../utils/passwords/storage');
+
+    // Update alias (always, even if empty to allow clearing)
+    await updatePasswordAlias(credential.id, editAlias.value || null);
+
+    // Update password if provided
     if (editPassword.value) {
-      // Import savePassword dynamically to update the password
       const { savePassword } = await import('../../../utils/passwords/storage');
       await savePassword(credential.url, credential.username, editPassword.value);
-      await loadPasswords();
     }
+
+    await loadPasswords();
     editingId.value = null;
     editPassword.value = '';
+    editAlias.value = '';
   }
 
   function handleCancelEdit(): void {
     editingId.value = null;
     editPassword.value = '';
+    editAlias.value = '';
   }
 
   async function handleStartCapture(): Promise<void> {
@@ -523,6 +609,7 @@ export function CredentialManager() {
                     key={credential.id}
                     credential={credential}
                     editPassword={editPassword}
+                    editAlias={editAlias}
                     onSave={() => handleSaveEdit(credential)}
                     onCancel={handleCancelEdit}
                   />
