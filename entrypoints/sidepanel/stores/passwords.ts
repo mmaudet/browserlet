@@ -6,7 +6,7 @@ import { getVaultState, type VaultState } from '../../../utils/passwords/vault';
 // Reactive store for password vault
 export const passwordStore = {
   passwords: signal<StoredPassword[]>([]),
-  vaultState: signal<VaultState>({ isLocked: true, lastUnlockTime: 0 }),
+  vaultState: signal<VaultState>({ isLocked: true, lastUnlockTime: 0, needsSetup: true }),
   isLoading: signal(false),
   error: signal<string | null>(null),
 };

@@ -1,18 +1,31 @@
+import { hasMasterPasswordSetup } from '../crypto/masterPassword';
+
 const VAULT_STATE_KEY = 'browserlet_vault_state';
 
 export interface VaultState {
   isLocked: boolean;
   lastUnlockTime: number; // Unix timestamp, 0 when locked
+  needsSetup: boolean; // true if master password not yet configured
 }
 
 /**
  * Get current vault state.
  * Defaults to locked if no session state (browser restarted).
+ * Detects if master password setup is needed.
  */
 export async function getVaultState(): Promise<VaultState> {
-  const result = await chrome.storage.session.get(VAULT_STATE_KEY);
-  const state = result[VAULT_STATE_KEY] as VaultState | undefined;
-  return state ?? { isLocked: true, lastUnlockTime: 0 };
+  const [sessionState, hasSetup] = await Promise.all([
+    chrome.storage.session.get(VAULT_STATE_KEY),
+    hasMasterPasswordSetup()
+  ]);
+
+  const state = sessionState[VAULT_STATE_KEY] as Partial<VaultState> | undefined;
+
+  return {
+    isLocked: state?.isLocked ?? true,
+    lastUnlockTime: state?.lastUnlockTime ?? 0,
+    needsSetup: !hasSetup
+  };
 }
 
 /**
