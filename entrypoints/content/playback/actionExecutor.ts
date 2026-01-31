@@ -8,6 +8,10 @@ import { typeCharacterDelay, scrollSettleDelay, DEFAULT_CONFIG } from './humaniz
 import type { BSLStep, SemanticHint } from './types';
 import { waitForElement } from './semanticResolver';
 
+// Password utilities for credential injection
+import { substituteCredentials, extractCredentialRefs } from '../../../utils/passwords/substitution';
+import { getPasswords } from '../../../utils/passwords/storage';
+
 /**
  * Execute a click action on an element (ACT-01)
  * Dispatches proper mousedown -> mouseup -> click sequence for framework compatibility
@@ -310,10 +314,23 @@ export class ActionExecutor {
         if (!element) throw new Error('click action requires element');
         return executeClick(element);
 
-      case 'type':
+      case 'type': {
         if (!element) throw new Error('type action requires element');
         if (!step.value) throw new Error('type action requires value');
-        return executeType(element, step.value, this.config);
+
+        // Check for credential references and substitute if present
+        let valueToType = step.value;
+        const credRefs = extractCredentialRefs(step.value);
+
+        if (credRefs.length > 0) {
+          // Fetch passwords and substitute
+          // Note: Pre-flight check in PlaybackManager already validated credentials exist
+          const passwords = await getPasswords();
+          valueToType = await substituteCredentials(step.value, passwords);
+        }
+
+        return executeType(element, valueToType, this.config);
+      }
 
       case 'select':
         if (!element) throw new Error('select action requires element');
