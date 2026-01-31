@@ -8,57 +8,62 @@ Browserlet est une extension Chrome qui permet d'automatiser des interactions av
 
 **Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA** — Les sélecteurs sémantiques ciblent l'intention ("le bouton de validation") plutôt que la structure DOM fragile (`#btn-submit-x7`), rendant les scripts maintenables quand l'UI évolue.
 
+## Current State (v1.0 Shipped)
+
+**Shipped:** 2026-01-31
+**Codebase:** 12,603 LOC TypeScript
+**Tech Stack:** WXT, VanJS, Monaco Editor, Chrome Manifest V3
+
+**What's Working:**
+- Recording with 10 semantic hint types
+- BSL playback with weighted semantic resolver
+- LLM integration (Claude API + Ollama) with encrypted keys
+- Contextual triggers (suggest + auto-execute modes)
+- Side Panel UI with i18n (FR/EN)
+- Cross-page navigation support
+
 ## Requirements
 
-### Validated
+### Validated (v1.0)
 
-- Semantic Resolver validé par POC (17/17 tests, janvier 2026)
+- ✓ Mode Recording — v1.0 (capture actions, generate BSL via LLM)
+- ✓ Génération BSL — v1.0 (Claude API + Ollama)
+- ✓ Execution Engine — v1.0 (deterministic BSL playback)
+- ✓ Semantic Resolver — v1.0 (10 hint types, 0.7 threshold)
+- ✓ Side Panel UI — v1.0 (Monaco Editor, script list, results)
+- ✓ Triggers contextuels — v1.0 (suggest mode, auto-execute)
+- ✓ Gestion auth basique — v1.0 (session check, manual prompt)
+- ✓ Stockage local — v1.0 (chrome.storage.local)
+- ✓ Import/Export YAML — v1.0 (js-yaml, file-saver)
+- ✓ Actions BSL — v1.0 (all 8 actions)
+- ✓ Interface FR + EN — v1.0 (chrome.i18n)
 
-### Active
+### Active (Next Milestone)
 
-- [ ] Mode Recording : capturer les actions utilisateur et générer un script BSL via LLM
-- [ ] Génération BSL : support Claude API et Ollama (configurable par l'utilisateur)
-- [ ] Execution Engine : exécution déterministe des scripts BSL avec semantic resolution
-- [ ] Semantic Resolver : résolution d'éléments par hints sémantiques (role, text, aria, etc.)
-- [ ] Side Panel UI : affichage contexte, liste scripts, exécution, résultats
-- [ ] Triggers contextuels : détection de contexte et suggestions d'actions
-- [ ] Gestion auth basique : vérification session existante, prompt manuel si déconnecté
-- [ ] Stockage local : sauvegarde scripts dans chrome.storage
-- [ ] Import/Export YAML : partage de scripts via fichiers
-- [ ] Actions BSL : click, type, select, extract, wait_for, navigate, scroll, hover
-- [ ] Variables et paramètres : inputs configurables, outputs structurés
-- [ ] Interface FR + EN : i18n dès v1
+- [ ] Self-healing selectors (LLM-assisted repair when selector fails)
+- [ ] Execution replay (screenshots for debugging)
+- [ ] Script version control
+- [ ] User testing feedback integration
 
 ### Out of Scope
 
-- Serveur central — Phase 2, après validation du MVP extension
-- Self-healing (réparation auto des sélecteurs via IA) — v1.1, nécessite plus de données d'usage
-- SSO complet (SAML, CAS, OIDC) — v1.1, auth basique suffisante pour valider le concept
-- MFA automatique — v1.1, trop complexe pour MVP
-- Credential store chiffré — v1.1, prompt manuel acceptable pour v1
+- Serveur central — v2, après validation terrain
+- SSO complet (SAML, CAS, OIDC) — v1.1+
+- MFA automatique — v1.1+
+- Credential store chiffré — v1.1+
 - Scheduling (exécution programmée) — v2
 - Webhooks — v2
-- Support Firefox — Chrome uniquement (Manifest V3 stable)
-- Version SaaS hébergée — AGPL-3.0 pur, self-hosted only
+- Support Firefox — Chrome uniquement
+- Version SaaS hébergée — AGPL-3.0 pur
 
 ## Context
 
 **Origine :** Projet LINAGORA pour automatiser des tâches répétitives sur applications métier legacy (ERP, SIRH) sans API exposée.
 
-**POC Semantic Resolver :** `/Users/mmaudet/work/poc-semantic-resolver`
-- TypeScript (~1,345 LOC), Playwright 1.41, Manifest V3
-- 17/17 tests passés (pages locales + Google, GitHub, Wikipedia)
-- Performance < 50ms (simple), < 100ms (complexe)
-- **10 hints supportés :** role, text_contains, text_matches, type, name, placeholder_contains, aria_label, near_label, class_contains, data_attribute
-- **Réutilisabilité : 85%** — resolver, evaluators, utils, types directement réutilisables
-
-**Leçons du POC :**
-- Toujours combiner plusieurs hints (un seul n'est jamais suffisant)
-- Privilégier hints explicites (aria_label, data_attribute, role) sur near_label
-- Utiliser data_attribute pour éléments dans listes/tableaux
-- Prévoir fallback_selector comme filet de sécurité
-- Score threshold à 0.7 fonctionne bien
-- Fuzzy matching avec Levenshtein pour tolérance aux variations
+**v1.0 Validated On:**
+- Real legacy ERP (OBM - extranet.linagora.com)
+- Google, GitHub, Wikipedia for semantic resolver
+- macOS Chrome for cross-platform notification fix
 
 **Personas cibles :**
 - Marie (gestionnaire) : exécute des scripts pré-configurés
@@ -67,24 +72,28 @@ Browserlet est une extension Chrome qui permet d'automatiser des interactions av
 
 ## Constraints
 
-- **Plateforme** : Chrome Extension Manifest V3 uniquement — pas de fragmentation multi-navigateurs
-- **Licence** : AGPL-3.0 — copyleft fort, pas de vendor lock-in
-- **Offline-first** : fonctionne sans connexion serveur (scripts locaux)
-- **Performance** : résolution sémantique < 50ms, exécution step < 100ms
-- **Sécurité** : pas de credentials en clair, exécution uniquement sur URL autorisées
-- **Stack** : TypeScript, Preact + Tailwind (UI légère), Monaco Editor (YAML)
+- **Plateforme** : Chrome Extension Manifest V3 uniquement
+- **Licence** : AGPL-3.0 — copyleft fort
+- **Offline-first** : fonctionne sans serveur
+- **Performance** : résolution < 50ms, step < 100ms
+- **Sécurité** : API keys chiffrées (AES-GCM 256-bit)
+- **Stack** : TypeScript, WXT, VanJS, Monaco Editor
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| IA en création uniquement | Évite coût récurrent, exécution déterministe et rapide | — Pending |
-| YAML pour BSL | Lisible par non-dev, standard, commentable | — Pending |
-| Chrome uniquement | Focus sur Manifest V3 stable, évite fragmentation | — Pending |
-| Claude API + Ollama | Flexibilité : cloud pour qualité, local pour offline/privacy | — Pending |
-| Pas de serveur v1 | Valider l'extension seule avant d'ajouter complexité | — Pending |
-| Auth basique v1 | Session existante + prompt suffisant pour valider le concept | — Pending |
-| Réutiliser POC Semantic Resolver | ~1,345 LOC TypeScript validé (17/17 tests), évite de repartir de zéro | — Pending |
+| IA en création uniquement | Évite coût récurrent, exécution déterministe | ✓ Good |
+| YAML pour BSL | Lisible par non-dev, standard, commentable | ✓ Good |
+| Chrome uniquement | Focus Manifest V3, évite fragmentation | ✓ Good |
+| Claude API + Ollama | Flexibilité cloud/local | ✓ Good |
+| Pas de serveur v1 | Valider extension seule d'abord | ✓ Good |
+| Auth basique v1 | Session + prompt suffisant pour MVP | ✓ Good |
+| WXT framework | Auto-manifest, HMR, conventions | ✓ Good |
+| VanJS for UI | Lightweight, no build step, reactive | ✓ Good |
+| In-page notifications | Chrome buttons don't work on macOS | ✓ Good |
+| 10 semantic hint types | Balances specificity and resilience | ✓ Good |
+| 0.7 confidence threshold | Sweet spot for accuracy vs false negatives | ✓ Good |
 
 ---
-*Last updated: 2026-01-29 after POC analysis*
+*Last updated: 2026-01-31 after v1.0 milestone*
