@@ -2,10 +2,13 @@
  * AES-GCM encryption utilities for secure API key storage.
  *
  * Security model:
- * - Session key stored in chrome.storage.session (memory-only, cleared on browser restart)
- * - Encrypted API keys stored in chrome.storage.local
+ * - When master password is set up: credentials encrypted with PBKDF2-derived key (persistent)
+ * - When no master password: fallback to session key (v1.1 compatibility, lost on browser restart)
+ * - Encrypted data stored in chrome.storage.local
  * - Uses Web Crypto API for all cryptographic operations
  */
+
+import { hasMasterPasswordSetup, getCachedDerivedKey } from './masterPassword';
 
 /**
  * Encrypted data structure for storage
@@ -148,36 +151,75 @@ export async function decryptWithKey(data: EncryptedData, key: CryptoKey): Promi
 /**
  * Encrypt an API key for secure storage.
  *
- * Uses the session key for encryption. This maintains backward compatibility
- * with existing code that uses session-based encryption.
+ * Key selection:
+ * - If master password is set up: Uses PBKDF2-derived key (requires vault unlocked)
+ * - If no master password: Uses session key (backward compatibility, v1.1)
+ *
+ * The session key path is for backward compatibility during migration period.
+ * New users should set up a master password for persistent credential storage.
  *
  * @param apiKey - The plaintext API key to encrypt
  * @returns EncryptedData with base64-encoded ciphertext and IV
+ * @throws Error if master password is set up but vault is locked
  */
 export async function encryptApiKey(apiKey: string): Promise<EncryptedData> {
-  const key = await getOrCreateSessionKey();
-  return encryptWithKey(apiKey, key);
+  // Check if master password system is set up
+  const hasMasterPassword = await hasMasterPasswordSetup();
+
+  if (hasMasterPassword) {
+    // Post-migration: Use master password-derived key
+    const key = await getCachedDerivedKey();
+    if (!key) {
+      throw new Error('Vault is locked. Unlock vault to save credentials.');
+    }
+    return encryptWithKey(apiKey, key);
+  }
+
+  // Pre-migration fallback: Use session key (backward compat)
+  const sessionKey = await getOrCreateSessionKey();
+  return encryptWithKey(apiKey, sessionKey);
 }
 
 /**
  * Decrypt an API key from encrypted storage.
  *
- * Uses the session key for decryption. This maintains backward compatibility
- * with existing code that uses session-based encryption.
+ * Key selection:
+ * - If master password is set up: Uses PBKDF2-derived key (requires vault unlocked)
+ * - If no master password: Uses session key (backward compatibility, v1.1)
+ *
+ * The session key path is for backward compatibility during migration period.
+ * Credentials encrypted with session key will fail after browser restart.
  *
  * @param data - EncryptedData with base64-encoded ciphertext and IV
  * @returns The decrypted plaintext API key
- * @throws Error if decryption fails (e.g., session key changed after browser restart)
+ * @throws Error if vault is locked or decryption fails
  */
 export async function decryptApiKey(data: EncryptedData): Promise<string> {
-  const key = await getOrCreateSessionKey();
+  const hasMasterPassword = await hasMasterPasswordSetup();
 
+  if (hasMasterPassword) {
+    // Post-migration: Use master password-derived key
+    const key = await getCachedDerivedKey();
+    if (!key) {
+      throw new Error('Vault is locked. Unlock vault to access credentials.');
+    }
+    try {
+      return await decryptWithKey(data, key);
+    } catch (error) {
+      throw new Error(
+        'Failed to decrypt credential. The credential may have been encrypted with a different key.'
+      );
+    }
+  }
+
+  // Pre-migration fallback: Use session key
+  const sessionKey = await getOrCreateSessionKey();
   try {
-    return await decryptWithKey(data, key);
+    return await decryptWithKey(data, sessionKey);
   } catch (error) {
     throw new Error(
-      'Failed to decrypt API key. The session key may have changed after browser restart. ' +
-        'Please re-enter your API key.'
+      'Failed to decrypt. The session key may have changed after browser restart. ' +
+        'Please set up a master password to enable persistent credentials.'
     );
   }
 }
