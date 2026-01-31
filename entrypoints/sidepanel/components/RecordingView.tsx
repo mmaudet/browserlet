@@ -4,6 +4,8 @@ import { llmConfigStore, getLLMConfigForServiceWorker, loadLLMConfig, isConfigVa
 import { loadScripts } from '../stores/scripts';
 import { navigateTo } from '../router';
 import { saveScript } from '../../../utils/storage/scripts';
+import { PasswordPrompt, detectedPasswords, showPasswordPrompt } from './PasswordPrompt';
+import type { DetectedPassword } from '../../../utils/passwords/types';
 
 // Recording state (synced with storage)
 export const isRecording = signal(false);
@@ -174,6 +176,28 @@ export async function toggleRecording(): Promise<void> {
       const actions = stateResponse.success && stateResponse.data?.recordedActions
         ? stateResponse.data.recordedActions
         : recordedActions.value;
+
+      // Check for captured passwords from the active tab
+      let capturedPasswords: DetectedPassword[] = [];
+      try {
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (activeTab?.id) {
+          const passwordResponse = await chrome.tabs.sendMessage(activeTab.id, { type: 'GET_CAPTURED_PASSWORDS' });
+          if (passwordResponse.success && passwordResponse.data) {
+            capturedPasswords = passwordResponse.data as DetectedPassword[];
+            console.log('[Browserlet] Captured passwords:', capturedPasswords.length);
+          }
+        }
+      } catch (error) {
+        // Content script might not be available, continue without passwords
+        console.warn('[Browserlet] Could not get captured passwords:', error);
+      }
+
+      // If passwords were captured, show the password prompt
+      if (capturedPasswords.length > 0) {
+        detectedPasswords.value = capturedPasswords;
+        showPasswordPrompt.value = true;
+      }
 
       if (actions.length === 0) {
         generationStatus.value = {
@@ -553,6 +577,9 @@ export function RecordingView() {
           )}
         </div>
       </div>
+
+      {/* Password save prompt modal */}
+      <PasswordPrompt />
     </div>
   );
 }

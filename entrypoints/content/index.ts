@@ -169,6 +169,14 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
       }
       return { success: true };
 
+    case 'GET_CAPTURED_PASSWORDS':
+      if (recordingManager) {
+        const capturedPasswords = recordingManager.getCapturedPasswords();
+        console.log('[Browserlet] Returning captured passwords:', capturedPasswords.length);
+        return { success: true, data: capturedPasswords };
+      }
+      return { success: true, data: [] };
+
     case 'EXECUTE_SCRIPT': {
       const { content } = message.payload as { content: string };
       const manager = getPlaybackManager();
