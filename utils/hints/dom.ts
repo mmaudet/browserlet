@@ -25,6 +25,7 @@ const IMPLICIT_ROLES: Record<string, string> = {
 };
 
 // Implicit roles for input by type
+// Note: password has no ARIA role (security), so it maps to empty string
 const INPUT_TYPE_ROLES: Record<string, string> = {
   'button': 'button',
   'submit': 'button',
@@ -37,6 +38,7 @@ const INPUT_TYPE_ROLES: Record<string, string> = {
   'tel': 'textbox',
   'url': 'textbox',
   'number': 'spinbutton',
+  'password': '', // No ARIA role for password fields (security)
 };
 
 /**
@@ -52,7 +54,10 @@ export function getElementRole(element: Element): string | null {
   // Special case for input
   if (tagName === 'input') {
     const type = (element as HTMLInputElement).type || 'text';
-    return INPUT_TYPE_ROLES[type] || 'textbox';
+    const role = INPUT_TYPE_ROLES[type];
+    // Return null for password (empty string) or undefined types default to textbox
+    if (role === '') return null;
+    return role ?? 'textbox';
   }
 
   // Implicit role by tag

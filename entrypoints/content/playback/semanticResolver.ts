@@ -31,7 +31,8 @@ export const HINT_WEIGHTS: Record<HintType, number> = {
  */
 function getInitialCandidates(hints: SemanticHint[]): Element[] {
   // Priority order for initial filtering
-  const priorityHints: HintType[] = ['role', 'type', 'name', 'id'];
+  // 'type' before 'role' because password fields have type but no role
+  const priorityHints: HintType[] = ['type', 'role', 'name', 'id'];
 
   for (const priorityType of priorityHints) {
     const hint = hints.find(h => h.type === priorityType);
