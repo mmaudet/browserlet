@@ -3,12 +3,14 @@ import { EventCapture } from './eventCapture';
 import { NavigationCapture } from './navigationCapture';
 import { HighlightOverlay, RecordingIndicator } from './visualFeedback';
 import { generateHints } from './hintGenerator';
+import { PasswordCapture, CapturedPassword } from './passwordCapture';
 
 export type RecordingEventHandler = (event: {
   type: 'state_changed' | 'action_captured';
   state?: RecordingState;
   action?: CapturedAction;
   session?: RecordingSession;
+  capturedPasswords?: CapturedPassword[];
 }) => void;
 
 /**
@@ -21,15 +23,18 @@ export class RecordingManager {
 
   private eventCapture: EventCapture;
   private navigationCapture: NavigationCapture;
+  private passwordCapture: PasswordCapture;
   private overlay: HighlightOverlay;
   private indicator: RecordingIndicator;
 
   private eventHandler: RecordingEventHandler | null = null;
   private hoverCleanup: (() => void) | null = null;
+  private capturedPasswords: CapturedPassword[] = [];
 
   constructor() {
     this.eventCapture = new EventCapture();
     this.navigationCapture = new NavigationCapture();
+    this.passwordCapture = new PasswordCapture();
     this.overlay = new HighlightOverlay();
     this.indicator = new RecordingIndicator();
   }
@@ -63,6 +68,13 @@ export class RecordingManager {
   }
 
   /**
+   * Get captured passwords from current or last session.
+   */
+  getCapturedPasswords(): CapturedPassword[] {
+    return this.capturedPasswords;
+  }
+
+  /**
    * Start recording user interactions.
    */
   start(): void {
@@ -86,6 +98,10 @@ export class RecordingManager {
     this.eventCapture.start((action) => this.handleAction(action));
     this.navigationCapture.start((action) => this.handleAction(action));
 
+    // Start password capture (separate from EventCapture which masks passwords)
+    this.capturedPasswords = [];
+    this.passwordCapture.start((pwd) => this.capturedPasswords.push(pwd));
+
     this.emit('state_changed');
   }
 
@@ -98,6 +114,9 @@ export class RecordingManager {
     // Stop capture modules
     this.eventCapture.stop();
     this.navigationCapture.stop();
+
+    // Stop password capture and collect all captured passwords
+    this.capturedPasswords = this.passwordCapture.stop();
 
     // Stop visual feedback
     this.indicator.hide();
@@ -270,7 +289,8 @@ export class RecordingManager {
       type,
       state: this.state,
       action,
-      session: this.session ?? undefined
+      session: this.session ?? undefined,
+      capturedPasswords: this.capturedPasswords.length > 0 ? this.capturedPasswords : undefined
     });
   }
 
@@ -284,4 +304,5 @@ export class RecordingManager {
 
 // Re-export types for convenience
 export type { CapturedAction, RecordingState, RecordingSession, SemanticHint, HintType } from './types';
+export type { CapturedPassword } from './passwordCapture';
 export { generateHints } from './hintGenerator';
