@@ -146,8 +146,10 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
         )
       ),
 
-      // Cooldown (only for auto-execute)
-      () => mode.val === 'auto_execute' ? div(
+      // Cooldown (only for auto-execute) - use style binding for visibility
+      div({
+        style: () => mode.val === 'auto_execute' ? '' : 'display: none;'
+      },
         label({ style: 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 4px;' }, msg('triggerCooldown')),
         input({
           type: 'number',
@@ -157,7 +159,7 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
           value: cooldownMin,
           oninput: (e: Event) => { cooldownMin.val = parseInt((e.target as HTMLInputElement).value) || 5; }
         })
-      ) : null,
+      ),
 
       // Enabled
       div({ style: 'display: flex; align-items: center; gap: 8px;' },
@@ -178,10 +180,12 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
           onclick: saveTrigger
         }, () => editingId.val ? msg('triggerSave') : msg('triggerSave')),
 
-        () => editingId.val ? button({
-          style: 'padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; font-size: 14px;',
+        button({
+          style: () => editingId.val
+            ? 'padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; font-size: 14px;'
+            : 'display: none;',
           onclick: resetForm
-        }, 'Cancel') : null
+        }, 'Cancel')
       )
     ),
 
@@ -201,7 +205,7 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
                     span({
                       style: `margin-left: 8px; font-size: 11px; padding: 2px 8px; border-radius: 4px; ${trigger.mode === 'suggest' ? 'background: #e3f2fd; color: #1976d2;' : 'background: #fff3e0; color: #e65100;'}`
                     }, trigger.mode),
-                    !trigger.enabled ? span({ style: 'margin-left: 8px; font-size: 11px; color: #999;' }, '(disabled)') : null
+                    span({ style: trigger.enabled ? 'display: none;' : 'margin-left: 8px; font-size: 11px; color: #999;' }, '(disabled)')
                   ),
                   div({ style: 'display: flex; gap: 4px;' },
                     button({

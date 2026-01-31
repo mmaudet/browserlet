@@ -29,8 +29,27 @@ export async function loadTriggers(): Promise<void> {
   isLoadingTriggers.val = true;
   try {
     triggersState.val = await getAllTriggers();
+    // Also load suggestions for current tab
+    await loadSuggestionsForCurrentTab();
   } finally {
     isLoadingTriggers.val = false;
+  }
+}
+
+// Load suggestions for current tab from session storage
+export async function loadSuggestionsForCurrentTab(): Promise<void> {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    const tabId = tabs[0]?.id;
+    if (tabId) {
+      const key = `suggested_scripts_${tabId}`;
+      const data = await chrome.storage.session.get(key);
+      const scriptIds = (data[key] as string[] | undefined) ?? [];
+      console.log('[Browserlet] Loaded suggestions for tab', tabId, ':', scriptIds);
+      suggestedScriptIds.val = scriptIds;
+    }
+  } catch (error) {
+    console.warn('[Browserlet] Failed to load suggestions:', error);
   }
 }
 
@@ -67,4 +86,20 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.browserlet_triggers) {
     triggersState.val = (changes.browserlet_triggers.newValue as TriggerConfig[] | undefined) ?? [];
   }
+  // Listen for session storage changes (suggestions)
+  if (area === 'session') {
+    // Check if any suggested_scripts_ key changed
+    for (const key of Object.keys(changes)) {
+      if (key.startsWith('suggested_scripts_')) {
+        // Reload suggestions for current tab
+        loadSuggestionsForCurrentTab();
+        break;
+      }
+    }
+  }
+});
+
+// Listen for tab changes to update suggestions
+chrome.tabs.onActivated.addListener(() => {
+  loadSuggestionsForCurrentTab();
 });

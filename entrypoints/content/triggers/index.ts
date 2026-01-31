@@ -22,13 +22,15 @@ export async function initializeTriggers(): Promise<void> {
 
   // Set up context change handler - send to background
   detector.onContextChange(async (state: ContextState) => {
+    console.log('[Browserlet] Context change detected:', state.matches, 'triggers:', state.matchedTriggers?.length ?? 0);
     try {
       await chrome.runtime.sendMessage({
         type: 'CONTEXT_MATCH',
         payload: state
       });
+      console.log('[Browserlet] CONTEXT_MATCH sent to background');
     } catch (error) {
-      // Background might not be ready, ignore
+      console.warn('[Browserlet] Failed to send CONTEXT_MATCH:', error);
     }
   });
 
@@ -53,9 +55,13 @@ export async function initializeTriggers(): Promise<void> {
  * Update triggers (called when triggers change)
  */
 export function updateTriggers(triggers: TriggerConfig[]): void {
+  console.log('[Browserlet] Updating triggers, count:', triggers.length);
   if (detector) {
     detector.setTriggers(triggers);
     detector.forceEvaluate();
+    console.log('[Browserlet] Triggers updated and evaluated');
+  } else {
+    console.warn('[Browserlet] Detector not initialized');
   }
 }
 
@@ -74,9 +80,11 @@ export function stopTriggers(): void {
  * Handle messages from background about trigger updates
  */
 export function handleTriggerMessage(message: { type: string; payload?: unknown }): void {
+  console.log('[Browserlet] handleTriggerMessage received:', message.type);
   switch (message.type) {
     case 'TRIGGERS_UPDATED': {
       const triggers = message.payload as TriggerConfig[];
+      console.log('[Browserlet] TRIGGERS_UPDATED received with', triggers.length, 'triggers');
       updateTriggers(triggers);
       break;
     }

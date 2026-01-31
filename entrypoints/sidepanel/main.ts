@@ -93,23 +93,26 @@ function App() {
     ),
 
     // Suggested scripts (contextual triggers)
-    () => suggestedScriptIds.val.length > 0
-      ? div({ style: 'padding: 8px 16px; background: #e3f2fd; border-bottom: 1px solid #90caf9;' },
-          SuggestedScripts({
-            onRunScript: (script) => {
-              navigateTo('execution');
-              chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-                if (tabs[0]?.id) {
-                  await chrome.tabs.sendMessage(tabs[0].id, {
-                    type: 'EXECUTE_SCRIPT',
-                    payload: { content: script.content }
-                  });
-                }
+    // Always render container, use style binding for visibility (VanJS reactivity pattern)
+    div({
+      style: () => suggestedScriptIds.val.length > 0
+        ? 'padding: 8px 16px; background: #e3f2fd; border-bottom: 1px solid #90caf9;'
+        : 'display: none;'
+    },
+      SuggestedScripts({
+        onRunScript: (script) => {
+          navigateTo('execution');
+          chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+            if (tabs[0]?.id) {
+              await chrome.tabs.sendMessage(tabs[0].id, {
+                type: 'EXECUTE_SCRIPT',
+                payload: { content: script.content }
               });
             }
-          })
-        )
-      : null,
+          });
+        }
+      })
+    ),
 
     // Navigation
     NavTabs(),
@@ -199,18 +202,24 @@ function App() {
 
 // Initialize
 async function init() {
+  console.log('[Browserlet Sidepanel] init() started');
+
   // Check service worker
   try {
     await chrome.runtime.sendMessage({ type: 'PING' });
+    console.log('[Browserlet Sidepanel] Service worker is available');
   } catch (error) {
     console.error('Service worker not available:', error);
   }
 
   // Load scripts
   await loadScripts();
+  console.log('[Browserlet Sidepanel] Scripts loaded');
 
   // Load triggers for context-aware suggestions
-  loadTriggers();
+  console.log('[Browserlet Sidepanel] Loading triggers...');
+  await loadTriggers();
+  console.log('[Browserlet Sidepanel] Triggers loaded, suggestedScriptIds:', suggestedScriptIds.val);
 
   // Load LLM configuration from storage
   try {

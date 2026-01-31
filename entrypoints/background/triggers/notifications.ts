@@ -24,28 +24,33 @@ export async function notifyAutoExecution(
 ): Promise<string> {
   const notificationId = `script_${scriptId}_${Date.now()}`;
 
-  await chrome.notifications.create(notificationId, {
-    type: 'basic',
-    iconUrl: chrome.runtime.getURL('icon/128.png'),
-    title: chrome.i18n.getMessage('notificationAutoExecuteTitle') || 'Script Auto-Executing',
-    message: chrome.i18n.getMessage('notificationAutoExecuteMessage', [scriptName]) ||
-             `Running: ${scriptName}`,
-    buttons: [
-      { title: chrome.i18n.getMessage('notificationStop') || 'Stop' },
-      { title: chrome.i18n.getMessage('notificationDisableSite') || 'Disable for this site' }
-    ],
-    requireInteraction: false,
-    priority: 0
-  });
+  try {
+    await chrome.notifications.create(notificationId, {
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('icon/128.png'),
+      title: chrome.i18n.getMessage('notificationAutoExecuteTitle') || 'Script Auto-Executing',
+      message: chrome.i18n.getMessage('notificationAutoExecuteMessage', [scriptName]) ||
+               `Running: ${scriptName}`,
+      buttons: [
+        { title: chrome.i18n.getMessage('notificationStop') || 'Stop' },
+        { title: chrome.i18n.getMessage('notificationDisableSite') || 'Disable for this site' }
+      ],
+      requireInteraction: false,
+      priority: 0
+    });
 
-  // Track notification for button handling
-  activeNotifications.set(notificationId, { scriptId, tabId, url });
+    // Track notification for button handling
+    activeNotifications.set(notificationId, { scriptId, tabId, url });
 
-  // Auto-clear notification after 10 seconds
-  setTimeout(() => {
-    chrome.notifications.clear(notificationId);
-    activeNotifications.delete(notificationId);
-  }, 10000);
+    // Auto-clear notification after 10 seconds
+    setTimeout(() => {
+      chrome.notifications.clear(notificationId);
+      activeNotifications.delete(notificationId);
+    }, 10000);
+  } catch (error) {
+    console.warn('[Browserlet] Failed to create notification:', error);
+    // Continue with execution even if notification fails
+  }
 
   return notificationId;
 }
@@ -59,21 +64,25 @@ export async function notifyExecutionComplete(
 ): Promise<void> {
   const notificationId = `complete_${Date.now()}`;
 
-  await chrome.notifications.create(notificationId, {
-    type: 'basic',
-    iconUrl: chrome.runtime.getURL('icon/128.png'),
-    title: success
-      ? (chrome.i18n.getMessage('notificationCompleteTitle') || 'Script Completed')
-      : (chrome.i18n.getMessage('notificationFailedTitle') || 'Script Failed'),
-    message: scriptName,
-    requireInteraction: false,
-    priority: 0
-  });
+  try {
+    await chrome.notifications.create(notificationId, {
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('icon/128.png'),
+      title: success
+        ? (chrome.i18n.getMessage('notificationCompleteTitle') || 'Script Completed')
+        : (chrome.i18n.getMessage('notificationFailedTitle') || 'Script Failed'),
+      message: scriptName,
+      requireInteraction: false,
+      priority: 0
+    });
 
-  // Auto-clear after 5 seconds
-  setTimeout(() => {
-    chrome.notifications.clear(notificationId);
-  }, 5000);
+    // Auto-clear after 5 seconds
+    setTimeout(() => {
+      chrome.notifications.clear(notificationId);
+    }, 5000);
+  } catch (error) {
+    console.warn('[Browserlet] Failed to create completion notification:', error);
+  }
 }
 
 /**

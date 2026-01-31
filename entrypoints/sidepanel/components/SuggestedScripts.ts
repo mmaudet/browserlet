@@ -25,9 +25,12 @@ export function SuggestedScripts({ onRunScript }: SuggestedScriptsProps) {
   const scripts = van.state<Script[]>([]);
   const isLoading = van.state(false);
 
+  console.log('[Browserlet SuggestedScripts] Component initialized, initial suggestedScriptIds:', suggestedScriptIds.val);
+
   // Load suggested scripts when IDs change
   van.derive(async () => {
     const ids = suggestedScriptIds.val;
+    console.log('[Browserlet SuggestedScripts] van.derive triggered, ids:', ids);
     if (ids.length === 0) {
       scripts.val = [];
       return;
@@ -37,6 +40,7 @@ export function SuggestedScripts({ onRunScript }: SuggestedScriptsProps) {
     try {
       const allScripts = await getScripts();
       scripts.val = allScripts.filter(s => ids.includes(s.id));
+      console.log('[Browserlet SuggestedScripts] Loaded scripts:', scripts.val.map(s => s.name));
     } finally {
       isLoading.val = false;
     }
@@ -44,15 +48,17 @@ export function SuggestedScripts({ onRunScript }: SuggestedScriptsProps) {
 
   // Load on mount - check session storage for current tab
   async function loadSuggestions(): Promise<void> {
+    console.log('[Browserlet SuggestedScripts] loadSuggestions called');
     try {
       const response = await chrome.runtime.sendMessage({
         type: 'GET_SUGGESTED_SCRIPTS'
       });
+      console.log('[Browserlet SuggestedScripts] GET_SUGGESTED_SCRIPTS response:', response);
       if (response.success && response.data) {
         suggestedScriptIds.val = response.data as string[];
       }
-    } catch {
-      // Ignore errors
+    } catch (error) {
+      console.warn('[Browserlet SuggestedScripts] loadSuggestions error:', error);
     }
   }
 
@@ -61,19 +67,20 @@ export function SuggestedScripts({ onRunScript }: SuggestedScriptsProps) {
 
   // Listen for tab changes to refresh suggestions
   chrome.tabs.onActivated.addListener(() => {
+    console.log('[Browserlet SuggestedScripts] Tab activated, reloading suggestions');
     loadSuggestions();
   });
 
-  return div({ class: 'suggested-scripts' },
+  return div({ style: 'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;' },
     // Header
-    div({ class: 'flex justify-between items-center mb-3' },
-      h3({ class: 'text-sm font-semibold flex items-center gap-2' },
-        span({ class: 'w-2 h-2 rounded-full bg-blue-500 animate-pulse' }),
-        msg('suggestedScriptsTitle')
+    div({ style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;' },
+      h3({ style: 'font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin: 0;' },
+        span({ style: 'width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; animation: pulse 2s infinite;' }),
+        msg('suggestedScriptsTitle') || 'Suggested Scripts'
       ),
       () => scripts.val.length > 0
         ? button({
-            class: 'text-xs text-gray-500 hover:text-gray-700',
+            style: 'font-size: 12px; color: #6b7280; background: none; border: none; cursor: pointer; padding: 4px 8px;',
             onclick: () => {
               clearSuggestions();
               // Clear badge for current tab
@@ -84,30 +91,37 @@ export function SuggestedScripts({ onRunScript }: SuggestedScriptsProps) {
               });
             }
           }, 'Dismiss')
-        : null
+        : div()
     ),
 
     // Content
-    () => isLoading.val
-      ? div({ class: 'text-gray-500 text-sm py-2' }, 'Loading...')
-      : scripts.val.length === 0
-        ? div({ class: 'text-gray-400 text-sm py-2' }, msg('suggestedScriptsEmpty'))
-        : div({ class: 'space-y-2' },
-            ...scripts.val.map(script =>
-              div({ class: 'flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100' },
-                div({ class: 'flex-1 min-w-0' },
-                  div({ class: 'font-medium text-sm truncate' }, script.name),
-                  script.description
-                    ? div({ class: 'text-xs text-gray-500 truncate' }, script.description)
-                    : null
-                ),
-                button({
-                  class: 'ml-2 px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 flex-shrink-0',
-                  onclick: () => onRunScript(script)
-                }, msg('suggestedScriptRun'))
-              )
-            )
+    () => {
+      if (isLoading.val) {
+        return div({ style: 'color: #6b7280; font-size: 14px; padding: 8px 0;' }, 'Loading...');
+      }
+
+      if (scripts.val.length === 0) {
+        return div({ style: 'color: #9ca3af; font-size: 14px; padding: 8px 0;' },
+          msg('suggestedScriptsEmpty') || 'No scripts suggested for this page');
+      }
+
+      return div({ style: 'display: flex; flex-direction: column; gap: 8px;' },
+        ...scripts.val.map(script =>
+          div({ style: 'display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe;' },
+            div({ style: 'flex: 1; min-width: 0;' },
+              div({ style: 'font-weight: 500; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;' }, script.name),
+              script.description
+                ? div({ style: 'font-size: 12px; color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;' }, script.description)
+                : div()
+            ),
+            button({
+              style: 'margin-left: 8px; padding: 6px 12px; background: #3b82f6; color: white; font-size: 14px; border-radius: 6px; border: none; cursor: pointer; flex-shrink: 0;',
+              onclick: () => onRunScript(script)
+            }, msg('suggestedScriptRun') || 'Run')
           )
+        )
+      );
+    }
   );
 }
 
@@ -118,7 +132,7 @@ export function SuggestedScripts({ onRunScript }: SuggestedScriptsProps) {
 export function SuggestionBadge() {
   return () => suggestedScriptIds.val.length > 0
     ? span({
-        class: 'inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-500 rounded-full'
+        style: 'display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; font-size: 12px; font-weight: bold; color: white; background: #3b82f6; border-radius: 50%;'
       }, String(suggestedScriptIds.val.length))
-    : null;
+    : div();
 }

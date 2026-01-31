@@ -130,7 +130,9 @@ export class ContextDetector {
   private checkCondition(condition: TriggerCondition, currentUrl: string): boolean {
     // Check URL pattern (if specified)
     if (condition.url_pattern) {
-      if (!matchesUrlPattern(currentUrl, condition.url_pattern)) {
+      const urlMatches = matchesUrlPattern(currentUrl, condition.url_pattern);
+      console.log('[Browserlet] URL pattern check:', condition.url_pattern, 'against', currentUrl, '=', urlMatches);
+      if (!urlMatches) {
         return false;
       }
     }
@@ -138,7 +140,9 @@ export class ContextDetector {
     // Check element presence (if specified)
     if (condition.element_present) {
       const result = resolveElement(condition.element_present.hints);
-      if (!result.element || !isElementVisible(result.element)) {
+      const visible = result.element ? isElementVisible(result.element) : false;
+      console.log('[Browserlet] Element present check:', condition.element_present.hints, 'found=', !!result.element, 'visible=', visible);
+      if (!result.element || !visible) {
         return false;
       }
     }
@@ -146,7 +150,9 @@ export class ContextDetector {
     // Check element absence (if specified)
     if (condition.element_absent) {
       const result = resolveElement(condition.element_absent.hints);
-      if (result.element && isElementVisible(result.element)) {
+      const visible = result.element ? isElementVisible(result.element) : false;
+      console.log('[Browserlet] Element absent check:', condition.element_absent.hints, 'found=', !!result.element, 'visible=', visible);
+      if (result.element && visible) {
         return false; // Element found but should be absent
       }
     }
