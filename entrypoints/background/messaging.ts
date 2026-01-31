@@ -1,5 +1,5 @@
 import type { AppState, Message, MessageResponse, PingResponse, CapturedAction } from '../../utils/types';
-import { getState, setState, setRecordingState, addRecordedAction } from './storage';
+import { getState, setState, setRecordingState, addRecordedAction, clearRecordedActions } from './storage';
 import { getLLMService } from './llm';
 import type { LLMConfig } from './llm/providers/types';
 import { getTriggerEngine, initializeTriggerEngine, broadcastTriggerUpdate } from './triggers';
@@ -51,6 +51,9 @@ async function processMessage(
     }
 
     case 'START_RECORDING': {
+      // Clear previous recorded actions before starting new recording
+      await clearRecordedActions();
+
       // Update state
       const updated = await setRecordingState('recording');
 
@@ -155,8 +158,14 @@ async function processMessage(
     case 'CONTEXT_MATCH': {
       const context = message.payload as ContextState;
       const tabId = _sender.tab?.id;
+      console.log('[Browserlet BG] CONTEXT_MATCH received, tabId:', tabId, 'matches:', context.matches);
       if (tabId) {
-        await getTriggerEngine().handleContextMatch(tabId, context);
+        try {
+          await getTriggerEngine().handleContextMatch(tabId, context);
+          console.log('[Browserlet BG] handleContextMatch completed');
+        } catch (error) {
+          console.error('[Browserlet BG] handleContextMatch error:', error);
+        }
       }
       return { success: true };
     }
