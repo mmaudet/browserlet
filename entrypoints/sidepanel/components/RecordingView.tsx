@@ -4,7 +4,7 @@ import { llmConfigStore, getLLMConfigForServiceWorker, loadLLMConfig, isConfigVa
 import { loadScripts } from '../stores/scripts';
 import { navigateTo } from '../router';
 import { saveScript } from '../../../utils/storage/scripts';
-import { PasswordPrompt, detectedPasswords, showPasswordPrompt } from './PasswordPrompt';
+import { PasswordPrompt, promptForPasswords } from './PasswordPrompt';
 import type { DetectedPassword } from '../../../utils/passwords/types';
 
 // Recording state (synced with storage)
@@ -181,8 +181,10 @@ export async function toggleRecording(): Promise<void> {
       let capturedPasswords: DetectedPassword[] = [];
       try {
         const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        console.log('[Browserlet] Active tab for password check:', activeTab?.id, activeTab?.url);
         if (activeTab?.id) {
           const passwordResponse = await chrome.tabs.sendMessage(activeTab.id, { type: 'GET_CAPTURED_PASSWORDS' });
+          console.log('[Browserlet] Password response:', JSON.stringify(passwordResponse));
           if (passwordResponse.success && passwordResponse.data) {
             capturedPasswords = passwordResponse.data as DetectedPassword[];
             console.log('[Browserlet] Captured passwords:', capturedPasswords.length);
@@ -193,10 +195,11 @@ export async function toggleRecording(): Promise<void> {
         console.warn('[Browserlet] Could not get captured passwords:', error);
       }
 
-      // If passwords were captured, show the password prompt
+      // If passwords were captured, show the password prompt and wait for user decision
       if (capturedPasswords.length > 0) {
-        detectedPasswords.value = capturedPasswords;
-        showPasswordPrompt.value = true;
+        console.log('[Browserlet] Showing password prompt for', capturedPasswords.length, 'passwords');
+        const saved = await promptForPasswords(capturedPasswords);
+        console.log('[Browserlet] Password prompt result:', saved ? 'saved' : 'skipped');
       }
 
       if (actions.length === 0) {

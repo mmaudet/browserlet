@@ -212,6 +212,22 @@ async function processMessage(
       return { success: true };
     }
 
+    case 'GET_CAPTURED_PASSWORDS': {
+      // Forward to active tab's content script to get captured passwords
+      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (activeTab?.id) {
+        try {
+          const response = await chrome.tabs.sendMessage(activeTab.id, { type: 'GET_CAPTURED_PASSWORDS' });
+          console.log('[Browserlet BG] GET_CAPTURED_PASSWORDS from tab', activeTab.id, ':', response);
+          return response;
+        } catch (error) {
+          console.error('[Browserlet BG] Failed to get captured passwords from tab:', error);
+          return { success: true, data: [] };
+        }
+      }
+      return { success: true, data: [] };
+    }
+
     // Password-related messages
     case 'GET_VAULT_STATE':
     case 'UNLOCK_VAULT':

@@ -9,6 +9,21 @@ export const showPasswordPrompt = signal(false);
 const isSaving = signal(false);
 const saveError = signal<string | null>(null);
 
+// Promise resolver for awaiting user decision
+let promptResolver: ((saved: boolean) => void) | null = null;
+
+/**
+ * Show the password prompt and wait for user decision.
+ * Returns true if passwords were saved, false if skipped.
+ */
+export function promptForPasswords(passwords: DetectedPassword[]): Promise<boolean> {
+  return new Promise((resolve) => {
+    detectedPasswords.value = passwords;
+    showPasswordPrompt.value = true;
+    promptResolver = resolve;
+  });
+}
+
 /**
  * Extract hostname from URL for display.
  */
@@ -40,6 +55,11 @@ async function handleSave(): Promise<void> {
       // Clear state and close modal
       detectedPasswords.value = [];
       showPasswordPrompt.value = false;
+      // Resolve the promise with true (saved)
+      if (promptResolver) {
+        promptResolver(true);
+        promptResolver = null;
+      }
     } else {
       saveError.value = response.error || 'Failed to save passwords';
     }
@@ -58,6 +78,11 @@ function handleSkip(): void {
   detectedPasswords.value = [];
   showPasswordPrompt.value = false;
   saveError.value = null;
+  // Resolve the promise with false (skipped)
+  if (promptResolver) {
+    promptResolver(false);
+    promptResolver = null;
+  }
 }
 
 /**

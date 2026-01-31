@@ -85,6 +85,7 @@ export class PasswordCapture {
     this.passwordValues.clear();
     this.callback = null;
 
+    console.log('[Browserlet PasswordCapture] stop() returning', captured.length, 'passwords');
     return captured;
   }
 
@@ -110,10 +111,12 @@ export class PasswordCapture {
   private trackPasswordField(field: HTMLInputElement): void {
     if (this.detectedFields.has(field)) return;
 
+    console.log('[Browserlet PasswordCapture] Detected password field:', field.name || field.id || 'unnamed');
     this.detectedFields.add(field);
 
     // Track value changes
     const inputHandler = () => {
+      console.log('[Browserlet PasswordCapture] Password value captured (length:', field.value.length, ')');
       this.passwordValues.set(field, field.value);
     };
 
