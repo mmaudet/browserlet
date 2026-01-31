@@ -1,11 +1,14 @@
 import { useSignal, type Signal } from '@preact/signals';
 import type { StoredPassword } from '../../../utils/passwords/types';
 import type { CapturedPassword } from '../../../entrypoints/content/recording/passwordCapture';
-import { passwordStore, loadPasswords } from '../stores/passwords';
+import { passwordStore, loadPasswords, refreshVaultState } from '../stores/passwords';
 import { scriptsState } from '../stores/scripts';
 import { deletePassword } from '../../../utils/passwords/storage';
-import { unlockVault } from '../../../utils/passwords/vault';
+import { unlockVault, lockVault } from '../../../utils/passwords/vault';
 import { extractCredentialRefs } from '../../../utils/passwords/substitution';
+import { clearCachedKey } from '../../../utils/crypto/masterPassword';
+import { MasterPasswordSetup } from './MasterPasswordSetup';
+import { VaultUnlock } from './VaultUnlock';
 
 /**
  * Build a map of credential ID/alias -> script names that use it.
@@ -317,9 +320,33 @@ function EditForm({ credential, editPassword, editAlias, onSave, onCancel }: Edi
   );
 }
 
-async function handleUnlock(): Promise<void> {
+/**
+ * Called after master password setup is complete.
+ * Updates vault state and loads passwords.
+ */
+async function handleSetupComplete(): Promise<void> {
   await unlockVault();
+  await refreshVaultState(); // Re-fetch vault state to update needsSetup signal
   await loadPasswords();
+}
+
+/**
+ * Called after vault unlock is successful.
+ * Updates vault state and loads passwords.
+ */
+async function handleUnlockSuccess(): Promise<void> {
+  await unlockVault();
+  await refreshVaultState(); // Re-fetch vault state to update isLocked signal
+  await loadPasswords();
+}
+
+/**
+ * Lock the vault - clears cached key and updates state.
+ */
+async function handleLock(): Promise<void> {
+  await clearCachedKey();
+  await lockVault();
+  await refreshVaultState();
 }
 
 export function CredentialManager() {
@@ -410,36 +437,14 @@ export function CredentialManager() {
     captureMode.value = 'idle';
   }
 
-  // Locked state - show unlock button
+  // First-time setup needed - show setup UI
+  if (vaultState.value.needsSetup) {
+    return <MasterPasswordSetup onSetupComplete={handleSetupComplete} />;
+  }
+
+  // Vault locked - show unlock UI
   if (vaultState.value.isLocked) {
-    return (
-      <div style={{ padding: '16px' }}>
-        <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#128274;</div>
-          <div style={{ fontWeight: 500, color: '#333', marginBottom: '8px' }}>
-            Vault is Locked
-          </div>
-          <div style={{ fontSize: '13px', color: '#666', marginBottom: '16px' }}>
-            Unlock to view and manage your stored credentials.
-          </div>
-          <button
-            onClick={handleUnlock}
-            style={{
-              padding: '10px 24px',
-              background: '#4caf50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 500,
-            }}
-          >
-            Unlock Vault
-          </button>
-        </div>
-      </div>
-    );
+    return <VaultUnlock onUnlockSuccess={handleUnlockSuccess} />;
   }
 
   // Loading state
@@ -501,8 +506,24 @@ export function CredentialManager() {
               +
             </button>
           </div>
-          <div style={{ fontSize: '12px', color: '#666' }}>
-            {passwords.value.length} credential{passwords.value.length === 1 ? '' : 's'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ fontSize: '12px', color: '#666' }}>
+              {passwords.value.length} credential{passwords.value.length === 1 ? '' : 's'}
+            </div>
+            <button
+              onClick={handleLock}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '16px',
+                padding: '4px',
+                color: '#666',
+              }}
+              title="Lock vault"
+            >
+              &#128274;
+            </button>
           </div>
         </div>
       </div>
