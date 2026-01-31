@@ -6,6 +6,7 @@
 import type { LLMProvider, LLMConfig } from './providers/types';
 import { ClaudeProvider } from './providers/claude';
 import { OllamaProvider } from './providers/ollama';
+import { OpenAIProvider } from './providers/openai';
 import { generateBasicBSL } from './fallback';
 import type { CapturedAction } from '../../content/recording/types';
 
@@ -55,8 +56,10 @@ export class LLMService {
       provider: config.provider,
       hasApiKey: !!config.claudeApiKey,
       apiKeyLength: config.claudeApiKey?.length ?? 0,
-      model: config.provider === 'claude' ? config.claudeModel : config.ollamaModel,
-      ollamaHost: config.provider === 'ollama' ? config.ollamaHost : undefined
+      model: config.provider === 'claude' ? config.claudeModel :
+             config.provider === 'openai' ? config.openaiModel : config.ollamaModel,
+      ollamaHost: config.provider === 'ollama' ? config.ollamaHost : undefined,
+      openaiEndpoint: config.provider === 'openai' ? config.openaiEndpoint : undefined
     });
 
     this.config = config;
@@ -67,6 +70,9 @@ export class LLMService {
     } else if (config.provider === 'ollama') {
       console.log('[LLM Service] Creating Ollama provider');
       this.provider = new OllamaProvider(config.ollamaHost, config.ollamaModel);
+    } else if (config.provider === 'openai' && config.openaiApiKey && config.openaiEndpoint) {
+      console.log('[LLM Service] Creating OpenAI provider');
+      this.provider = new OpenAIProvider(config.openaiEndpoint, config.openaiApiKey, config.openaiModel);
     } else {
       console.warn('[LLM Service] No provider created - missing API key or invalid config');
     }
@@ -154,6 +160,10 @@ export class LLMService {
     if (this.config.provider === 'ollama') {
       // Ollama doesn't require credentials, just needs to be selected
       return true;
+    }
+
+    if (this.config.provider === 'openai') {
+      return !!this.config.openaiApiKey && !!this.config.openaiEndpoint;
     }
 
     return false;
