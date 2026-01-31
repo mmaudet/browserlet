@@ -74,7 +74,7 @@ describe('substituteCredentials', () => {
       id: 'test',
       url: 'example.com',
       username: 'user',
-      encryptedPassword: { iv: 'mockIv', data: 'mockData' },
+      encryptedPassword: { iv: 'mockIv', ciphertext: 'mockData' },
       createdAt: Date.now(),
       updatedAt: Date.now()
     }];
@@ -106,7 +106,7 @@ describe('substituteCredentials', () => {
       id: 'other',
       url: 'example.com',
       username: 'user',
-      encryptedPassword: { iv: 'mockIv', data: 'mockData' },
+      encryptedPassword: { iv: 'mockIv', ciphertext: 'mockData' },
       createdAt: Date.now(),
       updatedAt: Date.now()
     }];
@@ -123,7 +123,7 @@ describe('substituteCredentials', () => {
         id: 'usr',
         url: 'example.com',
         username: 'user',
-        encryptedPassword: { iv: 'mockIv1', data: 'mockData1' },
+        encryptedPassword: { iv: 'mockIv1', ciphertext: 'mockData1' },
         createdAt: Date.now(),
         updatedAt: Date.now()
       },
@@ -131,7 +131,7 @@ describe('substituteCredentials', () => {
         id: 'pwd',
         url: 'example.com',
         username: 'user',
-        encryptedPassword: { iv: 'mockIv2', data: 'mockData2' },
+        encryptedPassword: { iv: 'mockIv2', ciphertext: 'mockData2' },
         createdAt: Date.now(),
         updatedAt: Date.now()
       }
