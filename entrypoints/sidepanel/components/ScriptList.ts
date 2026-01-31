@@ -1,9 +1,10 @@
 import van from 'vanjs-core';
 import type { Script } from '../../../utils/types';
-import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId } from '../stores/scripts';
+import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId, updateScriptInState } from '../stores/scripts';
 import { startExecution } from '../stores/execution';
 import { navigateTo } from '../router';
 import { TriggerConfig } from './TriggerConfig';
+import { deleteScript, saveScript } from '../../../utils/storage/scripts';
 
 const { div, input, span, button } = van.tags;
 
@@ -12,12 +13,14 @@ interface ScriptListProps {
   onNewScript?: () => void;
 }
 
-function ScriptItem({ script, isSelected, onSelect, onRun, onConfigureTriggers }: {
+function ScriptItem({ script, isSelected, onSelect, onRun, onConfigureTriggers, onDelete, onRename }: {
   script: Script;
   isSelected: boolean;
   onSelect: () => void;
   onRun: () => void;
   onConfigureTriggers: () => void;
+  onDelete: () => void;
+  onRename: () => void;
 }) {
   return div({
     class: () => `script-item ${isSelected ? 'selected' : ''}`,
@@ -43,13 +46,29 @@ function ScriptItem({ script, isSelected, onSelect, onRun, onConfigureTriggers }
       ),
       div({ style: 'display: flex; gap: 4px; align-items: center;' },
         button({
+          style: 'background: none; border: none; cursor: pointer; font-size: 14px; padding: 4px 6px; color: #666;',
+          title: chrome.i18n.getMessage('renameScript') || 'Rename',
+          onclick: function(e: Event) {
+            e.stopPropagation();
+            onRename();
+          }
+        }, '✏️'),
+        button({
+          style: 'background: none; border: none; cursor: pointer; font-size: 14px; padding: 4px 6px; color: #d32f2f;',
+          title: chrome.i18n.getMessage('deleteScript') || 'Delete',
+          onclick: function(e: Event) {
+            e.stopPropagation();
+            onDelete();
+          }
+        }, '🗑️'),
+        button({
           style: 'background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px 8px; color: #666;',
           title: chrome.i18n.getMessage('configureTriggers') || 'Configure triggers',
           onclick: function(e: Event) {
             e.stopPropagation();
             onConfigureTriggers();
           }
-        }, '\u26A1'), // Lightning bolt emoji
+        }, '\u26A1'),
         button({
           onclick: (e: Event) => {
             e.stopPropagation();
@@ -73,6 +92,22 @@ function ScriptItem({ script, isSelected, onSelect, onRun, onConfigureTriggers }
       )
     ) : ''
   );
+}
+
+async function handleDeleteScript(script: Script): Promise<void> {
+  const confirmMessage = chrome.i18n.getMessage('confirmDeleteScript') || `Delete "${script.name}"? This cannot be undone.`;
+  if (confirm(confirmMessage)) {
+    await deleteScript(script.id);
+  }
+}
+
+async function handleRenameScript(script: Script): Promise<void> {
+  const promptMessage = chrome.i18n.getMessage('renameScriptPrompt') || 'Enter new name:';
+  const newName = prompt(promptMessage, script.name);
+  if (newName && newName.trim() && newName !== script.name) {
+    const updated = await saveScript({ ...script, name: newName.trim() });
+    updateScriptInState(updated);
+  }
 }
 
 export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}) {
@@ -133,7 +168,9 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
               },
               onConfigureTriggers: () => {
                 showTriggerConfig.val = script.id;
-              }
+              },
+              onDelete: () => handleDeleteScript(script),
+              onRename: () => handleRenameScript(script)
             })
           )
         );
