@@ -17,7 +17,8 @@ export async function getPasswords(): Promise<StoredPassword[]> {
 export async function savePassword(
   url: string,
   username: string,
-  password: string
+  password: string,
+  alias?: string
 ): Promise<StoredPassword> {
   const encrypted = await encryptApiKey(password);
   const passwords = await getPasswords();
@@ -28,6 +29,10 @@ export async function savePassword(
   if (existing) {
     existing.encryptedPassword = encrypted;
     existing.updatedAt = Date.now();
+    // Preserve existing alias unless explicitly provided
+    if (alias !== undefined) {
+      existing.alias = alias || undefined;
+    }
     await chrome.storage.local.set({ [PASSWORDS_KEY]: passwords });
     return existing;
   }
@@ -42,6 +47,11 @@ export async function savePassword(
     updatedAt: Date.now(),
   };
 
+  // Include alias if provided
+  if (alias) {
+    entry.alias = alias;
+  }
+
   await chrome.storage.local.set({ [PASSWORDS_KEY]: [...passwords, entry] });
   return entry;
 }
@@ -51,6 +61,27 @@ export async function savePassword(
  */
 export async function getDecryptedPassword(entry: StoredPassword): Promise<string> {
   return await decryptApiKey(entry.encryptedPassword);
+}
+
+/**
+ * Update the alias for an existing password.
+ */
+export async function updatePasswordAlias(id: string, alias: string | null): Promise<void> {
+  const passwords = await getPasswords();
+  const credential = passwords.find(p => p.id === id);
+
+  if (!credential) {
+    throw new Error(`Credential with id ${id} not found`);
+  }
+
+  if (alias) {
+    credential.alias = alias;
+  } else {
+    delete credential.alias;
+  }
+  credential.updatedAt = Date.now();
+
+  await chrome.storage.local.set({ [PASSWORDS_KEY]: passwords });
 }
 
 /**

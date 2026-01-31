@@ -7,6 +7,8 @@ import type { EncryptedData } from '../crypto/encryption';
 export interface StoredPassword {
   /** Unique ID (pwd-{timestamp}-{random}) */
   id: string;
+  /** Optional user-friendly alias (e.g., "linagora_pwd") */
+  alias?: string;
   /** Domain or URL pattern for matching */
   url: string;
   /** Stored plaintext (not sensitive) */
