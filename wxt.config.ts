@@ -1,5 +1,6 @@
 import { defineConfig } from 'wxt';
 import monacoEditorPluginModule from 'vite-plugin-monaco-editor';
+import preact from '@preact/preset-vite';
 
 // Handle ESM/CJS interop - the package exports differently based on module system
 const monacoEditorPlugin =
@@ -26,6 +27,7 @@ export default defineConfig({
   },
   vite: () => ({
     plugins: [
+      preact(),
       monacoEditorPlugin({
         languageWorkers: ['editorWorkerService'],
       }),
