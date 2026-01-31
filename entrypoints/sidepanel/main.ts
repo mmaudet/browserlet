@@ -13,6 +13,7 @@ import { saveScript } from '../../utils/storage/scripts';
 import type { Script } from '../../utils/types';
 import { SuggestedScripts } from './components/SuggestedScripts';
 import { suggestedScriptIds, loadTriggers } from './stores/triggers';
+import { mountPreactTest } from './components/PreactTest';
 
 const { div, button, span, nav } = van.tags;
 
@@ -237,6 +238,12 @@ async function init() {
   if (root) {
     van.add(root, App());
   }
+
+  // Preact test component - temporary, remove after Phase 8 migration
+  const preactTestContainer = document.createElement('div');
+  preactTestContainer.id = 'preact-test';
+  document.body.appendChild(preactTestContainer);
+  mountPreactTest(preactTestContainer);
 }
 
 init();
