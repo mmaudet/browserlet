@@ -1,4 +1,5 @@
 import { useSignal, type Signal } from '@preact/signals';
+import { useEffect } from 'preact/hooks';
 import type { StoredPassword } from '../../../utils/passwords/types';
 import type { CapturedPassword } from '../../../entrypoints/content/recording/passwordCapture';
 import { passwordStore, loadPasswords, refreshVaultState } from '../stores/passwords';
@@ -7,8 +8,10 @@ import { deletePassword } from '../../../utils/passwords/storage';
 import { unlockVault, lockVault } from '../../../utils/passwords/vault';
 import { extractCredentialRefs } from '../../../utils/passwords/substitution';
 import { clearCachedKey } from '../../../utils/crypto/masterPassword';
+import { detectMigrationState } from '../../../utils/passwords/migration';
 import { MasterPasswordSetup } from './MasterPasswordSetup';
 import { VaultUnlock } from './VaultUnlock';
+import { CredentialMigration } from './CredentialMigration';
 
 /**
  * Build a map of credential ID/alias -> script names that use it.
@@ -356,8 +359,39 @@ export function CredentialManager() {
   const captureMode = useSignal<'idle' | 'capturing' | 'confirming'>('idle');
   const capturedCredentials = useSignal<CapturedPassword[]>([]);
 
+  // Migration state (null = checking, true = needs migration, false = no migration needed)
+  const needsMigration = useSignal<boolean | null>(null);
+  const migrationCredentialCount = useSignal(0);
+
   const { passwords, vaultState, isLoading, error } = passwordStore;
   const usageMap = buildUsageMap(passwords.value);
+
+  // Check for migration needed on mount (only when not in setup mode)
+  useEffect(() => {
+    async function checkMigration() {
+      // Only check migration after setup is complete
+      if (vaultState.value.needsSetup) {
+        needsMigration.value = false;
+        return;
+      }
+
+      const state = await detectMigrationState();
+      needsMigration.value = state.needsMigration;
+      migrationCredentialCount.value = state.credentialCount;
+    }
+
+    checkMigration();
+  }, [vaultState.value.needsSetup]);
+
+  /**
+   * Called when migration is complete.
+   * Clears migration state and refreshes vault.
+   */
+  async function handleMigrationComplete(): Promise<void> {
+    needsMigration.value = false;
+    await refreshVaultState();
+    await loadPasswords();
+  }
 
   async function handleDelete(credential: StoredPassword): Promise<void> {
     const usageCount = usageMap.get(credential.id)?.length || 0;
@@ -442,13 +476,23 @@ export function CredentialManager() {
     return <MasterPasswordSetup onSetupComplete={handleSetupComplete} />;
   }
 
+  // Migration needed - show migration UI (after setup, before unlock)
+  if (needsMigration.value === true) {
+    return (
+      <CredentialMigration
+        onComplete={handleMigrationComplete}
+        credentialCount={migrationCredentialCount.value}
+      />
+    );
+  }
+
   // Vault locked - show unlock UI
   if (vaultState.value.isLocked) {
     return <VaultUnlock onUnlockSuccess={handleUnlockSuccess} />;
   }
 
-  // Loading state
-  if (isLoading.value) {
+  // Loading state (including migration check)
+  if (isLoading.value || needsMigration.value === null) {
     return (
       <div style={{ padding: '16px' }}>
         <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}>
