@@ -97,11 +97,15 @@ export function validateStep(step: unknown, index: number): BSLStep {
     }
   }
 
-  // Validate navigate action needs value (URL)
+  // Validate navigate action needs value or url (URL)
   if (typedAction === 'navigate') {
-    if (!rawStep.value || typeof rawStep.value !== 'string') {
-      throw new Error(`Step ${index + 1}: navigate action requires a "value" (URL)`);
+    // Accept both 'url' and 'value' for navigate actions (recording uses 'url')
+    const navigateUrl = rawStep.url ?? rawStep.value;
+    if (!navigateUrl || typeof navigateUrl !== 'string') {
+      throw new Error(`Step ${index + 1}: navigate action requires a "url" or "value" (URL)`);
     }
+    // Normalize: store URL in 'value' for the executor
+    rawStep.value = navigateUrl;
   }
 
   // Construct validated BSLStep

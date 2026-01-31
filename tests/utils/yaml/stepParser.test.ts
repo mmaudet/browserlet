@@ -170,6 +170,21 @@ steps:
       expect(result.steps[0]?.timeout).toBe('30s');
     });
 
+    it('should parse navigate action with url field (recording format)', () => {
+      const yaml = `
+name: Navigate Test
+steps:
+  - action: navigate
+    url: https://example.com/page
+`;
+
+      const result = parseSteps(yaml);
+
+      expect(result.steps).toHaveLength(1);
+      expect(result.steps[0]?.action).toBe('navigate');
+      expect(result.steps[0]?.value).toBe('https://example.com/page');
+    });
+
     it('should parse step with output variable', () => {
       const yaml = `
 name: Extract Test
@@ -249,7 +264,7 @@ steps:
       );
     });
 
-    it('should throw error for navigate step without value', () => {
+    it('should throw error for navigate step without url or value', () => {
       const yaml = `
 name: Test Script
 steps:
@@ -257,7 +272,7 @@ steps:
 `;
 
       expect(() => parseSteps(yaml)).toThrow(
-        'Step 1: navigate action requires a "value" (URL)'
+        'Step 1: navigate action requires a "url" or "value" (URL)'
       );
     });
 
