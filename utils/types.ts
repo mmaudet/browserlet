@@ -36,7 +36,15 @@ export type MessageType =
   | 'STOP_TRIGGERS'
   // In-page notifications (cross-platform, works on macOS)
   | 'SHOW_AUTO_EXECUTE_NOTIFICATION'
-  | 'SHOW_COMPLETION_NOTIFICATION';
+  | 'SHOW_COMPLETION_NOTIFICATION'
+  // Password messages
+  | 'GET_VAULT_STATE'
+  | 'UNLOCK_VAULT'
+  | 'LOCK_VAULT'
+  | 'GET_PASSWORDS'
+  | 'SAVE_PASSWORD'
+  | 'SAVE_PASSWORDS'
+  | 'DELETE_PASSWORD';
 
 export interface Message {
   type: MessageType;

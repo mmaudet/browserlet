@@ -5,6 +5,7 @@ import type { LLMConfig } from './llm/providers/types';
 import { getTriggerEngine, initializeTriggerEngine, broadcastTriggerUpdate } from './triggers';
 import type { ContextState, TriggerConfig } from '../../utils/triggers/types';
 import { getAllTriggers, saveTrigger, deleteTrigger, setSiteOverride } from '../../utils/storage/triggers';
+import { handlePasswordMessage } from './passwords';
 
 // Storage key for persisted execution state
 const EXECUTION_STATE_KEY = 'browserlet_execution_state';
@@ -209,6 +210,18 @@ async function processMessage(
       };
       await setSiteOverride(scriptId, url, enabled);
       return { success: true };
+    }
+
+    // Password-related messages
+    case 'GET_VAULT_STATE':
+    case 'UNLOCK_VAULT':
+    case 'LOCK_VAULT':
+    case 'GET_PASSWORDS':
+    case 'SAVE_PASSWORD':
+    case 'SAVE_PASSWORDS':
+    case 'DELETE_PASSWORD': {
+      const result = await handlePasswordMessage(message.type, message.payload);
+      return result;
     }
 
     default:

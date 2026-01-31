@@ -1,6 +1,7 @@
 import { handleMessage } from './messaging';
 import { initializeState } from './storage';
 import { initializeTriggerEngine } from './triggers';
+import { initializePasswordInfrastructure } from './passwords';
 
 export default defineBackground(() => {
   console.log('[Browserlet] Service worker started');
@@ -44,4 +45,7 @@ export default defineBackground(() => {
   initializeTriggerEngine().catch(error => {
     console.error('[Browserlet] Failed to initialize trigger engine:', error);
   });
+
+  // Initialize password infrastructure (auto-lock timer, idle detection)
+  initializePasswordInfrastructure();
 });
