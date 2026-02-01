@@ -16,7 +16,9 @@ export function normalizeText(text: string | null | undefined, removeAccents = t
   let normalized = text
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, ' '); // Multiple spaces to single space
+    .replace(/\s+/g, ' ') // Multiple spaces to single space
+    .replace(/[\u2018\u2019\u201A\u201B\u0060\u00B4]/g, "'") // Normalize all apostrophe variants to ASCII
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"'); // Normalize all quote variants to ASCII
 
   if (removeAccents) {
     normalized = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');

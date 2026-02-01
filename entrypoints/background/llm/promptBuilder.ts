@@ -61,7 +61,8 @@ steps:
 5. Use wait_for before actions on dynamically loaded elements (after navigation, AJAX, etc.)
 6. Group related actions logically with appropriate timeouts
 7. For input fields, prefer type action over click
-8. Map captured navigate actions to BSL navigate action with the target URL
+8. **NAVIGATE ACTIONS**: The navigate action ONLY takes a URL in the \`value\` field. Do NOT include \`target\` or \`hints\` for navigate - just \`action: navigate\` and \`value: "https://..."\`
+9. **PRESERVE USER INPUT VALUES**: Keep the actual values the user typed (usernames, emails, search terms, etc.). Only use \`{{credential:name}}\` placeholder syntax for PASSWORD fields. Never replace usernames or other non-password inputs with placeholders like \`{{username}}\` - that syntax is not supported.
 
 ## Captured Actions
 \`\`\`json
@@ -92,5 +93,10 @@ BSL format:
 
 Hints (by priority): data_attribute, role, type, aria_label, name, text_contains, placeholder_contains, near_label, class_contains, id
 
-Use 2-3 hints per target. Output ONLY YAML.`;
+Rules:
+- Use 2-3 hints per target
+- navigate action: ONLY use value field with URL, NO target/hints
+- Preserve actual user input values, only use {{credential:name}} for passwords
+
+Output ONLY YAML.`;
 }
