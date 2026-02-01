@@ -6,16 +6,39 @@
 export type { SemanticHint, HintType } from '../recording/types';
 import type { SemanticHint } from '../recording/types';
 
-// BSL action types (8 actions for playback)
+// BSL action types (9 actions for playback)
 export type ActionType =
   | 'click'
   | 'type'
   | 'select'
   | 'extract'
+  | 'table_extract'
   | 'wait_for'
   | 'navigate'
   | 'scroll'
   | 'hover';
+
+// Transform types for extraction
+export type TransformType =
+  | 'trim'
+  | 'lowercase'
+  | 'uppercase'
+  | 'parse_number'
+  | 'parse_currency'
+  | 'parse_date';
+
+// Output configuration for extraction actions
+export interface OutputConfig {
+  variable: string;           // e.g., "extracted.client_name"
+  attribute?: string;         // For extracting href, src, value, data-*
+  transform?: TransformType;  // Optional transform to apply
+}
+
+// Result of table extraction
+export interface TableExtractionResult {
+  headers: string[];
+  rows: Record<string, string>[];
+}
 
 // A single step in a BSL script
 export interface BSLStep {
@@ -27,10 +50,7 @@ export interface BSLStep {
     fallback_selector?: string;
   };
   value?: string;
-  output?: {
-    variable: string;
-    transform?: string;
-  };
+  output?: OutputConfig;
   timeout?: string; // e.g., "10s", "30s", "5000ms"
 }
 
@@ -57,7 +77,10 @@ export interface ExecutionResult {
   status: 'completed' | 'failed' | 'stopped';
   step?: number;
   error?: string;
+  /** @deprecated Use extractedData for extraction results */
   results?: Record<string, unknown>;
+  /** Extracted data from extract/table_extract actions, keyed by variable name */
+  extractedData?: Record<string, unknown>;
 }
 
 // Result of semantic element resolution
