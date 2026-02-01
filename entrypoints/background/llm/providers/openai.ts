@@ -87,6 +87,45 @@ export class OpenAIProvider implements LLMProvider {
   }
 
   /**
+   * Generate raw text response from a prompt
+   * @param prompt - The prompt to send to the LLM
+   * @returns Promise resolving to raw text response
+   */
+  async generate(prompt: string): Promise<string> {
+    console.log('[OpenAI] generate called with prompt length:', prompt.length);
+
+    const response = await this.rateLimiter.execute(async () => {
+      const res = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 4096,
+          temperature: 0.1,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`OpenAI API error: ${res.status} ${res.statusText} - ${errorText}`);
+      }
+
+      return res.json() as Promise<OpenAIResponse>;
+    });
+
+    const messageContent = response.choices[0]?.message?.content;
+    if (!messageContent) {
+      throw new Error('No content in OpenAI response');
+    }
+
+    return messageContent;
+  }
+
+  /**
    * Generate BSL script from captured actions using OpenAI-compatible API
    * @param actions - Array of captured user actions
    * @returns Promise resolving to BSL YAML string

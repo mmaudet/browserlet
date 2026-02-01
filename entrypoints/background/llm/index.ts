@@ -82,6 +82,29 @@ export class LLMService {
   }
 
   /**
+   * Generate raw text response from a prompt
+   * Used for non-BSL generation tasks like extraction suggestions
+   *
+   * @param prompt - The prompt to send to the LLM
+   * @returns Promise resolving to raw text response
+   * @throws Error if provider not configured or fails
+   */
+  async generate(prompt: string): Promise<string> {
+    console.log('[LLM Service] generate called with prompt length:', prompt.length);
+
+    if (!this.provider || !this.initialized) {
+      throw new Error('LLM not configured');
+    }
+
+    const available = await this.provider.isAvailable();
+    if (!available) {
+      throw new Error('LLM provider not available');
+    }
+
+    return this.provider.generate(prompt);
+  }
+
+  /**
    * Generate BSL script from captured actions
    * Falls back to basic generation if provider unavailable or fails
    *

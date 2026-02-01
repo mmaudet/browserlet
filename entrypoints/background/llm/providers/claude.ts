@@ -64,6 +64,30 @@ export class ClaudeProvider implements LLMProvider {
   }
 
   /**
+   * Generate raw text response from a prompt
+   * @param prompt - The prompt to send to the LLM
+   * @returns Promise resolving to raw text response
+   */
+  async generate(prompt: string): Promise<string> {
+    console.log('[Claude] generate called with prompt length:', prompt.length);
+
+    const response = await this.rateLimiter.execute(async () => {
+      return this.client.messages.create({
+        model: this.model,
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: prompt }],
+      });
+    });
+
+    const textBlock = response.content.find(block => block.type === 'text');
+    if (!textBlock || textBlock.type !== 'text') {
+      throw new Error('No text content in Claude response');
+    }
+
+    return textBlock.text;
+  }
+
+  /**
    * Generate BSL script from captured actions using Claude
    * @param actions - Array of captured user actions
    * @returns Promise resolving to BSL YAML string

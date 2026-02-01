@@ -2,6 +2,8 @@ import type { AppState, Message, MessageResponse, PingResponse, CapturedAction }
 import { getState, setState, setRecordingState, addRecordedAction, clearRecordedActions } from './storage';
 import { getLLMService } from './llm';
 import type { LLMConfig } from './llm/providers/types';
+import { buildExtractionPrompt, parseExtractionResponse } from './llm/prompts/extractionPrompt';
+import type { PageContext } from './llm/prompts/extractionPrompt';
 import { getTriggerEngine, initializeTriggerEngine, broadcastTriggerUpdate } from './triggers';
 import type { ContextState, TriggerConfig } from '../../utils/triggers/types';
 import { getAllTriggers, saveTrigger, deleteTrigger, setSiteOverride } from '../../utils/storage/triggers';
@@ -154,6 +156,26 @@ async function processMessage(
       const llmService = getLLMService();
       const status = llmService.getStatus();
       return { success: true, data: status };
+    }
+
+    case 'SUGGEST_EXTRACTIONS': {
+      const pageContext = message.payload as PageContext;
+      const llmService = getLLMService();
+
+      // Check if LLM is configured
+      if (!llmService.isConfigured()) {
+        return { success: false, error: 'LLM not configured' };
+      }
+
+      try {
+        const prompt = buildExtractionPrompt(pageContext);
+        const response = await llmService.generate(prompt);
+        const suggestions = parseExtractionResponse(response);
+        return { success: true, data: suggestions };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to generate suggestions';
+        return { success: false, error: errorMessage };
+      }
     }
 
     case 'CONTEXT_MATCH': {

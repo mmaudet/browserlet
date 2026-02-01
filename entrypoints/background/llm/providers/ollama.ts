@@ -53,6 +53,23 @@ export class OllamaProvider implements LLMProvider {
   }
 
   /**
+   * Generate raw text response from a prompt
+   * @param prompt - The prompt to send to the LLM
+   * @returns Promise resolving to raw text response
+   */
+  async generate(prompt: string): Promise<string> {
+    console.log('[Ollama] generate called with prompt length:', prompt.length);
+
+    const response = await this.client.chat({
+      model: this.model,
+      messages: [{ role: 'user', content: prompt }],
+      stream: false,
+    });
+
+    return response.message.content;
+  }
+
+  /**
    * Generate BSL script from captured actions using Ollama
    * @param actions - Array of captured user actions
    * @returns Promise resolving to BSL YAML string

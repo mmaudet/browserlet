@@ -25,6 +25,13 @@ export interface LLMProvider {
   generateBSL(actions: CapturedAction[]): Promise<string>;
 
   /**
+   * Generate raw text response from a prompt
+   * @param prompt - The prompt to send to the LLM
+   * @returns Promise resolving to raw text response
+   */
+  generate(prompt: string): Promise<string>;
+
+  /**
    * Check if provider is available and configured
    * @returns Promise resolving to availability status
    */

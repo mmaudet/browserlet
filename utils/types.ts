@@ -50,7 +50,10 @@ export type MessageType =
   | 'START_PASSWORD_CAPTURE'
   | 'STOP_PASSWORD_CAPTURE'
   // Credential substitution (for content script playback)
-  | 'SUBSTITUTE_CREDENTIALS';
+  | 'SUBSTITUTE_CREDENTIALS'
+  // AI extraction suggestions
+  | 'SUGGEST_EXTRACTIONS'
+  | 'GET_PAGE_CONTEXT';
 
 export interface Message {
   type: MessageType;

@@ -272,7 +272,109 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
       return { success: true };
     }
 
+    case 'GET_PAGE_CONTEXT': {
+      // Gather relevant text nodes with context for AI extraction analysis
+      const textNodes = gatherTextNodes();
+      return {
+        success: true,
+        data: {
+          url: window.location.href,
+          title: document.title,
+          textNodes
+        }
+      };
+    }
+
     default:
       return { success: false, error: `Unknown message type: ${message.type}` };
   }
+}
+
+interface TextNodeContext {
+  text: string;
+  tagName: string;
+  className?: string;
+  id?: string;
+  ariaLabel?: string;
+  nearbyLabels: string[];
+}
+
+/**
+ * Gather text nodes from the page with their context
+ * Used for AI extraction suggestions
+ */
+function gatherTextNodes(): TextNodeContext[] {
+  const nodes: TextNodeContext[] = [];
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: (node) => {
+        const text = node.textContent?.trim();
+        // Filter out empty, very short, or very long text
+        if (!text || text.length < 2 || text.length > 200) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }
+  );
+
+  let count = 0;
+  while (walker.nextNode() && count < 100) {
+    const textNode = walker.currentNode;
+    const parent = textNode.parentElement;
+    if (!parent) continue;
+
+    // Skip hidden elements
+    const style = window.getComputedStyle(parent);
+    if (style.display === 'none' || style.visibility === 'hidden') continue;
+
+    // Skip script/style tags
+    if (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') continue;
+
+    nodes.push({
+      text: textNode.textContent?.trim() || '',
+      tagName: parent.tagName.toLowerCase(),
+      className: parent.className || undefined,
+      id: parent.id || undefined,
+      ariaLabel: parent.getAttribute('aria-label') || undefined,
+      nearbyLabels: findNearbyLabels(parent)
+    });
+    count++;
+  }
+
+  return nodes;
+}
+
+/**
+ * Find labels near an element (for context)
+ */
+function findNearbyLabels(element: Element): string[] {
+  const labels: string[] = [];
+
+  // Check for associated label (by for attribute)
+  if (element.id) {
+    const label = document.querySelector(`label[for="${element.id}"]`);
+    if (label?.textContent) labels.push(label.textContent.trim());
+  }
+
+  // Check previous sibling
+  const prev = element.previousElementSibling;
+  if (prev?.tagName === 'LABEL') {
+    const text = prev.textContent?.trim();
+    if (text) labels.push(text);
+  }
+
+  // Check parent for label-like patterns
+  const parent = element.parentElement;
+  if (parent) {
+    const siblingLabel = parent.querySelector('label, .label, [class*="label"]');
+    if (siblingLabel && siblingLabel !== element) {
+      const text = siblingLabel.textContent?.trim();
+      if (text) labels.push(text);
+    }
+  }
+
+  return labels.filter(l => l.length > 0).slice(0, 3);
 }
