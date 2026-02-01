@@ -307,6 +307,12 @@ export class PlaybackManager {
           };
         }
 
+        // Save state BEFORE executing any step that might cause navigation
+        // This handles click actions on login buttons, form submits, etc.
+        if (step.action === 'click' || step.action === 'submit') {
+          await this.saveStateForNavigation(i + 1);
+        }
+
         // Execute the step
         await this.executeStep(step, i);
 

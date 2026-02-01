@@ -70,10 +70,49 @@ function getInitialCandidates(hints: SemanticHint[]): Element[] {
   }
 
   // Fallback: get all interactive elements
-  return Array.from(document.querySelectorAll(
+  const standardInteractive = Array.from(document.querySelectorAll(
     'a, button, input, select, textarea, [role="button"], [role="link"], ' +
-    '[role="textbox"], [role="checkbox"], [role="radio"], [tabindex]'
+    '[role="textbox"], [role="checkbox"], [role="radio"], [tabindex], [onclick]'
   ));
+
+  // If we have text_contains hint but no standard interactive elements matched,
+  // expand to include any visible element with pointer cursor (non-accessible sites)
+  const hasTextHint = hints.some(h => h.type === 'text_contains');
+  if (hasTextHint && standardInteractive.length === 0) {
+    return getClickableElements();
+  }
+
+  // If we have text_contains and few candidates, also include clickable elements
+  if (hasTextHint) {
+    const clickableElements = getClickableElements();
+    const combined = new Set([...standardInteractive, ...clickableElements]);
+    return Array.from(combined);
+  }
+
+  return standardInteractive;
+}
+
+/**
+ * Get elements that appear clickable (cursor: pointer) even without semantic markup
+ * Used as fallback for non-accessible websites
+ */
+function getClickableElements(): Element[] {
+  const candidates: Element[] = [];
+
+  // Query common clickable containers
+  const potentialClickables = document.querySelectorAll(
+    'div, span, li, td, article, section, [class*="btn"], [class*="button"], [class*="card"], [class*="click"]'
+  );
+
+  for (const el of potentialClickables) {
+    const style = window.getComputedStyle(el);
+    // Element has pointer cursor = likely clickable
+    if (style.cursor === 'pointer') {
+      candidates.push(el);
+    }
+  }
+
+  return candidates;
 }
 
 /**
@@ -195,7 +234,17 @@ export function resolveElement(hints: SemanticHint[]): ResolverResult {
     };
   }
 
-  const candidates = getInitialCandidates(hints);
+  const allCandidates = getInitialCandidates(hints);
+
+  // Filter to only visible/interactable candidates first
+  // This prevents hidden duplicates from being selected over visible ones
+  const candidates = allCandidates.filter(el => {
+    const rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  });
+
+  // Fallback to all candidates if no visible ones found
+  const finalCandidates = candidates.length > 0 ? candidates : allCandidates;
 
   // Calculate max possible score
   const maxPossibleScore = hints.reduce((sum, hint) => sum + HINT_WEIGHTS[hint.type], 0);
@@ -205,7 +254,7 @@ export function resolveElement(hints: SemanticHint[]): ResolverResult {
   let bestMatchedHints: string[] = [];
   let bestFailedHints: string[] = [];
 
-  for (const candidate of candidates) {
+  for (const candidate of finalCandidates) {
     let score = 0;
     const matchedHints: string[] = [];
     const failedHints: string[] = [];
