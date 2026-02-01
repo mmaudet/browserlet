@@ -1,4 +1,3 @@
-import { useSignal } from '@preact/signals';
 import { useRef, useEffect } from 'preact/hooks';
 import { monaco, setupMonaco } from '../monaco-setup';
 import type { Script } from '../../../utils/types';
@@ -41,8 +40,6 @@ export function ScriptEditor({ script, onSave, onClose }: ScriptEditorProps) {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-  const isSaving = useSignal(false);
-  const lastSaved = useSignal<number>(script.updatedAt);
 
   // Initialize Monaco editor
   useEffect(() => {
@@ -71,7 +68,6 @@ export function ScriptEditor({ script, onSave, onClose }: ScriptEditorProps) {
 
     // Auto-save on change (debounced)
     const autoSave = debounce(async () => {
-      isSaving.value = true;
       try {
         const content = editorRef.current?.getValue() || '';
         // Extract name from YAML content to sync with script.name
@@ -83,12 +79,9 @@ export function ScriptEditor({ script, onSave, onClose }: ScriptEditorProps) {
           name: nameFromYaml || script.name,
           id: script.id
         });
-        lastSaved.value = updated.updatedAt;
         onSave?.(updated);
       } catch (error) {
         console.error('Failed to save script:', error);
-      } finally {
-        isSaving.value = false;
       }
     }, 1000);
 
@@ -125,27 +118,16 @@ export function ScriptEditor({ script, onSave, onClose }: ScriptEditorProps) {
           borderBottom: '1px solid #ddd'
         }}
       >
-        <span style={{ fontWeight: 500 }}>{script.name}</span>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {isSaving.value ? (
-            <span style={{ fontSize: '12px', color: '#666' }}>
-              {chrome.i18n.getMessage('saving') || 'Saving...'}
-            </span>
-          ) : (
-            <span style={{ fontSize: '12px', color: '#999' }}>
-              {chrome.i18n.getMessage('lastSaved') || 'Saved'}
-            </span>
-          )}
-          {onClose && (
-            <button
-              class="btn btn-secondary"
-              style={{ padding: '4px 12px', fontSize: '12px' }}
-              onClick={onClose}
-            >
-              {chrome.i18n.getMessage('close') || 'Close'}
-            </button>
-          )}
-        </div>
+        <span style={{ fontWeight: 500, color: '#333' }}>{script.name}</span>
+        {onClose && (
+          <button
+            class="btn btn-secondary"
+            style={{ padding: '4px 12px', fontSize: '12px' }}
+            onClick={onClose}
+          >
+            {chrome.i18n.getMessage('close') || 'Close'}
+          </button>
+        )}
       </div>
       {/* Editor container */}
       <div
