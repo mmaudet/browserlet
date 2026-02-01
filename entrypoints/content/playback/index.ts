@@ -392,24 +392,24 @@ export class PlaybackManager {
     let element: Element | undefined;
 
     // Resolve element for actions that need a target
-    if (step.target?.hints && step.target.hints.length > 0) {
-      const timeout = parseTimeout(step.timeout);
+    if (processedStep.target?.hints && processedStep.target.hints.length > 0) {
+      const timeout = parseTimeout(processedStep.timeout);
 
       try {
-        const result = await waitForElement(step.target.hints, timeout);
+        const result = await waitForElement(processedStep.target.hints, timeout);
 
         if (result.element) {
           element = result.element;
         } else {
           // Try fallback selector if available
-          if (step.target.fallback_selector) {
-            const fallbackElement = document.querySelector(step.target.fallback_selector);
+          if (processedStep.target.fallback_selector) {
+            const fallbackElement = document.querySelector(processedStep.target.fallback_selector);
             if (fallbackElement) {
               element = fallbackElement;
             } else {
               throw new Error(
                 `Element not found. Hints: [${result.matchedHints.join(', ')}] matched with ${Math.round(result.confidence * 100)}% confidence. ` +
-                `Fallback selector "${step.target.fallback_selector}" also failed.`
+                `Fallback selector "${processedStep.target.fallback_selector}" also failed.`
               );
             }
           } else {
@@ -421,14 +421,14 @@ export class PlaybackManager {
         }
       } catch (error) {
         // Try fallback selector on timeout
-        if (step.target.fallback_selector) {
-          const fallbackElement = document.querySelector(step.target.fallback_selector);
+        if (processedStep.target.fallback_selector) {
+          const fallbackElement = document.querySelector(processedStep.target.fallback_selector);
           if (fallbackElement) {
             element = fallbackElement;
           } else {
             const message = error instanceof Error ? error.message : 'Unknown error';
             throw new Error(
-              `${message} Fallback selector "${step.target.fallback_selector}" also failed.`
+              `${message} Fallback selector "${processedStep.target.fallback_selector}" also failed.`
             );
           }
         } else {
@@ -438,27 +438,27 @@ export class PlaybackManager {
     }
 
     // For navigate action, save state BEFORE navigation (page will reload)
-    if (step.action === 'navigate') {
+    if (processedStep.action === 'navigate') {
       // Save state so we can resume on the new page
       await this.saveStateForNavigation(index + 1);
       // Execute navigate - this will destroy the current script context
-      await this.actionExecutor.execute(step, element);
+      await this.actionExecutor.execute(processedStep, element);
       // This line will likely never be reached as the page navigates
       return;
     }
 
     // Execute the action
-    const result = await this.actionExecutor.execute(step, element);
+    const result = await this.actionExecutor.execute(processedStep, element);
 
     // Store extract/table_extract results if action has output variable
-    if ((step.action === 'extract' || step.action === 'table_extract') && step.output?.variable) {
+    if ((processedStep.action === 'extract' || processedStep.action === 'table_extract') && processedStep.output?.variable) {
       // Validate variable name starts with "extracted." prefix
-      if (!step.output.variable.startsWith('extracted.')) {
+      if (!processedStep.output.variable.startsWith('extracted.')) {
         throw new Error(
-          `Variable name must start with "extracted." prefix. Got: "${step.output.variable}"`
+          `Variable name must start with "extracted." prefix. Got: "${processedStep.output.variable}"`
         );
       }
-      this.results.set(step.output.variable, result);
+      this.results.set(processedStep.output.variable, result);
     }
   }
 
@@ -496,3 +496,4 @@ export { SessionDetector, checkSessionActive, DEFAULT_LOGIN_PATTERNS } from './s
 export { humanizedWait, randomDelay, DEFAULT_CONFIG } from './humanizer';
 export type { HumanizerConfig } from './humanizer';
 export { waitForElement, resolveElement, isElementInteractable, HINT_WEIGHTS } from './semanticResolver';
+export { substituteVariables, hasExtractedVariables, extractVariableRefs } from './variableSubstitution';
