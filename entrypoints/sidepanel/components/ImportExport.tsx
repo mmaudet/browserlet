@@ -1,5 +1,5 @@
 import { useRef } from 'preact/hooks';
-import { signal } from '@preact/signals';
+import { useSignal } from '@preact/signals';
 import { saveAs } from 'file-saver';
 import type { Script } from '../../../utils/types';
 import { parseScript, dumpScript } from '../../../utils/yaml/parser';
@@ -41,8 +41,8 @@ interface ImportButtonProps {
 }
 
 export function ImportButton({ onImport, className }: ImportButtonProps) {
-  const isImporting = signal(false);
-  const error = signal<string | null>(null);
+  const isImporting = useSignal(false);
+  const error = useSignal<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: Event) => {

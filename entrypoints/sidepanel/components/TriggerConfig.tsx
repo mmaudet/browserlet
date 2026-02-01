@@ -3,7 +3,8 @@
  * Allows users to set URL patterns, element hints, and mode
  */
 
-import { signal } from '@preact/signals';
+import { useSignal } from '@preact/signals';
+import { useEffect } from 'preact/hooks';
 import type { TriggerConfig as TriggerConfigType, TriggerCondition, TriggerMode } from '../../../utils/triggers/types';
 import { getTriggers } from '../../../utils/storage/triggers';
 
@@ -20,17 +21,17 @@ interface TriggerConfigProps {
  * TriggerConfig component
  */
 export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
-  // State
-  const triggers = signal<TriggerConfigType[]>([]);
-  const isLoading = signal(true);
-  const isSaving = signal(false);
+  // State - use useSignal for component-local state that persists across renders
+  const triggers = useSignal<TriggerConfigType[]>([]);
+  const isLoading = useSignal(true);
+  const isSaving = useSignal(false);
 
   // Current editing state
-  const urlPattern = signal('');
-  const mode = signal<TriggerMode>('suggest');
-  const enabled = signal(true);
-  const cooldownMin = signal(5);
-  const editingId = signal<string | null>(null);
+  const urlPattern = useSignal('');
+  const mode = useSignal<TriggerMode>('suggest');
+  const enabled = useSignal(true);
+  const cooldownMin = useSignal(5);
+  const editingId = useSignal<string | null>(null);
 
   // Load existing triggers
   async function loadTriggers(): Promise<void> {
@@ -104,8 +105,10 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
     cooldownMin.value = 5;
   }
 
-  // Initial load
-  loadTriggers();
+  // Initial load on mount
+  useEffect(() => {
+    loadTriggers();
+  }, [scriptId]);
 
   return (
     <div style={{ padding: '16px' }}>

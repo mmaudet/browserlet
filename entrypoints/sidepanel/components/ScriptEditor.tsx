@@ -1,4 +1,4 @@
-import { signal } from '@preact/signals';
+import { useSignal } from '@preact/signals';
 import { useRef, useEffect } from 'preact/hooks';
 import { monaco, setupMonaco } from '../monaco-setup';
 import type { Script } from '../../../utils/types';
@@ -41,8 +41,8 @@ export function ScriptEditor({ script, onSave, onClose }: ScriptEditorProps) {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-  const isSaving = signal(false);
-  const lastSaved = signal<number>(script.updatedAt);
+  const isSaving = useSignal(false);
+  const lastSaved = useSignal<number>(script.updatedAt);
 
   // Initialize Monaco editor
   useEffect(() => {

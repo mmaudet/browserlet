@@ -1,4 +1,4 @@
-import { signal } from '@preact/signals';
+import { useSignal } from '@preact/signals';
 import type { Script } from '../../../utils/types';
 import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId, updateScriptInState } from '../stores/scripts';
 import { startExecution } from '../stores/execution';
@@ -135,7 +135,7 @@ async function handleRenameScript(script: Script): Promise<void> {
 }
 
 export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}) {
-  const showTriggerConfig = signal<string | null>(null);
+  const showTriggerConfig = useSignal<string | null>(null);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

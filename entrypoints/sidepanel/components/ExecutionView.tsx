@@ -1,4 +1,4 @@
-import { signal } from '@preact/signals';
+import { useSignal } from '@preact/signals';
 import { Parser } from '@json2csv/plainjs';
 import {
   isExecuting, currentScript, currentStep, totalSteps,
@@ -7,7 +7,7 @@ import {
 } from '../stores/execution';
 
 export function ExecutionView() {
-  const copySuccess = signal<string | null>(null);
+  const copySuccess = useSignal<string | null>(null);
 
   const showCopySuccess = (message: string) => {
     copySuccess.value = message;
