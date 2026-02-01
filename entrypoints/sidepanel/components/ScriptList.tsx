@@ -1,5 +1,5 @@
 import { useSignal } from '@preact/signals';
-import { Pencil, Trash2, Zap, History, Play, CheckCircle, XCircle, StopCircle, Loader2, X, Plus } from 'lucide-preact';
+import { Trash2, Zap, History, Play, CheckCircle, XCircle, StopCircle, Loader2, X, Plus, Check } from 'lucide-preact';
 import type { Script, ExecutionRecord } from '../../../utils/types';
 import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId, updateScriptInState } from '../stores/scripts';
 import { triggersState } from '../stores/triggers';
@@ -24,113 +24,191 @@ interface ScriptItemProps {
   onConfigureTriggers: () => void;
   onViewHistory: () => void;
   onDelete: () => void;
-  onRename: () => void;
+  onRename: (newName: string) => void;
 }
 
 function ScriptItem({ script, isSelected, triggerCount, onSelect, onRun, onConfigureTriggers, onViewHistory, onDelete, onRename }: ScriptItemProps) {
+  const isEditing = useSignal(false);
+  const editValue = useSignal(script.name);
+
+  const handleDoubleClick = (e: Event) => {
+    e.stopPropagation();
+    editValue.value = script.name;
+    isEditing.value = true;
+  };
+
+  const handleSave = () => {
+    const newName = editValue.value.trim();
+    if (newName && newName !== script.name) {
+      onRename(newName);
+    }
+    isEditing.value = false;
+  };
+
+  const handleCancel = () => {
+    editValue.value = script.name;
+    isEditing.value = false;
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+  };
+
   return (
     <div
       style={{
         padding: '12px',
         borderBottom: '1px solid #f0f0f0',
         cursor: 'pointer',
-        background: isSelected ? '#e3f2fd' : 'white',
+        background: isSelected ? '#e8f4fd' : 'white',
         transition: 'background 0.15s'
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
         <div
           style={{ flex: 1, minWidth: 0 }}
-          onClick={onSelect}
+          onClick={isEditing.value ? undefined : onSelect}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span style={{ fontWeight: 500, color: '#333' }}>{script.name}</span>
-            {script.target_app && (
-              <span style={{ fontSize: '10px', background: '#e0e0e0', padding: '2px 6px', borderRadius: '4px', color: '#666' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+            {isEditing.value ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
+                <input
+                  type="text"
+                  value={editValue.value}
+                  onInput={(e: Event) => { editValue.value = (e.target as HTMLInputElement).value; }}
+                  onKeyDown={handleKeyDown}
+                  onBlur={handleSave}
+                  autoFocus
+                  style={{
+                    flex: 1,
+                    padding: '4px 8px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    border: '1px solid #007AFF',
+                    borderRadius: '4px',
+                    outline: 'none',
+                    background: 'white'
+                  }}
+                  onClick={(e: Event) => e.stopPropagation()}
+                />
+                <button
+                  onClick={(e: Event) => { e.stopPropagation(); handleSave(); }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#34c759', display: 'flex', alignItems: 'center' }}
+                  title={chrome.i18n.getMessage('save') || 'Save'}
+                >
+                  <Check size={16} strokeWidth={2} />
+                </button>
+                <button
+                  onClick={(e: Event) => { e.stopPropagation(); handleCancel(); }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#8e8e93', display: 'flex', alignItems: 'center' }}
+                  title={chrome.i18n.getMessage('cancel') || 'Cancel'}
+                >
+                  <X size={16} strokeWidth={2} />
+                </button>
+              </div>
+            ) : (
+              <span
+                onDblClick={handleDoubleClick}
+                style={{
+                  fontWeight: 500,
+                  color: '#333',
+                  cursor: 'text',
+                  padding: '2px 4px',
+                  borderRadius: '4px',
+                  transition: 'background 0.15s'
+                }}
+                title={chrome.i18n.getMessage('doubleClickToRename') || 'Double-click to rename'}
+              >
+                {script.name}
+              </span>
+            )}
+            {!isEditing.value && script.target_app && (
+              <span style={{ fontSize: '10px', background: '#e0e0e0', padding: '2px 6px', borderRadius: '4px', color: '#666', flexShrink: 0 }}>
                 {script.target_app}
               </span>
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
-          <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#8e8e93', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title={chrome.i18n.getMessage('renameScript') || 'Rename'}
-            onClick={(e: Event) => {
-              e.stopPropagation();
-              onRename();
-            }}
-          >
-            <Pencil size={15} strokeWidth={1.5} />
-          </button>
-          <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#ff3b30', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title={chrome.i18n.getMessage('deleteScript') || 'Delete'}
-            onClick={(e: Event) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-          >
-            <Trash2 size={15} strokeWidth={1.5} />
-          </button>
-          <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: triggerCount > 0 ? '#ff9500' : '#8e8e93', position: 'relative', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title={chrome.i18n.getMessage('configureTriggers') || 'Configure triggers'}
-            onClick={(e: Event) => {
-              e.stopPropagation();
-              onConfigureTriggers();
-            }}
-          >
-            <Zap size={16} strokeWidth={1.5} fill={triggerCount > 0 ? '#ff9500' : 'none'} />
-            {triggerCount > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '0',
-                right: '0',
-                background: '#007AFF',
-                color: 'white',
-                fontSize: '9px',
-                fontWeight: 600,
-                minWidth: '14px',
-                height: '14px',
-                borderRadius: '7px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 3px'
-              }}>
-                {triggerCount}
-              </span>
-            )}
-          </button>
-          <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#8e8e93', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title={chrome.i18n.getMessage('viewHistory') || 'View History'}
-            onClick={(e: Event) => {
-              e.stopPropagation();
-              onViewHistory();
-            }}
-          >
-            <History size={15} strokeWidth={1.5} />
-          </button>
-          <button
-            onClick={(e: Event) => {
-              e.stopPropagation();
-              onRun();
-            }}
-            style={{ padding: '5px 10px', background: '#34c759', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title={chrome.i18n.getMessage('runScript') || 'Run Script'}
-          >
-            <Play size={14} strokeWidth={2} fill="white" />
-          </button>
-        </div>
+        {!isEditing.value && (
+          <div style={{ display: 'flex', gap: '2px', alignItems: 'center', flexShrink: 0 }}>
+            {/* Triggers */}
+            <button
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: triggerCount > 0 ? '#ff9500' : '#8e8e93', position: 'relative', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title={chrome.i18n.getMessage('configureTriggers') || 'Configure triggers'}
+              onClick={(e: Event) => {
+                e.stopPropagation();
+                onConfigureTriggers();
+              }}
+            >
+              <Zap size={16} strokeWidth={1.5} fill={triggerCount > 0 ? '#ff9500' : 'none'} />
+              {triggerCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '0',
+                  right: '0',
+                  background: '#007AFF',
+                  color: 'white',
+                  fontSize: '9px',
+                  fontWeight: 600,
+                  minWidth: '14px',
+                  height: '14px',
+                  borderRadius: '7px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 3px'
+                }}>
+                  {triggerCount}
+                </span>
+              )}
+            </button>
+            {/* History */}
+            <button
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#8e8e93', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title={chrome.i18n.getMessage('viewHistory') || 'View History'}
+              onClick={(e: Event) => {
+                e.stopPropagation();
+                onViewHistory();
+              }}
+            >
+              <History size={15} strokeWidth={1.5} />
+            </button>
+            {/* Play */}
+            <button
+              onClick={(e: Event) => {
+                e.stopPropagation();
+                onRun();
+              }}
+              style={{ padding: '5px 10px', background: '#34c759', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title={chrome.i18n.getMessage('runScript') || 'Run Script'}
+            >
+              <Play size={14} strokeWidth={2} fill="white" />
+            </button>
+            {/* Delete (far right) */}
+            <button
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#ff3b30', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '4px' }}
+              title={chrome.i18n.getMessage('deleteScript') || 'Delete'}
+              onClick={(e: Event) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+            >
+              <Trash2 size={15} strokeWidth={1.5} />
+            </button>
+          </div>
+        )}
       </div>
-      {script.description && (
+      {script.description && !isEditing.value && (
         <div style={{ fontSize: '12px', color: '#666', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {script.description}
         </div>
       )}
-      {script.tags && script.tags.length > 0 && (
+      {script.tags && script.tags.length > 0 && !isEditing.value && (
         <div style={{ marginTop: '6px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
           {script.tags.map(tag => (
             <span
@@ -153,21 +231,18 @@ async function handleDeleteScript(script: Script): Promise<void> {
   }
 }
 
-async function handleRenameScript(script: Script): Promise<void> {
-  const promptMessage = chrome.i18n.getMessage('renameScriptPrompt') || 'Enter new name:';
-  const newName = prompt(promptMessage, script.name);
-  if (newName && newName.trim() && newName !== script.name) {
-    const trimmedName = newName.trim();
-    // Update name in BSL content (YAML) as well
-    let updatedContent = script.content;
-    if (updatedContent) {
-      // Replace the name field in YAML - escape quotes for YAML string
-      const escapedName = trimmedName.replace(/"/g, '\\"');
-      updatedContent = updatedContent.replace(/^name:.*$/m, `name: "${escapedName}"`);
-    }
-    const updated = await saveScript({ ...script, name: trimmedName, content: updatedContent });
-    updateScriptInState(updated);
+async function handleRenameScript(script: Script, newName: string): Promise<void> {
+  if (!newName || newName === script.name) return;
+
+  // Update name in BSL content (YAML) as well
+  let updatedContent = script.content;
+  if (updatedContent) {
+    // Replace the name field in YAML - escape quotes for YAML string
+    const escapedName = newName.replace(/"/g, '\\"');
+    updatedContent = updatedContent.replace(/^name:.*$/m, `name: "${escapedName}"`);
   }
+  const updated = await saveScript({ ...script, name: newName, content: updatedContent });
+  updateScriptInState(updated);
 }
 
 // History modal component
@@ -375,7 +450,7 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
                   showHistoryModal.value = { scriptId: script.id, scriptName: script.name };
                 }}
                 onDelete={() => handleDeleteScript(script)}
-                onRename={() => handleRenameScript(script)}
+                onRename={(newName) => handleRenameScript(script, newName)}
               />
             ))}
           </div>
