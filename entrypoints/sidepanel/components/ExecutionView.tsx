@@ -58,6 +58,20 @@ export function ExecutionView() {
     return '';
   };
 
+  /**
+   * Check if results contain meaningful data (not just empty objects)
+   */
+  const hasActualResults = () => {
+    const results = executionResults.value;
+    if (results.length === 0) return false;
+    // Check if all results are empty objects
+    return results.some(r => {
+      if (r === null || r === undefined) return false;
+      if (typeof r !== 'object') return true; // primitive value is meaningful
+      return Object.keys(r as object).length > 0;
+    });
+  };
+
   return (
     <div style={{ padding: '16px' }}>
       {/* Header */}
@@ -178,65 +192,83 @@ export function ExecutionView() {
         </div>
       ) : null}
 
-      {/* Results section */}
-      {executionResults.value.length > 0 && (
+      {/* Results section - only show if execution completed/stopped */}
+      {(executionStatus.value === 'completed' || executionStatus.value === 'stopped') && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontWeight: 500, color: '#333' }}>
-              {chrome.i18n.getMessage('success') || 'Results'}
-            </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                style={{
-                  padding: '4px 12px',
-                  fontSize: '12px',
-                  background: '#e0e0e0',
-                  border: 'none',
+          {hasActualResults() ? (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontWeight: 500, color: '#333' }}>
+                  {chrome.i18n.getMessage('success') || 'Results'}
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: '12px',
+                      background: '#e0e0e0',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={copyAsJSON}
+                  >
+                    JSON
+                  </button>
+                  <button
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: '12px',
+                      background: '#e0e0e0',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={copyAsCSV}
+                  >
+                    CSV
+                  </button>
+                </div>
+              </div>
+              {copySuccess.value && (
+                <div style={{
+                  background: '#e8f5e9',
+                  color: '#2e7d32',
+                  padding: '8px',
                   borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-                onClick={copyAsJSON}
-              >
-                JSON
-              </button>
-              <button
-                style={{
-                  padding: '4px 12px',
                   fontSize: '12px',
-                  background: '#e0e0e0',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-                onClick={copyAsCSV}
-              >
-                CSV
-              </button>
-            </div>
-          </div>
-          {copySuccess.value && (
+                  marginBottom: '8px'
+                }}>
+                  {copySuccess.value}
+                </div>
+              )}
+              <pre style={{
+                background: '#f5f5f5',
+                padding: '12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                overflowX: 'auto',
+                maxHeight: '200px',
+                margin: 0
+              }}>
+                {JSON.stringify(executionResults.value, null, 2)}
+              </pre>
+            </>
+          ) : (
             <div style={{
-              background: '#e8f5e9',
-              color: '#2e7d32',
-              padding: '8px',
-              borderRadius: '4px',
-              fontSize: '12px',
-              marginBottom: '8px'
+              padding: '16px',
+              background: '#f5f5f5',
+              borderRadius: '6px',
+              textAlign: 'center',
+              color: '#666',
+              fontSize: '13px'
             }}>
-              {copySuccess.value}
+              <div style={{ marginBottom: '4px' }}>✓ Script exécuté avec succès</div>
+              <div style={{ fontSize: '12px', color: '#999' }}>
+                Aucune donnée extraite (pas d'action "extract" dans le script)
+              </div>
             </div>
           )}
-          <pre style={{
-            background: '#f5f5f5',
-            padding: '12px',
-            borderRadius: '6px',
-            fontSize: '12px',
-            overflowX: 'auto',
-            maxHeight: '200px',
-            margin: 0
-          }}>
-            {JSON.stringify(executionResults.value, null, 2)}
-          </pre>
         </div>
       )}
     </div>
