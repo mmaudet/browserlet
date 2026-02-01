@@ -5,11 +5,13 @@ import { PlaybackManager } from './playback';
 import { initializeTriggers, handleTriggerMessage } from './triggers';
 import { showAutoExecuteNotification, showCompletionNotification } from './triggers/inPageNotification';
 import { PasswordCapture } from './recording/passwordCapture';
+import { CredentialCaptureIndicator } from './recording/visualFeedback';
 
 // Singleton instances
 let recordingManager: RecordingManager | null = null;
 let playbackManager: PlaybackManager | null = null;
 let standaloneCapturer: PasswordCapture | null = null;
+let credentialCaptureIndicator: CredentialCaptureIndicator | null = null;
 
 /**
  * Get or create the PlaybackManager singleton
@@ -184,10 +186,19 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
         standaloneCapturer = new PasswordCapture();
       }
       standaloneCapturer.start(() => {}); // callback not needed for standalone
+      // Show visual indicator
+      if (!credentialCaptureIndicator) {
+        credentialCaptureIndicator = new CredentialCaptureIndicator();
+      }
+      credentialCaptureIndicator.show();
       console.log('[Browserlet] Standalone password capture started');
       return { success: true };
 
     case 'STOP_PASSWORD_CAPTURE':
+      // Hide visual indicator
+      if (credentialCaptureIndicator) {
+        credentialCaptureIndicator.hide();
+      }
       if (standaloneCapturer) {
         const captured = standaloneCapturer.stop();
         standaloneCapturer = null;

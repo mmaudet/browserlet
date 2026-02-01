@@ -586,30 +586,30 @@ export function CredentialManager() {
       {captureMode.value === 'capturing' && (
         <div style={{
           padding: '12px',
-          background: '#e3f2fd',
-          borderBottom: '1px solid #90caf9',
+          background: '#f3e5f5',
+          borderBottom: '1px solid #ce93d8',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
         }}>
           <div>
-            <div style={{ fontWeight: 500, color: '#1976d2' }}>Capture Mode Active</div>
+            <div style={{ fontWeight: 500, color: '#7b1fa2' }}>🔑 Capture Mode Active</div>
             <div style={{ fontSize: '12px', color: '#666' }}>
-              Enter credentials on any login page, then click Done
+              Enter credentials on any login page, then click Stop
             </div>
           </div>
           <button
             onClick={handleStopCapture}
             style={{
               padding: '6px 12px',
-              background: '#1976d2',
+              background: '#9c27b0',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
             }}
           >
-            Done
+            Stop Capture
           </button>
         </div>
       )}

@@ -71,6 +71,41 @@ export const RECORDING_INDICATOR_STYLES = {
   `,
 } as const;
 
+// Credential capture indicator badge (shows "🔑 CAPTURE" in corner)
+export const CREDENTIAL_CAPTURE_STYLES = {
+  container: `
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: ${MAX_Z_INDEX};
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: rgba(156, 39, 176, 0.95);
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+  `,
+  dot: `
+    width: 8px;
+    height: 8px;
+    background-color: white;
+    border-radius: 50%;
+    animation: capture-pulse 1.5s ease-in-out infinite;
+  `,
+  keyframes: `
+    @keyframes capture-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+  `,
+} as const;
+
 // Utility function to create style element
 export function injectStyles(css: string, id: string): HTMLStyleElement {
   // Remove existing style element if present

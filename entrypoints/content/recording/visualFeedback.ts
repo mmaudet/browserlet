@@ -1,4 +1,4 @@
-import { OVERLAY_STYLES, RECORDING_INDICATOR_STYLES, injectStyles } from './styles';
+import { OVERLAY_STYLES, RECORDING_INDICATOR_STYLES, CREDENTIAL_CAPTURE_STYLES, injectStyles } from './styles';
 
 export type OverlayState = 'hover' | 'captured' | 'error';
 
@@ -155,6 +155,67 @@ export class RecordingIndicator {
 
   /**
    * Hide the recording indicator.
+   */
+  hide(): void {
+    if (this.container) {
+      this.container.remove();
+      this.container = null;
+    }
+
+    if (this.styleElement) {
+      this.styleElement.remove();
+      this.styleElement = null;
+    }
+  }
+
+  /**
+   * Check if indicator is currently visible.
+   */
+  isVisible(): boolean {
+    return this.container !== null;
+  }
+}
+
+/**
+ * Credential capture indicator that shows "🔑 CAPTURE" badge in corner of page.
+ * Uses purple color to distinguish from recording indicator.
+ */
+export class CredentialCaptureIndicator {
+  private container: HTMLDivElement | null = null;
+  private styleElement: HTMLStyleElement | null = null;
+
+  /**
+   * Show the credential capture indicator.
+   */
+  show(): void {
+    if (this.container) return; // Already visible
+
+    // Inject keyframes
+    this.styleElement = injectStyles(
+      CREDENTIAL_CAPTURE_STYLES.keyframes,
+      'browserlet-capture-keyframes'
+    );
+
+    // Create container
+    this.container = document.createElement('div');
+    this.container.setAttribute('data-browserlet-capture-indicator', 'true');
+    this.container.style.cssText = CREDENTIAL_CAPTURE_STYLES.container;
+
+    // Create pulsing dot
+    const dot = document.createElement('div');
+    dot.style.cssText = CREDENTIAL_CAPTURE_STYLES.dot;
+
+    // Create icon and text
+    const text = document.createElement('span');
+    text.textContent = '🔑 CAPTURE';
+
+    this.container.appendChild(dot);
+    this.container.appendChild(text);
+    document.body.appendChild(this.container);
+  }
+
+  /**
+   * Hide the credential capture indicator.
    */
   hide(): void {
     if (this.container) {
