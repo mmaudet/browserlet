@@ -14,6 +14,7 @@ export class EventCapture {
 
   // Debounce input events to avoid capturing every keystroke
   private inputDebounceMap = new Map<Element, number>();
+  private pendingInputs = new Map<Element, () => void>(); // Store pending capture functions
   private readonly INPUT_DEBOUNCE_MS = 1500; // Increased from 500ms to reduce duplicates
 
   /**
@@ -50,15 +51,21 @@ export class EventCapture {
     if (!this.isActive) return;
 
     this.isActive = false;
+
+    // Clear debounce timers first
+    this.inputDebounceMap.forEach(timer => clearTimeout(timer));
+    this.inputDebounceMap.clear();
+
+    // Flush any pending input captures before stopping
+    // This ensures inputs typed just before stop are not lost
+    this.pendingInputs.forEach(captureInput => captureInput());
+    this.pendingInputs.clear();
+
     this.callback = null;
 
     // Run all cleanup functions
     this.cleanupFns.forEach(fn => fn());
     this.cleanupFns = [];
-
-    // Clear debounce timers
-    this.inputDebounceMap.forEach(timer => clearTimeout(timer));
-    this.inputDebounceMap.clear();
   }
 
   /**
@@ -93,8 +100,9 @@ export class EventCapture {
       clearTimeout(existingTimer);
     }
 
-    const timer = window.setTimeout(() => {
-      if (!this.isActive || !this.callback) return;
+    // Store the capture function for potential flush on stop
+    const captureInput = (): void => {
+      if (!this.callback) return;
 
       const action = this.createAction('input', target, {
         value: this.getSanitizedValue(target)
@@ -102,6 +110,14 @@ export class EventCapture {
       this.callback(action);
 
       this.inputDebounceMap.delete(target);
+      this.pendingInputs.delete(target);
+    };
+
+    this.pendingInputs.set(target, captureInput);
+
+    const timer = window.setTimeout(() => {
+      if (!this.isActive) return;
+      captureInput();
     }, this.INPUT_DEBOUNCE_MS);
 
     this.inputDebounceMap.set(target, timer);
