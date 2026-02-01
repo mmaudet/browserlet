@@ -9,6 +9,7 @@ import { unlockVault, lockVault } from '../../../utils/passwords/vault';
 import { extractCredentialRefs } from '../../../utils/passwords/substitution';
 import { clearCachedKey } from '../../../utils/crypto/masterPassword';
 import { detectMigrationState } from '../../../utils/passwords/migration';
+import { loadLLMConfig } from '../stores/llmConfig';
 import { MasterPasswordSetup } from './MasterPasswordSetup';
 import { VaultUnlock } from './VaultUnlock';
 import { CredentialMigration } from './CredentialMigration';
@@ -325,22 +326,26 @@ function EditForm({ credential, editPassword, editAlias, onSave, onCancel }: Edi
 
 /**
  * Called after master password setup is complete.
- * Updates vault state and loads passwords.
+ * Updates vault state, loads passwords, and reloads LLM config.
  */
 async function handleSetupComplete(): Promise<void> {
   await unlockVault();
   await refreshVaultState(); // Re-fetch vault state to update needsSetup signal
   await loadPasswords();
+  // Reload LLM config now that we can decrypt API keys
+  await loadLLMConfig();
 }
 
 /**
  * Called after vault unlock is successful.
- * Updates vault state and loads passwords.
+ * Updates vault state, loads passwords, and reloads LLM config.
  */
 async function handleUnlockSuccess(): Promise<void> {
   await unlockVault();
   await refreshVaultState(); // Re-fetch vault state to update isLocked signal
   await loadPasswords();
+  // Reload LLM config now that we can decrypt API keys
+  await loadLLMConfig();
 }
 
 /**
@@ -365,6 +370,11 @@ export function CredentialManager() {
 
   const { passwords, vaultState, isLoading, error } = passwordStore;
   const usageMap = buildUsageMap(passwords.value);
+
+  // Load vault state and passwords on mount
+  useEffect(() => {
+    loadPasswords();
+  }, []);
 
   // Check for migration needed on mount (only when not in setup mode)
   useEffect(() => {

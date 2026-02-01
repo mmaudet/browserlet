@@ -1,10 +1,44 @@
 import { defineConfig } from 'wxt';
 import monacoEditorPluginModule from 'vite-plugin-monaco-editor';
 import preact from '@preact/preset-vite';
+import { readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
 
 // Handle ESM/CJS interop - the package exports differently based on module system
 const monacoEditorPlugin =
   (monacoEditorPluginModule as any).default || monacoEditorPluginModule;
+
+/**
+ * Post-build hook to extract Monaco inline script to external file.
+ * Required for Manifest V3 CSP compliance (no inline scripts).
+ */
+function extractMonacoInlineScript(outputDir: string): void {
+  const htmlPath = join(outputDir, 'sidepanel.html');
+
+  try {
+    let html = readFileSync(htmlPath, 'utf-8');
+
+    // Match the Monaco inline script
+    const inlineScriptRegex = /<script>(self\["MonacoEnvironment"\][\s\S]*?)<\/script>/;
+    const match = html.match(inlineScriptRegex);
+
+    if (match) {
+      const scriptContent = match[1];
+
+      // Write to external file
+      const scriptPath = join(outputDir, 'monaco-env.js');
+      writeFileSync(scriptPath, scriptContent, 'utf-8');
+
+      // Replace inline script with external reference
+      html = html.replace(inlineScriptRegex, '<script src="/monaco-env.js"></script>');
+      writeFileSync(htmlPath, html, 'utf-8');
+
+      console.log('[WXT] Extracted Monaco inline script to monaco-env.js');
+    }
+  } catch (error) {
+    console.warn('[WXT] Could not extract Monaco inline script:', error);
+  }
+}
 
 export default defineConfig({
   manifest: {
@@ -23,6 +57,11 @@ export default defineConfig({
     },
     action: {
       default_title: 'Open Browserlet',
+    },
+  },
+  hooks: {
+    'build:done': (wxt) => {
+      extractMonacoInlineScript(wxt.config.outDir);
     },
   },
   vite: () => ({
