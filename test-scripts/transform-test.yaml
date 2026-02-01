@@ -1,0 +1,79 @@
+# Transform Functions Test
+# Tests all available transform functions in Phase 14
+# Use appropriate pages for each transform type
+
+name: "Transform Functions Test"
+version: "1.0.0"
+description: "Tests all transform functions: trim, parse_currency, parse_date, parse_number, lowercase, uppercase"
+
+steps:
+  # Navigate to a page for testing
+  - action: navigate
+    value: "https://example.com"
+
+  - action: wait_for
+    target:
+      hints:
+        - type: role
+          value: heading
+    timeout: "5s"
+
+  # Test trim transform
+  - action: extract
+    target:
+      hints:
+        - type: role
+          value: heading
+    output:
+      variable: extracted.trimmed_heading
+      transform: trim
+
+  # Test lowercase transform
+  - action: extract
+    target:
+      hints:
+        - type: role
+          value: heading
+    output:
+      variable: extracted.lowercase_heading
+      transform: lowercase
+
+  # Test uppercase transform
+  - action: extract
+    target:
+      hints:
+        - type: role
+          value: heading
+    output:
+      variable: extracted.uppercase_heading
+      transform: uppercase
+
+  # For parse_currency test, run on a shopping site:
+  # - action: extract
+  #   target:
+  #     hints:
+  #       - type: class_name
+  #         value: "price"
+  #   output:
+  #     variable: extracted.price_value
+  #     transform: parse_currency
+
+  # For parse_date test, run on a page with dates:
+  # - action: extract
+  #   target:
+  #     hints:
+  #       - type: class_name
+  #         value: "date"
+  #   output:
+  #     variable: extracted.date_value
+  #     transform: parse_date
+
+  # For parse_number test:
+  # - action: extract
+  #   target:
+  #     hints:
+  #       - type: text_contains
+  #         value: "1,234"
+  #   output:
+  #     variable: extracted.number_value
+  #     transform: parse_number

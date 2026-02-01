@@ -1,0 +1,67 @@
+# Extraction Feature Test
+# Tests all extraction capabilities for Phase 14 verification
+# This script exercises: extract action, transforms, variable substitution
+
+name: "Extraction Feature Test"
+version: "1.0.0"
+description: "Comprehensive test of Phase 14 data extraction features"
+
+steps:
+  # Test 1: Basic text extraction with trim transform
+  - action: navigate
+    value: "https://httpbin.org/html"
+
+  - action: wait_for
+    target:
+      hints:
+        - type: role
+          value: heading
+    timeout: "5s"
+
+  - action: extract
+    target:
+      hints:
+        - type: role
+          value: heading
+    output:
+      variable: extracted.page_title
+      transform: trim
+
+  # Test 2: Extract paragraph text
+  - action: extract
+    target:
+      hints:
+        - type: tag
+          value: p
+    output:
+      variable: extracted.first_paragraph
+      transform: trim
+
+  # Test 3: Navigate to a page with structured data
+  - action: navigate
+    value: "https://example.com"
+
+  - action: wait_for
+    target:
+      hints:
+        - type: role
+          value: heading
+    timeout: "5s"
+
+  # Test 4: Extract and use in subsequent step (variable substitution)
+  - action: extract
+    target:
+      hints:
+        - type: role
+          value: heading
+    output:
+      variable: extracted.example_heading
+
+  # This step would use the extracted value
+  # Uncomment on a page with a search field:
+  # - action: type
+  #   target:
+  #     hints:
+  #       - type: placeholder
+  #         value: "Search"
+  #   value: "{{extracted.example_heading}}"

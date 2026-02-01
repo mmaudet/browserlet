@@ -1,0 +1,28 @@
+# Simple Extraction Test
+# Quick test script to paste in editor for manual verification
+# Run on any page with visible text content
+
+name: "Simple Extract Test"
+version: "1.0.0"
+description: "Simple extraction test for quick verification"
+
+steps:
+  # Extract the first heading on any page
+  - action: extract
+    target:
+      hints:
+        - type: role
+          value: heading
+    output:
+      variable: extracted.heading_text
+      transform: trim
+
+  # Extract by text content (adjust value for your test page)
+  - action: extract
+    target:
+      hints:
+        - type: text_contains
+          value: "Example"
+    output:
+      variable: extracted.matched_text
+      transform: trim

@@ -1,0 +1,42 @@
+# Variable Substitution Test
+# Tests {{extracted.variable}} syntax in subsequent steps
+# Run on github.com or similar site with search functionality
+
+name: "Variable Substitution Test"
+version: "1.0.0"
+description: "Tests using extracted values in subsequent actions"
+
+steps:
+  # Navigate to GitHub
+  - action: navigate
+    value: "https://github.com"
+
+  - action: wait_for
+    target:
+      hints:
+        - type: role
+          value: heading
+    timeout: "10s"
+
+  # Extract text from the page
+  - action: extract
+    target:
+      hints:
+        - type: role
+          value: heading
+    output:
+      variable: extracted.site_heading
+      transform: trim
+
+  # Use extracted value in a type action
+  # Note: This tests the {{extracted.variable}} substitution
+  - action: type
+    target:
+      hints:
+        - type: placeholder
+          value: "Search"
+    value: "{{extracted.site_heading}}"
+
+  # Alternative: Use in navigate action
+  # - action: navigate
+  #   value: "https://www.google.com/search?q={{extracted.site_heading}}"
