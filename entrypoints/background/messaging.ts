@@ -194,7 +194,13 @@ async function processMessage(
     }
 
     case 'GET_SUGGESTED_SCRIPTS': {
-      const tabId = _sender.tab?.id;
+      // Get tab ID from sender (if from content script) or from active tab (if from sidepanel)
+      let tabId = _sender.tab?.id;
+      if (!tabId) {
+        // Message from sidepanel - query active tab
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        tabId = activeTab?.id;
+      }
       if (tabId) {
         const scriptIds = await getTriggerEngine().getSuggestedScripts(tabId);
         return { success: true, data: scriptIds };
