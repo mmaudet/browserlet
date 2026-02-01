@@ -240,11 +240,11 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
                     color: trigger.mode === 'suggest' ? '#1976d2' : '#e65100',
                     fontWeight: 500
                   }}>
-                    {trigger.mode === 'suggest' ? 'Suggérer' : 'Auto-exécuter'}
+                    {trigger.mode === 'suggest' ? msg('triggerModeSuggest') : msg('triggerModeAutoExecute')}
                   </span>
                   {!trigger.enabled && (
                     <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', background: '#f0f0f0', color: '#999' }}>
-                      Désactivé
+                      {msg('triggerDisabled')}
                     </span>
                   )}
                 </div>
@@ -263,7 +263,7 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
                     }}
                     onClick={() => editTrigger(trigger)}
                   >
-                    {msg('triggerEdit') || 'Modifier'}
+                    {msg('triggerEdit') || 'Edit'}
                   </button>
                   <button
                     style={{

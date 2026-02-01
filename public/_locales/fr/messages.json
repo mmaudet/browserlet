@@ -467,6 +467,22 @@
     "message": "Supprimer",
     "description": "Bouton supprimer trigger"
   },
+  "triggerEdit": {
+    "message": "Modifier",
+    "description": "Bouton modifier trigger"
+  },
+  "triggerExisting": {
+    "message": "Triggers existants",
+    "description": "Titre section triggers existants"
+  },
+  "triggerNone": {
+    "message": "Aucun trigger configuré",
+    "description": "Message quand aucun trigger"
+  },
+  "triggerDisabled": {
+    "message": "Désactivé",
+    "description": "Badge trigger désactivé"
+  },
   "triggerAddCondition": {
     "message": "Ajouter une condition",
     "description": "Bouton ajouter condition"

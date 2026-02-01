@@ -467,6 +467,22 @@
     "message": "Delete",
     "description": "Delete trigger button"
   },
+  "triggerEdit": {
+    "message": "Edit",
+    "description": "Edit trigger button"
+  },
+  "triggerExisting": {
+    "message": "Existing triggers",
+    "description": "Existing triggers section title"
+  },
+  "triggerNone": {
+    "message": "No triggers configured",
+    "description": "Message when no triggers"
+  },
+  "triggerDisabled": {
+    "message": "Disabled",
+    "description": "Disabled trigger badge"
+  },
   "triggerAddCondition": {
     "message": "Add Condition",
     "description": "Add condition button"
