@@ -13,8 +13,9 @@ const containerStyle: Record<string, string | number> = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  justifyContent: 'center',
+  justifyContent: 'flex-start',
   padding: '24px',
+  paddingTop: '40px',
   minHeight: '100%',
 };
 
@@ -120,7 +121,7 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
     e.preventDefault();
 
     if (!password.value) {
-      error.value = 'Please enter your master password.';
+      error.value = 'Veuillez saisir votre mot de passe principal.';
       return;
     }
 
@@ -139,7 +140,7 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
       } else {
         // Increment failed attempts
         attempts.value = attempts.value + 1;
-        error.value = 'Incorrect master password.';
+        error.value = 'Mot de passe principal incorrect.';
 
         // Trigger shake animation
         showShake.value = true;
@@ -150,8 +151,8 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
       }
     } catch (err) {
       error.value = err instanceof Error
-        ? `Unlock failed: ${err.message}`
-        : 'An unexpected error occurred.';
+        ? `Échec du déverrouillage : ${err.message}`
+        : 'Une erreur inattendue s\'est produite.';
     } finally {
       isLoading.value = false;
     }
@@ -175,15 +176,15 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
     <div style={containerStyle}>
       <form style={formStyle} onSubmit={handleSubmit}>
         <div style={iconStyle}>&#128274;</div>
-        <h2 style={titleStyle}>Unlock Vault</h2>
+        <h2 style={titleStyle}>Déverrouiller le coffre</h2>
         <p style={descriptionStyle}>
-          Enter your master password to access credentials.
+          Saisissez votre mot de passe principal pour accéder à vos identifiants.
         </p>
 
         {/* Multiple attempts warning */}
         {attempts.value >= 3 && (
           <div style={warningStyle}>
-            Multiple failed attempts. Make sure you have the correct password.
+            Plusieurs tentatives échouées. Vérifiez que vous avez le bon mot de passe.
           </div>
         )}
 
@@ -199,7 +200,7 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
             value={password.value}
             onInput={handleInput}
             onKeyDown={handleKeyDown}
-            placeholder="Master password"
+            placeholder="Mot de passe principal"
             style={showShake.value ? inputErrorStyle : inputStyle}
             disabled={isLoading.value}
             autoFocus
@@ -212,7 +213,7 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
           style={isDisabled ? buttonDisabledStyle : buttonStyle}
           disabled={isDisabled}
         >
-          {isLoading.value ? 'Unlocking...' : 'Unlock'}
+          {isLoading.value ? 'Déverrouillage...' : 'Déverrouiller'}
         </button>
       </form>
 
