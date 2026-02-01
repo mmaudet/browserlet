@@ -22,11 +22,11 @@ const appState = signal<'loading' | 'needs_setup' | 'needs_unlock' | 'ready'>('l
 
 // Bottom action bar component
 function BottomActionBar() {
-  const actions: Array<{ id: ViewName; icon: string; labelKey: string }> = [
+  const actions: Array<{ id: ViewName; icon: string; labelKey: string; iconSize?: string }> = [
     { id: 'list', icon: '📋', labelKey: 'scripts' },
     { id: 'recording', icon: '🔴', labelKey: 'record' },
     { id: 'credentials', icon: '🔐', labelKey: 'credentials' },
-    { id: 'settings', icon: '⚙', labelKey: 'settings' }
+    { id: 'settings', icon: '⚙️', labelKey: 'settings' }
   ];
 
   return (
@@ -54,7 +54,7 @@ function BottomActionBar() {
           }}
           onClick={() => navigateTo(action.id)}
         >
-          <span style={{ fontSize: '24px' }}>{action.icon}</span>
+          <span style={{ fontSize: '24px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{action.icon}</span>
           <span>{chrome.i18n.getMessage(action.labelKey) || action.labelKey}</span>
         </button>
       ))}
