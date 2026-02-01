@@ -78,15 +78,19 @@ describe('applyTransform', () => {
     });
 
     it('throws on invalid number', () => {
+      vi.stubGlobal('navigator', { language: 'en-US' });
       expect(() => applyTransform('abc', 'parse_number')).toThrow(
         'Cannot parse "abc" as number'
       );
+      vi.unstubAllGlobals();
     });
 
     it('throws on empty string', () => {
+      vi.stubGlobal('navigator', { language: 'en-US' });
       expect(() => applyTransform('', 'parse_number')).toThrow(
         'Cannot parse "" as number'
       );
+      vi.unstubAllGlobals();
     });
   });
 
