@@ -902,5 +902,41 @@
   "addSelected": {
     "message": "Ajouter la selection",
     "description": "Bouton pour ajouter les suggestions selectionnees"
+  },
+  "extractedData": {
+    "message": "Donnees extraites",
+    "description": "Titre de la modale de donnees extraites"
+  },
+  "viewExtractedData": {
+    "message": "Voir les donnees extraites",
+    "description": "Info-bulle pour le bouton voir les donnees"
+  },
+  "viewData": {
+    "message": "Donnees",
+    "description": "Label court pour le bouton voir les donnees"
+  },
+  "noExtractedData": {
+    "message": "Aucune donnee extraite. Executez un script avec des actions extract.",
+    "description": "Message quand aucune donnee n'a ete extraite"
+  },
+  "tableView": {
+    "message": "Tableau",
+    "description": "Label pour le bouton vue tableau"
+  },
+  "exportJSON": {
+    "message": "Exporter JSON",
+    "description": "Bouton pour exporter en fichier JSON"
+  },
+  "exportCSV": {
+    "message": "Exporter CSV",
+    "description": "Bouton pour exporter en fichier CSV"
+  },
+  "copyToClipboard": {
+    "message": "Copier dans le presse-papiers",
+    "description": "Info-bulle pour le bouton copier"
+  },
+  "copied": {
+    "message": "Copie !",
+    "description": "Message de confirmation apres copie"
   }
 }

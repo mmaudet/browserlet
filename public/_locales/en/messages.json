@@ -902,5 +902,41 @@
   "addSelected": {
     "message": "Add Selected",
     "description": "Button to add selected extraction suggestions"
+  },
+  "extractedData": {
+    "message": "Extracted Data",
+    "description": "Title for extracted data modal"
+  },
+  "viewExtractedData": {
+    "message": "View extracted data",
+    "description": "Tooltip for view extracted data button"
+  },
+  "viewData": {
+    "message": "Data",
+    "description": "Short label for view data button"
+  },
+  "noExtractedData": {
+    "message": "No data extracted yet. Run a script with extract actions.",
+    "description": "Message when no data has been extracted"
+  },
+  "tableView": {
+    "message": "Table",
+    "description": "Label for table view toggle"
+  },
+  "exportJSON": {
+    "message": "Export JSON",
+    "description": "Button to export data as JSON file"
+  },
+  "exportCSV": {
+    "message": "Export CSV",
+    "description": "Button to export data as CSV file"
+  },
+  "copyToClipboard": {
+    "message": "Copy to clipboard",
+    "description": "Tooltip for copy button"
+  },
+  "copied": {
+    "message": "Copied!",
+    "description": "Feedback message after copying"
   }
 }
