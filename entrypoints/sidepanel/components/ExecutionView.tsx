@@ -1,5 +1,6 @@
 import { useSignal } from '@preact/signals';
 import { Parser } from '@json2csv/plainjs';
+import { Play, Check } from 'lucide-preact';
 import {
   isExecuting, currentScript, currentStep, totalSteps,
   progressPercent, executionStatus, executionResults, executionError,
@@ -83,12 +84,14 @@ export function ExecutionView() {
 
       {/* Idle state - show instructions */}
       {executionStatus.value === 'idle' && !isExecuting.value && (
-        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#666' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>▶️</div>
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#8e8e93' }}>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <Play size={48} strokeWidth={1.5} />
+          </div>
           <div style={{ fontSize: '14px', marginBottom: '8px' }}>
             {chrome.i18n.getMessage('noExecution') || 'No execution in progress'}
           </div>
-          <div style={{ fontSize: '12px', color: '#999' }}>
+          <div style={{ fontSize: '12px', color: '#aeaeb2' }}>
             {chrome.i18n.getMessage('executionHint') || 'Select a script and click "Run" to execute it'}
           </div>
         </div>
@@ -258,13 +261,15 @@ export function ExecutionView() {
             <div style={{
               padding: '16px',
               background: '#f5f5f5',
-              borderRadius: '6px',
+              borderRadius: '8px',
               textAlign: 'center',
               color: '#666',
               fontSize: '13px'
             }}>
-              <div style={{ marginBottom: '4px' }}>✓ Script exécuté avec succès</div>
-              <div style={{ fontSize: '12px', color: '#999' }}>
+              <div style={{ marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <Check size={16} strokeWidth={2} color="#34c759" /> Script exécuté avec succès
+              </div>
+              <div style={{ fontSize: '12px', color: '#aeaeb2' }}>
                 Aucune donnée extraite (pas d'action "extract" dans le script)
               </div>
             </div>

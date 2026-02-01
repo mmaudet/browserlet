@@ -1,5 +1,6 @@
 import { useSignal, type Signal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
+import { Copy, Check, Pencil, Trash2, Lock, Key, Plus } from 'lucide-preact';
 import type { StoredPassword } from '../../../utils/passwords/types';
 
 // Helper to get i18n messages
@@ -133,48 +134,57 @@ function CredentialItem({ credential, usageCount, scriptNames, onDelete, onEdit 
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
           <button
             style={{
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '14px',
-              padding: '4px 6px',
-              color: copySuccess.value ? '#4caf50' : '#666',
+              padding: '6px',
+              color: copySuccess.value ? '#34c759' : '#8e8e93',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             title={msg('credentialCopyReference')}
             onClick={handleCopy}
           >
-            {copySuccess.value ? '✓' : '📋'}
+            {copySuccess.value ? <Check size={15} strokeWidth={2} /> : <Copy size={15} strokeWidth={1.5} />}
           </button>
           <button
             style={{
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '14px',
-              padding: '4px 6px',
-              color: '#666',
+              padding: '6px',
+              color: '#8e8e93',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             title={msg('credentialEdit')}
             onClick={onEdit}
           >
-            &#9999;&#65039;
+            <Pencil size={15} strokeWidth={1.5} />
           </button>
           <button
             style={{
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '14px',
-              padding: '4px 6px',
-              color: '#d32f2f',
+              padding: '6px',
+              color: '#ff3b30',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             title={msg('credentialDelete')}
             onClick={onDelete}
           >
-            &#128465;&#65039;
+            <Trash2 size={15} strokeWidth={1.5} />
           </button>
         </div>
       </div>
@@ -567,14 +577,13 @@ export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
               onClick={handleStartCapture}
               disabled={captureMode.value !== 'idle'}
               style={{
-                background: '#4caf50',
+                background: '#34c759',
                 color: 'white',
                 border: 'none',
-                borderRadius: '4px',
-                width: '24px',
-                height: '24px',
+                borderRadius: '6px',
+                width: '26px',
+                height: '26px',
                 cursor: captureMode.value === 'idle' ? 'pointer' : 'not-allowed',
-                fontSize: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -582,7 +591,7 @@ export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
               }}
               title={msg('credentialAdd')}
             >
-              +
+              <Plus size={16} strokeWidth={2.5} />
             </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -595,13 +604,16 @@ export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '16px',
-                padding: '4px',
-                color: '#666',
+                padding: '6px',
+                color: '#8e8e93',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
               title={msg('credentialLockVault')}
             >
-              &#128274;
+              <Lock size={16} strokeWidth={1.5} />
             </button>
           </div>
         </div>
@@ -618,7 +630,9 @@ export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
           alignItems: 'center',
         }}>
           <div>
-            <div style={{ fontWeight: 500, color: '#7b1fa2' }}>🔑 Capture Mode Active</div>
+            <div style={{ fontWeight: 500, color: '#7b1fa2', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Key size={16} strokeWidth={2} /> Capture Mode Active
+            </div>
             <div style={{ fontSize: '12px', color: '#666' }}>
               Enter credentials on any login page, then click Stop
             </div>
@@ -690,8 +704,10 @@ export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
       {/* Credential list */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {captureMode.value === 'idle' && passwords.value.length === 0 ? (
-          <div style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
-            <div style={{ fontSize: '36px', marginBottom: '12px' }}>&#128273;</div>
+          <div style={{ padding: '24px', textAlign: 'center', color: '#8e8e93' }}>
+            <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+              <Key size={40} strokeWidth={1.5} />
+            </div>
             <div>{msg('credentialNoneStored')}</div>
             <div style={{ fontSize: '12px', marginTop: '4px' }}>
               Credentials are captured during recording when you log into websites.

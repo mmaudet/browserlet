@@ -71,6 +71,43 @@
     #monaco-editor-container {
       min-height: 300px;
     }
+
+    /* Spin animation for loading icons */
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+
+    /* macOS-style button refinements */
+    button {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    button:focus {
+      outline: none;
+    }
+
+    button:focus-visible {
+      outline: 2px solid #007AFF;
+      outline-offset: 2px;
+    }
+
+    /* Smooth transitions for interactive elements */
+    button, a {
+      transition: all 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      opacity: 0.85;
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(0.97);
+    }
   </style>
 </head>
 <body>

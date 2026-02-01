@@ -1,4 +1,5 @@
 import { useSignal } from '@preact/signals';
+import { Lock, Check } from 'lucide-preact';
 import type { StoredPassword } from '../../../utils/passwords/types';
 import {
   getLegacyCredentialMetadata,
@@ -46,9 +47,10 @@ const cardStyle: Record<string, string | number> = {
 };
 
 const iconStyle: Record<string, string | number> = {
-  fontSize: '48px',
-  textAlign: 'center',
+  display: 'flex',
+  justifyContent: 'center',
   marginBottom: '16px',
+  color: '#8e8e93',
 };
 
 const titleStyle: Record<string, string | number> = {
@@ -410,7 +412,7 @@ export function CredentialMigration({
     return (
       <div style={containerStyle}>
         <div style={cardStyle}>
-          <div style={iconStyle}>&#128274;</div>
+          <div style={iconStyle}><Lock size={48} strokeWidth={1.5} /></div>
           <h2 style={titleStyle}>{msg('migrationRequired')}</h2>
           <p style={descriptionStyle}>
             {msg('migrationExplain', [String(credentialCount)])}
@@ -504,7 +506,7 @@ export function CredentialMigration({
     return (
       <div style={containerStyle}>
         <div style={cardStyle}>
-          <div style={iconStyle}>&#10004;&#65039;</div>
+          <div style={{ ...iconStyle, color: '#34c759' }}><Check size={48} strokeWidth={2} /></div>
           <h2 style={titleStyle}>{msg('migrationComplete')}</h2>
 
           <div style={successStyle}>

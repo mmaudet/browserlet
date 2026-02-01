@@ -1,4 +1,5 @@
 import { signal } from '@preact/signals';
+import { Lock } from 'lucide-preact';
 import type { DetectedPassword } from '../../../utils/passwords/types';
 
 // Module-level signals for shared state across components
@@ -193,9 +194,10 @@ const errorStyle: Record<string, string | number> = {
 };
 
 const lockIconStyle: Record<string, string | number> = {
-  display: 'inline-block',
+  display: 'inline-flex',
+  alignItems: 'center',
   marginRight: '8px',
-  fontSize: '16px'
+  verticalAlign: 'middle'
 };
 
 /**
@@ -220,7 +222,7 @@ export function PasswordPrompt() {
     }}>
       <div style={modalStyle}>
         <h3 style={titleStyle}>
-          <span style={lockIconStyle}>&#128274;</span>
+          <span style={lockIconStyle}><Lock size={18} strokeWidth={2} /></span>
           {chrome.i18n.getMessage('savePasswords') || 'Save Passwords?'}
         </h3>
         <p style={descriptionStyle}>

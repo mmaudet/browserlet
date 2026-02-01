@@ -1,6 +1,7 @@
 import { useRef } from 'preact/hooks';
 import { useSignal } from '@preact/signals';
 import { saveAs } from 'file-saver';
+import { Download } from 'lucide-preact';
 import type { Script } from '../../../utils/types';
 import { parseScript, dumpScript } from '../../../utils/yaml/parser';
 import { saveScript } from '../../../utils/storage/scripts';
@@ -111,12 +112,12 @@ export function ImportButton({ onImport, className }: ImportButtonProps) {
       />
       <button
         class={className}
-        style={className ? undefined : defaultStyle}
+        style={className ? undefined : { ...defaultStyle, padding: '8px 10px' }}
         onClick={() => fileInputRef.current?.click()}
         disabled={isImporting.value}
         title={chrome.i18n.getMessage('importScript') || 'Import YAML file'}
       >
-        <span>📥</span>
+        <Download size={16} strokeWidth={1.5} />
         {isImporting.value
           ? chrome.i18n.getMessage('importing') || '...'
           : null}

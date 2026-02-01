@@ -1,4 +1,5 @@
 import { useSignal } from '@preact/signals';
+import { Pencil, Trash2, Zap, History, Play, CheckCircle, XCircle, StopCircle, Loader2, X, Plus } from 'lucide-preact';
 import type { Script, ExecutionRecord } from '../../../utils/types';
 import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId, updateScriptInState } from '../stores/scripts';
 import { triggersState } from '../stores/triggers';
@@ -51,45 +52,45 @@ function ScriptItem({ script, isSelected, triggerCount, onSelect, onRun, onConfi
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
           <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: '4px 6px', color: '#666' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#8e8e93', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title={chrome.i18n.getMessage('renameScript') || 'Rename'}
             onClick={(e: Event) => {
               e.stopPropagation();
               onRename();
             }}
           >
-            &#9999;&#65039;
+            <Pencil size={15} strokeWidth={1.5} />
           </button>
           <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: '4px 6px', color: '#d32f2f' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#ff3b30', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title={chrome.i18n.getMessage('deleteScript') || 'Delete'}
             onClick={(e: Event) => {
               e.stopPropagation();
               onDelete();
             }}
           >
-            &#128465;&#65039;
+            <Trash2 size={15} strokeWidth={1.5} />
           </button>
           <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', padding: '4px 8px', color: triggerCount > 0 ? '#f59e0b' : '#666', position: 'relative' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: triggerCount > 0 ? '#ff9500' : '#8e8e93', position: 'relative', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title={chrome.i18n.getMessage('configureTriggers') || 'Configure triggers'}
             onClick={(e: Event) => {
               e.stopPropagation();
               onConfigureTriggers();
             }}
           >
-            {'\u26A1'}
+            <Zap size={16} strokeWidth={1.5} fill={triggerCount > 0 ? '#ff9500' : 'none'} />
             {triggerCount > 0 && (
               <span style={{
                 position: 'absolute',
                 top: '0',
                 right: '0',
-                background: '#3b82f6',
+                background: '#007AFF',
                 color: 'white',
-                fontSize: '10px',
-                fontWeight: 'bold',
+                fontSize: '9px',
+                fontWeight: 600,
                 minWidth: '14px',
                 height: '14px',
                 borderRadius: '7px',
@@ -103,24 +104,24 @@ function ScriptItem({ script, isSelected, triggerCount, onSelect, onRun, onConfi
             )}
           </button>
           <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: '4px 6px', color: '#666' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#8e8e93', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title={chrome.i18n.getMessage('viewHistory') || 'View History'}
             onClick={(e: Event) => {
               e.stopPropagation();
               onViewHistory();
             }}
           >
-            🕒
+            <History size={15} strokeWidth={1.5} />
           </button>
           <button
             onClick={(e: Event) => {
               e.stopPropagation();
               onRun();
             }}
-            style={{ padding: '6px 12px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+            style={{ padding: '5px 10px', background: '#34c759', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title={chrome.i18n.getMessage('runScript') || 'Run Script'}
           >
-            &#9654;
+            <Play size={14} strokeWidth={2} fill="white" />
           </button>
         </div>
       </div>
@@ -214,11 +215,11 @@ function ScriptHistoryModal({ scriptId, scriptName, onClose }: ScriptHistoryModa
 
   const getStatusIcon = (status: ExecutionRecord['status']) => {
     switch (status) {
-      case 'completed': return '✅';
-      case 'failed': return '❌';
-      case 'stopped': return '⏹️';
-      case 'running': return '⏳';
-      default: return '❓';
+      case 'completed': return <CheckCircle size={14} color="#34c759" strokeWidth={2} />;
+      case 'failed': return <XCircle size={14} color="#ff3b30" strokeWidth={2} />;
+      case 'stopped': return <StopCircle size={14} color="#8e8e93" strokeWidth={2} />;
+      case 'running': return <Loader2 size={14} color="#007AFF" strokeWidth={2} style={{ animation: 'spin 1s linear infinite' }} />;
+      default: return <StopCircle size={14} color="#8e8e93" strokeWidth={2} />;
     }
   };
 
@@ -240,9 +241,9 @@ function ScriptHistoryModal({ scriptId, scriptName, onClose }: ScriptHistoryModa
         </h3>
         <button
           onClick={onClose}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: '#666' }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          ×
+          <X size={20} strokeWidth={2} />
         </button>
       </div>
       <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
@@ -328,10 +329,10 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
           {onNewScript && (
             <button
               onClick={onNewScript}
-              style={{ padding: '8px 12px', background: '#4285f4', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '20px', lineHeight: 1 }}
+              style={{ padding: '8px', background: '#007AFF', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               title={chrome.i18n.getMessage('newScript') || 'New Script'}
             >
-              +
+              <Plus size={20} strokeWidth={2.5} />
             </button>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { useSignal } from '@preact/signals';
+import { Lock } from 'lucide-preact';
 import { validateMasterPassword, cacheDerivedKey } from '../../../utils/crypto/masterPassword';
 
 // Helper to get i18n messages
@@ -32,9 +33,10 @@ const formStyle: Record<string, string | number> = {
 };
 
 const iconStyle: Record<string, string | number> = {
-  fontSize: '48px',
-  textAlign: 'center',
+  display: 'flex',
+  justifyContent: 'center',
   marginBottom: '16px',
+  color: '#8e8e93',
 };
 
 const titleStyle: Record<string, string | number> = {
@@ -178,7 +180,7 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
   return (
     <div style={containerStyle}>
       <form style={formStyle} onSubmit={handleSubmit}>
-        <div style={iconStyle}>&#128274;</div>
+        <div style={iconStyle}><Lock size={48} strokeWidth={1.5} /></div>
         <h2 style={titleStyle}>{msg('vaultUnlockTitle')}</h2>
         <p style={descriptionStyle}>
           {msg('vaultUnlockDescription')}

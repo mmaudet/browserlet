@@ -1,5 +1,6 @@
 import { render } from 'preact';
 import { signal } from '@preact/signals';
+import { List, Circle, KeyRound, Settings, ArrowLeft, Loader2 } from 'lucide-preact';
 import { currentView, navigateTo, goBack, editorScript, ViewName } from './router';
 import { loadScripts, selectScript } from './stores/scripts';
 import { loadLLMConfig, llmConfigStore } from './stores/llmConfig';
@@ -22,42 +23,56 @@ const appState = signal<'loading' | 'needs_setup' | 'needs_unlock' | 'ready'>('l
 
 // Bottom action bar component
 function BottomActionBar() {
-  const actions: Array<{ id: ViewName; icon: string; labelKey: string; iconSize?: string }> = [
-    { id: 'list', icon: '📋', labelKey: 'scripts' },
-    { id: 'recording', icon: '🔴', labelKey: 'record' },
-    { id: 'credentials', icon: '🔐', labelKey: 'credentials' },
-    { id: 'settings', icon: '⚙️', labelKey: 'settings' }
+  const actions: Array<{ id: ViewName; icon: typeof List; labelKey: string; isRecording?: boolean }> = [
+    { id: 'list', icon: List, labelKey: 'scripts' },
+    { id: 'recording', icon: Circle, labelKey: 'record', isRecording: true },
+    { id: 'credentials', icon: KeyRound, labelKey: 'credentials' },
+    { id: 'settings', icon: Settings, labelKey: 'settings' }
   ];
 
   return (
     <nav style={{
       display: 'flex',
-      borderTop: '1px solid #ddd',
-      background: 'white',
-      padding: '8px 0'
+      borderTop: '1px solid #e5e5e5',
+      background: 'rgba(255, 255, 255, 0.8)',
+      backdropFilter: 'blur(10px)',
+      padding: '6px 0 8px'
     }}>
-      {actions.map(action => (
-        <button
-          key={action.id}
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '4px',
-            padding: '8px',
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            color: currentView.value === action.id ? '#4285f4' : '#666',
-            fontSize: '12px'
-          }}
-          onClick={() => navigateTo(action.id)}
-        >
-          <span style={{ fontSize: '24px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{action.icon}</span>
-          <span>{chrome.i18n.getMessage(action.labelKey) || action.labelKey}</span>
-        </button>
-      ))}
+      {actions.map(action => {
+        const isActive = currentView.value === action.id;
+        const IconComponent = action.icon;
+        return (
+          <button
+            key={action.id}
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '2px',
+              padding: '6px 8px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              color: isActive ? '#007AFF' : '#8e8e93',
+              fontSize: '10px',
+              fontWeight: isActive ? 500 : 400,
+              transition: 'color 0.15s ease'
+            }}
+            onClick={() => navigateTo(action.id)}
+          >
+            <span style={{ height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconComponent
+                size={22}
+                strokeWidth={isActive ? 2 : 1.5}
+                fill={action.isRecording ? '#ff3b30' : 'none'}
+                color={action.isRecording ? '#ff3b30' : isActive ? '#007AFF' : '#8e8e93'}
+              />
+            </span>
+            <span>{chrome.i18n.getMessage(action.labelKey) || action.labelKey}</span>
+          </button>
+        );
+      })}
     </nav>
   );
 }
@@ -117,15 +132,22 @@ function ContentRouter() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '14px',
-              color: '#666'
+              fontSize: '13px',
+              color: '#007AFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              transition: 'background 0.15s ease'
             }}
             onClick={() => {
               disposeEditor();
               goBack();
             }}
           >
-            ← {chrome.i18n.getMessage('back') || 'Back'}
+            <ArrowLeft size={16} strokeWidth={2} />
+            {chrome.i18n.getMessage('back') || 'Back'}
           </button>
           <div style={{ display: 'flex', gap: '8px' }}>
             {editorScript.value && <ExportButton script={editorScript.value} />}
@@ -164,12 +186,19 @@ function ContentRouter() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '14px',
-              color: '#666'
+              fontSize: '13px',
+              color: '#007AFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              transition: 'background 0.15s ease'
             }}
             onClick={() => goBack()}
           >
-            ← {chrome.i18n.getMessage('back') || 'Back'}
+            <ArrowLeft size={16} strokeWidth={2} />
+            {chrome.i18n.getMessage('back') || 'Back'}
           </button>
         </div>
         {/* Settings content */}
@@ -196,12 +225,19 @@ function ContentRouter() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '14px',
-              color: '#666'
+              fontSize: '13px',
+              color: '#007AFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              transition: 'background 0.15s ease'
             }}
             onClick={() => goBack()}
           >
-            ← {chrome.i18n.getMessage('back') || 'Back'}
+            <ArrowLeft size={16} strokeWidth={2} />
+            {chrome.i18n.getMessage('back') || 'Back'}
           </button>
         </div>
         {/* Credentials content */}
@@ -238,8 +274,11 @@ function App() {
         height: '100vh',
         background: '#f5f5f5'
       }}>
-        <div style={{ fontSize: '24px', marginBottom: '16px' }}>🔐</div>
-        <div style={{ color: '#666' }}>Chargement...</div>
+        <div style={{ marginBottom: '16px', color: '#8e8e93' }}>
+          <Loader2 size={32} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
+        </div>
+        <div style={{ color: '#8e8e93', fontSize: '14px' }}>Chargement...</div>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
