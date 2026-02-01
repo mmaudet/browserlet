@@ -590,5 +590,269 @@
   "recordingNotAvailable": {
     "message": "Enregistrement non disponible sur cette page (pages du navigateur, PDF ou extensions non supportés)",
     "description": "Erreur lors de la tentative d'enregistrement sur des pages non supportées"
+  },
+
+  "credentialClickToSeeUsage": {
+    "message": "Cliquez pour voir quels scripts utilisent cet identifiant",
+    "description": "Tooltip pour voir l'usage des credentials"
+  },
+  "credentialCopyReference": {
+    "message": "Copier la référence",
+    "description": "Tooltip copier référence credential"
+  },
+  "credentialEdit": {
+    "message": "Modifier l'identifiant",
+    "description": "Tooltip modifier credential"
+  },
+  "credentialDelete": {
+    "message": "Supprimer l'identifiant",
+    "description": "Tooltip supprimer credential"
+  },
+  "credentialAdd": {
+    "message": "Ajouter un identifiant",
+    "description": "Tooltip ajouter credential"
+  },
+  "credentialLockVault": {
+    "message": "Verrouiller le coffre",
+    "description": "Tooltip verrouiller le vault"
+  },
+  "credentialPlaceholderAlias": {
+    "message": "ex: mon_identifiant",
+    "description": "Placeholder pour l'alias"
+  },
+  "credentialPlaceholderNewPassword": {
+    "message": "Saisissez le nouveau mot de passe",
+    "description": "Placeholder nouveau mot de passe"
+  },
+  "credentialUsedBy": {
+    "message": "Utilisé par :",
+    "description": "Label scripts utilisant le credential"
+  },
+  "credentialCaptured": {
+    "message": "Identifiants capturés",
+    "description": "Titre section credentials capturés"
+  },
+  "credentialNoneStored": {
+    "message": "Aucun identifiant enregistré.",
+    "description": "Message quand pas de credentials"
+  },
+  "credentialNewPassword": {
+    "message": "Nouveau mot de passe",
+    "description": "Label nouveau mot de passe"
+  },
+  "credentialCancel": {
+    "message": "Annuler",
+    "description": "Bouton annuler"
+  },
+  "credentialSave": {
+    "message": "Enregistrer",
+    "description": "Bouton enregistrer"
+  },
+
+  "migrationRequired": {
+    "message": "Migration des identifiants requise",
+    "description": "Titre migration"
+  },
+  "migrationActionRequired": {
+    "message": "Action requise :",
+    "description": "Label action requise"
+  },
+  "migrationDescription": {
+    "message": "Vous devez ressaisir chaque mot de passe pour le chiffrer avec votre nouveau mot de passe principal.",
+    "description": "Description migration"
+  },
+  "migrationPassword": {
+    "message": "Mot de passe",
+    "description": "Label mot de passe"
+  },
+  "migrationPlaceholder": {
+    "message": "Saisissez le mot de passe pour cet identifiant",
+    "description": "Placeholder migration"
+  },
+  "migrationComplete": {
+    "message": "Migration terminée !",
+    "description": "Titre migration complete"
+  },
+  "migrationCompleteDesc": {
+    "message": "Tous vos identifiants ont été migrés avec succès.",
+    "description": "Description migration complete"
+  },
+  "migrationContinue": {
+    "message": "Continuer",
+    "description": "Bouton continuer migration"
+  },
+  "migrationSkip": {
+    "message": "Passer",
+    "description": "Bouton passer credential"
+  },
+  "migrationFinish": {
+    "message": "Terminer",
+    "description": "Bouton terminer migration"
+  },
+  "migrationProgress": {
+    "message": "Identifiant $1 sur $2",
+    "description": "Progression migration"
+  },
+  "migrationExplain": {
+    "message": "Vous avez $1 identifiant(s) de la version précédente. Suite au redémarrage du navigateur, les clés de chiffrement ont été perdues.",
+    "description": "Texte explication migration"
+  },
+  "migrationStartButton": {
+    "message": "Démarrer la migration",
+    "description": "Bouton démarrer migration"
+  },
+  "migrationSkipAll": {
+    "message": "Passer et tout supprimer",
+    "description": "Bouton passer tout"
+  },
+  "migrationSkipAllConfirm": {
+    "message": "Êtes-vous sûr de vouloir passer la migration ?\n\nTous les identifiants stockés seront supprimés et ne pourront pas être récupérés.\n\nCette action est irréversible.",
+    "description": "Confirmation passer tout"
+  },
+  "migrationLoading": {
+    "message": "Chargement...",
+    "description": "Texte chargement"
+  },
+  "migrationSaving": {
+    "message": "Enregistrement...",
+    "description": "Texte enregistrement"
+  },
+  "migrationNext": {
+    "message": "Suivant",
+    "description": "Bouton suivant"
+  },
+  "migrationReenter": {
+    "message": "Ressaisir le mot de passe",
+    "description": "Label ressaisir mot de passe"
+  },
+  "migrationAlias": {
+    "message": "Alias :",
+    "description": "Label alias"
+  },
+  "migrationEncrypted": {
+    "message": "Vos identifiants sont maintenant chiffrés avec votre mot de passe principal.",
+    "description": "Message chiffrement terminé"
+  },
+  "migrationMigrated": {
+    "message": "$1 identifiant(s) migré(s)",
+    "description": "Compte migrés"
+  },
+  "migrationSkipped": {
+    "message": ", $1 passé(s)",
+    "description": "Compte passés"
+  },
+  "migrationContinueVault": {
+    "message": "Continuer vers le coffre",
+    "description": "Bouton continuer vers coffre"
+  },
+  "migrationErrorEmpty": {
+    "message": "Veuillez saisir le mot de passe.",
+    "description": "Erreur mot de passe vide"
+  },
+  "migrationErrorLocked": {
+    "message": "Le coffre est verrouillé. Veuillez d'abord le déverrouiller.",
+    "description": "Erreur coffre verrouillé"
+  },
+  "migrationErrorLoad": {
+    "message": "Échec du chargement des identifiants",
+    "description": "Erreur chargement"
+  },
+  "migrationErrorEncrypt": {
+    "message": "Échec du chiffrement du mot de passe",
+    "description": "Erreur chiffrement"
+  },
+  "migrationErrorSave": {
+    "message": "Échec de l'enregistrement des identifiants",
+    "description": "Erreur enregistrement"
+  },
+
+  "masterPasswordTitle": {
+    "message": "Créer un mot de passe principal",
+    "description": "Titre setup master password"
+  },
+  "masterPasswordDescription": {
+    "message": "Ce mot de passe chiffrera vos identifiants. Il ne pourra pas être récupéré en cas d'oubli.",
+    "description": "Description setup"
+  },
+  "masterPasswordLabel": {
+    "message": "Mot de passe principal",
+    "description": "Label mot de passe"
+  },
+  "masterPasswordPlaceholder": {
+    "message": "Saisissez votre mot de passe",
+    "description": "Placeholder mot de passe"
+  },
+  "masterPasswordConfirmLabel": {
+    "message": "Confirmer le mot de passe",
+    "description": "Label confirmation"
+  },
+  "masterPasswordConfirmPlaceholder": {
+    "message": "Confirmez votre mot de passe",
+    "description": "Placeholder confirmation"
+  },
+  "masterPasswordWarning": {
+    "message": "Si vous oubliez ce mot de passe, vous perdrez l'accès à tous vos identifiants enregistrés.",
+    "description": "Avertissement important"
+  },
+  "masterPasswordCreate": {
+    "message": "Créer le mot de passe",
+    "description": "Bouton créer"
+  },
+  "masterPasswordCreating": {
+    "message": "Création...",
+    "description": "Bouton en cours"
+  },
+  "masterPasswordErrorLength": {
+    "message": "Le mot de passe doit contenir au moins 12 caractères.",
+    "description": "Erreur longueur"
+  },
+  "masterPasswordErrorMismatch": {
+    "message": "Les mots de passe ne correspondent pas.",
+    "description": "Erreur correspondance"
+  },
+  "masterPasswordStrengthWeak": {
+    "message": "Faible (min 12 caractères)",
+    "description": "Force faible"
+  },
+  "masterPasswordStrengthFair": {
+    "message": "Moyen",
+    "description": "Force moyenne"
+  },
+  "masterPasswordStrengthStrong": {
+    "message": "Fort",
+    "description": "Force forte"
+  },
+
+  "vaultUnlockTitle": {
+    "message": "Déverrouiller le coffre",
+    "description": "Titre unlock"
+  },
+  "vaultUnlockDescription": {
+    "message": "Saisissez votre mot de passe principal pour accéder à vos identifiants.",
+    "description": "Description unlock"
+  },
+  "vaultUnlockWarning": {
+    "message": "Plusieurs tentatives échouées. Vérifiez que vous avez le bon mot de passe.",
+    "description": "Avertissement tentatives"
+  },
+  "vaultUnlockPlaceholder": {
+    "message": "Mot de passe principal",
+    "description": "Placeholder unlock"
+  },
+  "vaultUnlockButton": {
+    "message": "Déverrouiller",
+    "description": "Bouton unlock"
+  },
+  "vaultUnlockUnlocking": {
+    "message": "Déverrouillage...",
+    "description": "Bouton en cours"
+  },
+  "vaultUnlockErrorEmpty": {
+    "message": "Veuillez saisir votre mot de passe principal.",
+    "description": "Erreur champ vide"
+  },
+  "vaultUnlockErrorWrong": {
+    "message": "Mot de passe principal incorrect.",
+    "description": "Erreur mauvais mdp"
   }
 }

@@ -6,6 +6,9 @@ import {
   cacheDerivedKey,
 } from '../../../utils/crypto/masterPassword';
 
+// Helper to get i18n messages
+const msg = (key: string): string => chrome.i18n.getMessage(key) || key;
+
 /**
  * Props for MasterPasswordSetup component.
  */
@@ -52,9 +55,9 @@ function getStrengthColor(strength: PasswordStrength): string {
  */
 function getStrengthLabel(strength: PasswordStrength): string {
   switch (strength) {
-    case 'weak': return 'Faible (min 12 caractères)';
-    case 'fair': return 'Moyen';
-    case 'strong': return 'Fort';
+    case 'weak': return msg('masterPasswordStrengthWeak');
+    case 'fair': return msg('masterPasswordStrengthFair');
+    case 'strong': return msg('masterPasswordStrengthStrong');
     default: return '';
   }
 }
@@ -211,13 +214,13 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
 
     // Validate password length (NIST minimum)
     if (password.value.length < 12) {
-      error.value = 'Le mot de passe doit contenir au moins 12 caractères.';
+      error.value = msg('masterPasswordErrorLength');
       return;
     }
 
     // Validate confirmation matches
     if (password.value !== confirmPassword.value) {
-      error.value = 'Les mots de passe ne correspondent pas.';
+      error.value = msg('masterPasswordErrorMismatch');
       return;
     }
 
@@ -263,9 +266,9 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
   return (
     <div style={containerStyle}>
       <form style={formStyle} onSubmit={handleSubmit}>
-        <h2 style={titleStyle}>Créer un mot de passe principal</h2>
+        <h2 style={titleStyle}>{msg('masterPasswordTitle')}</h2>
         <p style={descriptionStyle}>
-          Ce mot de passe chiffrera vos identifiants. Il ne pourra pas être récupéré en cas d'oubli.
+          {msg('masterPasswordDescription')}
         </p>
 
         {error.value && (
@@ -274,12 +277,12 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
 
         {/* Password input */}
         <div style={inputGroupStyle}>
-          <label style={labelStyle}>Mot de passe principal</label>
+          <label style={labelStyle}>{msg('masterPasswordLabel')}</label>
           <input
             type="password"
             value={password.value}
             onInput={handlePasswordInput}
-            placeholder="Saisissez votre mot de passe"
+            placeholder={msg('masterPasswordPlaceholder')}
             style={error.value && password.value.length < 12 ? inputErrorStyle : inputStyle}
             disabled={isLoading.value}
             autoFocus
@@ -308,12 +311,12 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
 
         {/* Confirm password input */}
         <div style={inputGroupStyle}>
-          <label style={labelStyle}>Confirmer le mot de passe</label>
+          <label style={labelStyle}>{msg('masterPasswordConfirmLabel')}</label>
           <input
             type="password"
             value={confirmPassword.value}
             onInput={handleConfirmInput}
-            placeholder="Confirmez votre mot de passe"
+            placeholder={msg('masterPasswordConfirmPlaceholder')}
             style={error.value && password.value !== confirmPassword.value ? inputErrorStyle : inputStyle}
             disabled={isLoading.value}
           />
@@ -321,8 +324,7 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
 
         {/* Warning about password recovery */}
         <div style={warningStyle}>
-          <strong>Important :</strong> Si vous oubliez ce mot de passe, vous perdrez l'accès à tous vos identifiants enregistrés.
-          Il n'y a aucun moyen de le récupérer.
+          <strong>Important:</strong> {msg('masterPasswordWarning')}
         </div>
 
         {/* Submit button */}
@@ -331,7 +333,7 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
           style={isDisabled ? buttonDisabledStyle : buttonStyle}
           disabled={isDisabled}
         >
-          {isLoading.value ? 'Création...' : 'Créer le mot de passe'}
+          {isLoading.value ? msg('masterPasswordCreating') : msg('masterPasswordCreate')}
         </button>
       </form>
     </div>

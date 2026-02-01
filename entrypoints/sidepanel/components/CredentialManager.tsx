@@ -1,6 +1,9 @@
 import { useSignal, type Signal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import type { StoredPassword } from '../../../utils/passwords/types';
+
+// Helper to get i18n messages
+const msg = (key: string): string => chrome.i18n.getMessage(key) || key;
 import type { CapturedPassword } from '../../../entrypoints/content/recording/passwordCapture';
 import { passwordStore, loadPasswords, refreshVaultState } from '../stores/passwords';
 import { scriptsState } from '../stores/scripts';
@@ -108,7 +111,7 @@ function CredentialItem({ credential, usageCount, scriptNames, onDelete, onEdit 
                   cursor: 'pointer',
                 }}
                 onClick={() => { showUsage.value = !showUsage.value; }}
-                title="Click to see which scripts use this credential"
+                title={msg('credentialClickToSeeUsage')}
               >
                 {usageCount} script{usageCount === 1 ? '' : 's'}
               </button>
@@ -140,7 +143,7 @@ function CredentialItem({ credential, usageCount, scriptNames, onDelete, onEdit 
               padding: '4px 6px',
               color: copySuccess.value ? '#4caf50' : '#666',
             }}
-            title="Copy credential reference"
+            title={msg('credentialCopyReference')}
             onClick={handleCopy}
           >
             {copySuccess.value ? '✓' : '📋'}
@@ -154,7 +157,7 @@ function CredentialItem({ credential, usageCount, scriptNames, onDelete, onEdit 
               padding: '4px 6px',
               color: '#666',
             }}
-            title="Edit credential"
+            title={msg('credentialEdit')}
             onClick={onEdit}
           >
             &#9999;&#65039;
@@ -168,7 +171,7 @@ function CredentialItem({ credential, usageCount, scriptNames, onDelete, onEdit 
               padding: '4px 6px',
               color: '#d32f2f',
             }}
-            title="Delete credential"
+            title={msg('credentialDelete')}
             onClick={onDelete}
           >
             &#128465;&#65039;
@@ -185,7 +188,7 @@ function CredentialItem({ credential, usageCount, scriptNames, onDelete, onEdit 
           borderRadius: '4px',
           fontSize: '12px',
         }}>
-          <div style={{ fontWeight: 500, color: '#666', marginBottom: '4px' }}>Used by:</div>
+          <div style={{ fontWeight: 500, color: '#666', marginBottom: '4px' }}>{msg('credentialUsedBy')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
             {scriptNames.map(name => (
               <span
@@ -253,7 +256,7 @@ function EditForm({ credential, editPassword, editAlias, onSave, onCancel }: Edi
           type="text"
           value={editAlias.value}
           onInput={(e: Event) => { handleAliasInput((e.target as HTMLInputElement).value); }}
-          placeholder="e.g., linagora_pwd"
+          placeholder={msg('credentialPlaceholderAlias')}
           style={{
             width: '100%',
             padding: '8px',
@@ -269,13 +272,13 @@ function EditForm({ credential, editPassword, editAlias, onSave, onCancel }: Edi
       </div>
       <div style={{ marginBottom: '12px' }}>
         <label style={{ display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
-          New Password
+          {msg('credentialNewPassword')}
         </label>
         <input
           type="password"
           value={editPassword.value}
           onInput={(e: Event) => { editPassword.value = (e.target as HTMLInputElement).value; }}
-          placeholder="Enter new password"
+          placeholder={msg('credentialPlaceholderNewPassword')}
           style={{
             width: '100%',
             padding: '8px',
@@ -302,7 +305,7 @@ function EditForm({ credential, editPassword, editAlias, onSave, onCancel }: Edi
             fontSize: '12px',
           }}
         >
-          Cancel
+          {msg('credentialCancel')}
         </button>
         <button
           onClick={onSave}
@@ -317,7 +320,7 @@ function EditForm({ credential, editPassword, editAlias, onSave, onCancel }: Edi
             fontSize: '12px',
           }}
         >
-          Save
+          {msg('credentialSave')}
         </button>
       </div>
     </div>
@@ -577,7 +580,7 @@ export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
                 justifyContent: 'center',
                 opacity: captureMode.value === 'idle' ? 1 : 0.5,
               }}
-              title="Add credential"
+              title={msg('credentialAdd')}
             >
               +
             </button>
@@ -596,7 +599,7 @@ export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
                 padding: '4px',
                 color: '#666',
               }}
-              title="Lock vault"
+              title={msg('credentialLockVault')}
             >
               &#128274;
             </button>
@@ -639,7 +642,7 @@ export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
       {/* Confirming mode UI */}
       {captureMode.value === 'confirming' && (
         <div style={{ padding: '16px' }}>
-          <div style={{ fontWeight: 500, marginBottom: '12px' }}>Captured Credentials</div>
+          <div style={{ fontWeight: 500, marginBottom: '12px' }}>{msg('credentialCaptured')}</div>
           {capturedCredentials.value.map((cred, i) => (
             <div key={i} style={{
               padding: '12px',
@@ -689,7 +692,7 @@ export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
         {captureMode.value === 'idle' && passwords.value.length === 0 ? (
           <div style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
             <div style={{ fontSize: '36px', marginBottom: '12px' }}>&#128273;</div>
-            <div>No credentials stored.</div>
+            <div>{msg('credentialNoneStored')}</div>
             <div style={{ fontSize: '12px', marginTop: '4px' }}>
               Credentials are captured during recording when you log into websites.
             </div>

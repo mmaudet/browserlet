@@ -1,5 +1,4 @@
 import { useSignal } from '@preact/signals';
-import { useEffect } from 'preact/hooks';
 import type { StoredPassword } from '../../../utils/passwords/types';
 import {
   getLegacyCredentialMetadata,
@@ -9,6 +8,10 @@ import {
 } from '../../../utils/passwords/migration';
 import { getCachedDerivedKey } from '../../../utils/crypto/masterPassword';
 import { encryptWithKey } from '../../../utils/crypto/encryption';
+
+// Helper to get i18n messages
+const msg = (key: string, substitutions?: string[]): string =>
+  chrome.i18n.getMessage(key, substitutions) || key;
 
 /**
  * Props for CredentialMigration component.
@@ -250,8 +253,8 @@ export function CredentialMigration({
     } catch (err) {
       error.value =
         err instanceof Error
-          ? `Failed to load credentials: ${err.message}`
-          : 'Failed to load credentials';
+          ? `${msg('migrationErrorLoad')}: ${err.message}`
+          : msg('migrationErrorLoad');
     } finally {
       isLoading.value = false;
     }
@@ -261,11 +264,7 @@ export function CredentialMigration({
    * Skip all and delete - user confirms they want to lose all credentials.
    */
   async function handleSkipAll(): Promise<void> {
-    const confirmed = confirm(
-      'Are you sure you want to skip migration?\n\n' +
-        'All stored credentials will be deleted and cannot be recovered.\n\n' +
-        'This action is irreversible.'
-    );
+    const confirmed = confirm(msg('migrationSkipAllConfirm'));
 
     if (confirmed) {
       // Clear all credentials and mark migration complete
@@ -280,7 +279,7 @@ export function CredentialMigration({
    */
   async function handleNextCredential(): Promise<void> {
     if (!currentPassword.value) {
-      error.value = 'Please enter the password.';
+      error.value = msg('migrationErrorEmpty');
       return;
     }
 
@@ -291,7 +290,7 @@ export function CredentialMigration({
       // Get the cached derived key
       const key = await getCachedDerivedKey();
       if (!key) {
-        error.value = 'Vault is locked. Please unlock first.';
+        error.value = msg('migrationErrorLocked');
         isLoading.value = false;
         return;
       }
@@ -332,8 +331,8 @@ export function CredentialMigration({
     } catch (err) {
       error.value =
         err instanceof Error
-          ? `Encryption failed: ${err.message}`
-          : 'Failed to encrypt password';
+          ? `${msg('migrationErrorEncrypt')}: ${err.message}`
+          : msg('migrationErrorEncrypt');
     } finally {
       isLoading.value = false;
     }
@@ -372,8 +371,8 @@ export function CredentialMigration({
     } catch (err) {
       error.value =
         err instanceof Error
-          ? `Failed to save credentials: ${err.message}`
-          : 'Failed to save credentials';
+          ? `${msg('migrationErrorSave')}: ${err.message}`
+          : msg('migrationErrorSave');
     } finally {
       isLoading.value = false;
     }
@@ -412,17 +411,15 @@ export function CredentialMigration({
       <div style={containerStyle}>
         <div style={cardStyle}>
           <div style={iconStyle}>&#128274;</div>
-          <h2 style={titleStyle}>Credential Migration Required</h2>
+          <h2 style={titleStyle}>{msg('migrationRequired')}</h2>
           <p style={descriptionStyle}>
-            You have {credentialCount} credential{credentialCount === 1 ? '' : 's'} from
-            the previous version. Due to browser restart, the encryption keys were lost.
+            {msg('migrationExplain', [String(credentialCount)])}
           </p>
 
           {error.value && <div style={errorStyle}>{error.value}</div>}
 
           <div style={warningStyle}>
-            <strong>Action required:</strong> You'll need to re-enter each password to
-            migrate them to the new secure storage. Credentials you skip will be deleted.
+            <strong>{msg('migrationActionRequired')}</strong> {msg('migrationDescription')}
           </div>
 
           <button
@@ -430,11 +427,11 @@ export function CredentialMigration({
             onClick={handleStartMigration}
             disabled={isLoading.value}
           >
-            {isLoading.value ? 'Loading...' : 'Start Migration'}
+            {isLoading.value ? msg('migrationLoading') : msg('migrationStartButton')}
           </button>
 
           <button style={buttonDangerStyle} onClick={handleSkipAll}>
-            Skip and Delete All
+            {msg('migrationSkipAll')}
           </button>
         </div>
       </div>
@@ -447,27 +444,27 @@ export function CredentialMigration({
       <div style={containerStyle}>
         <div style={cardStyle}>
           <div style={progressStyle}>
-            Re-enter Password ({currentIndex.value + 1}/{total})
+            {msg('migrationReenter')} ({currentIndex.value + 1}/{total})
           </div>
 
           <div style={credentialInfoStyle}>
             <div style={credentialUsernameStyle}>{currentCredential.username}</div>
             <div style={credentialUrlStyle}>{currentCredential.url}</div>
             {currentCredential.alias && (
-              <div style={credentialAliasStyle}>Alias: {currentCredential.alias}</div>
+              <div style={credentialAliasStyle}>{msg('migrationAlias')} {currentCredential.alias}</div>
             )}
           </div>
 
           {error.value && <div style={errorStyle}>{error.value}</div>}
 
           <div style={inputGroupStyle}>
-            <label style={labelStyle}>Password</label>
+            <label style={labelStyle}>{msg('migrationPassword')}</label>
             <input
               type="password"
               value={currentPassword.value}
               onInput={handlePasswordInput}
               onKeyDown={handleKeyDown}
-              placeholder="Enter password for this credential"
+              placeholder={msg('migrationPlaceholder')}
               style={inputStyle}
               disabled={isLoading.value}
               autoFocus
@@ -480,7 +477,7 @@ export function CredentialMigration({
               onClick={handleSkipCredential}
               disabled={isLoading.value}
             >
-              Skip
+              {msg('migrationSkip')}
             </button>
             <button
               style={{
@@ -492,7 +489,7 @@ export function CredentialMigration({
               onClick={handleNextCredential}
               disabled={isLoading.value || !currentPassword.value}
             >
-              {isLoading.value ? 'Saving...' : isLast ? 'Complete' : 'Next'}
+              {isLoading.value ? msg('migrationSaving') : isLast ? msg('migrationFinish') : msg('migrationNext')}
             </button>
           </div>
         </div>
@@ -508,19 +505,19 @@ export function CredentialMigration({
       <div style={containerStyle}>
         <div style={cardStyle}>
           <div style={iconStyle}>&#10004;&#65039;</div>
-          <h2 style={titleStyle}>Migration Complete!</h2>
+          <h2 style={titleStyle}>{msg('migrationComplete')}</h2>
 
           <div style={successStyle}>
-            Your credentials are now encrypted with your master password.
+            {msg('migrationEncrypted')}
           </div>
 
           <div style={statsStyle}>
-            {migratedCount} credential{migratedCount === 1 ? '' : 's'} migrated
-            {skippedCount.value > 0 && `, ${skippedCount.value} skipped`}
+            {msg('migrationMigrated', [String(migratedCount)])}
+            {skippedCount.value > 0 && msg('migrationSkipped', [String(skippedCount.value)])}
           </div>
 
           <button style={buttonSuccessStyle} onClick={onComplete}>
-            Continue to Vault
+            {msg('migrationContinueVault')}
           </button>
         </div>
       </div>

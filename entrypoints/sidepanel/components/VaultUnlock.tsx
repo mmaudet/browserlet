@@ -1,6 +1,9 @@
 import { useSignal } from '@preact/signals';
 import { validateMasterPassword, cacheDerivedKey } from '../../../utils/crypto/masterPassword';
 
+// Helper to get i18n messages
+const msg = (key: string): string => chrome.i18n.getMessage(key) || key;
+
 /**
  * Props for VaultUnlock component.
  */
@@ -121,7 +124,7 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
     e.preventDefault();
 
     if (!password.value) {
-      error.value = 'Veuillez saisir votre mot de passe principal.';
+      error.value = msg('vaultUnlockErrorEmpty');
       return;
     }
 
@@ -140,7 +143,7 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
       } else {
         // Increment failed attempts
         attempts.value = attempts.value + 1;
-        error.value = 'Mot de passe principal incorrect.';
+        error.value = msg('vaultUnlockErrorWrong');
 
         // Trigger shake animation
         showShake.value = true;
@@ -176,15 +179,15 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
     <div style={containerStyle}>
       <form style={formStyle} onSubmit={handleSubmit}>
         <div style={iconStyle}>&#128274;</div>
-        <h2 style={titleStyle}>Déverrouiller le coffre</h2>
+        <h2 style={titleStyle}>{msg('vaultUnlockTitle')}</h2>
         <p style={descriptionStyle}>
-          Saisissez votre mot de passe principal pour accéder à vos identifiants.
+          {msg('vaultUnlockDescription')}
         </p>
 
         {/* Multiple attempts warning */}
         {attempts.value >= 3 && (
           <div style={warningStyle}>
-            Plusieurs tentatives échouées. Vérifiez que vous avez le bon mot de passe.
+            {msg('vaultUnlockWarning')}
           </div>
         )}
 
@@ -200,7 +203,7 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
             value={password.value}
             onInput={handleInput}
             onKeyDown={handleKeyDown}
-            placeholder="Mot de passe principal"
+            placeholder={msg('vaultUnlockPlaceholder')}
             style={showShake.value ? inputErrorStyle : inputStyle}
             disabled={isLoading.value}
             autoFocus
@@ -213,7 +216,7 @@ export function VaultUnlock({ onUnlockSuccess }: VaultUnlockProps) {
           style={isDisabled ? buttonDisabledStyle : buttonStyle}
           disabled={isDisabled}
         >
-          {isLoading.value ? 'Déverrouillage...' : 'Déverrouiller'}
+          {isLoading.value ? msg('vaultUnlockUnlocking') : msg('vaultUnlockButton')}
         </button>
       </form>
 

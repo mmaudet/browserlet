@@ -590,5 +590,269 @@
   "recordingNotAvailable": {
     "message": "Recording not available on this page (browser pages, PDFs, or extensions are not supported)",
     "description": "Error when trying to record on unsupported pages"
+  },
+
+  "credentialClickToSeeUsage": {
+    "message": "Click to see which scripts use this credential",
+    "description": "Tooltip to see credential usage"
+  },
+  "credentialCopyReference": {
+    "message": "Copy credential reference",
+    "description": "Tooltip copy credential reference"
+  },
+  "credentialEdit": {
+    "message": "Edit credential",
+    "description": "Tooltip edit credential"
+  },
+  "credentialDelete": {
+    "message": "Delete credential",
+    "description": "Tooltip delete credential"
+  },
+  "credentialAdd": {
+    "message": "Add credential",
+    "description": "Tooltip add credential"
+  },
+  "credentialLockVault": {
+    "message": "Lock vault",
+    "description": "Tooltip lock vault"
+  },
+  "credentialPlaceholderAlias": {
+    "message": "e.g., my_credential",
+    "description": "Placeholder for alias"
+  },
+  "credentialPlaceholderNewPassword": {
+    "message": "Enter new password",
+    "description": "Placeholder new password"
+  },
+  "credentialUsedBy": {
+    "message": "Used by:",
+    "description": "Label scripts using credential"
+  },
+  "credentialCaptured": {
+    "message": "Captured Credentials",
+    "description": "Title captured credentials section"
+  },
+  "credentialNoneStored": {
+    "message": "No credentials stored.",
+    "description": "Message when no credentials"
+  },
+  "credentialNewPassword": {
+    "message": "New Password",
+    "description": "Label new password"
+  },
+  "credentialCancel": {
+    "message": "Cancel",
+    "description": "Cancel button"
+  },
+  "credentialSave": {
+    "message": "Save",
+    "description": "Save button"
+  },
+
+  "migrationRequired": {
+    "message": "Credential Migration Required",
+    "description": "Migration title"
+  },
+  "migrationActionRequired": {
+    "message": "Action required:",
+    "description": "Action required label"
+  },
+  "migrationDescription": {
+    "message": "You'll need to re-enter each password to encrypt it with your new master password.",
+    "description": "Migration description"
+  },
+  "migrationPassword": {
+    "message": "Password",
+    "description": "Password label"
+  },
+  "migrationPlaceholder": {
+    "message": "Enter password for this credential",
+    "description": "Migration placeholder"
+  },
+  "migrationComplete": {
+    "message": "Migration Complete!",
+    "description": "Migration complete title"
+  },
+  "migrationCompleteDesc": {
+    "message": "All your credentials have been successfully migrated.",
+    "description": "Migration complete description"
+  },
+  "migrationContinue": {
+    "message": "Continue",
+    "description": "Continue button"
+  },
+  "migrationSkip": {
+    "message": "Skip",
+    "description": "Skip credential button"
+  },
+  "migrationFinish": {
+    "message": "Finish",
+    "description": "Finish migration button"
+  },
+  "migrationProgress": {
+    "message": "Credential $1 of $2",
+    "description": "Migration progress"
+  },
+  "migrationExplain": {
+    "message": "You have $1 credential(s) from the previous version. Due to browser restart, the encryption keys were lost.",
+    "description": "Migration explain text"
+  },
+  "migrationStartButton": {
+    "message": "Start Migration",
+    "description": "Start migration button"
+  },
+  "migrationSkipAll": {
+    "message": "Skip and Delete All",
+    "description": "Skip all button"
+  },
+  "migrationSkipAllConfirm": {
+    "message": "Are you sure you want to skip migration?\n\nAll stored credentials will be deleted and cannot be recovered.\n\nThis action is irreversible.",
+    "description": "Skip all confirmation"
+  },
+  "migrationLoading": {
+    "message": "Loading...",
+    "description": "Loading text"
+  },
+  "migrationSaving": {
+    "message": "Saving...",
+    "description": "Saving text"
+  },
+  "migrationNext": {
+    "message": "Next",
+    "description": "Next button"
+  },
+  "migrationReenter": {
+    "message": "Re-enter Password",
+    "description": "Re-enter password label"
+  },
+  "migrationAlias": {
+    "message": "Alias:",
+    "description": "Alias label"
+  },
+  "migrationEncrypted": {
+    "message": "Your credentials are now encrypted with your master password.",
+    "description": "Migration encrypted message"
+  },
+  "migrationMigrated": {
+    "message": "$1 credential(s) migrated",
+    "description": "Migrated count"
+  },
+  "migrationSkipped": {
+    "message": ", $1 skipped",
+    "description": "Skipped count"
+  },
+  "migrationContinueVault": {
+    "message": "Continue to Vault",
+    "description": "Continue to vault button"
+  },
+  "migrationErrorEmpty": {
+    "message": "Please enter the password.",
+    "description": "Empty password error"
+  },
+  "migrationErrorLocked": {
+    "message": "Vault is locked. Please unlock first.",
+    "description": "Vault locked error"
+  },
+  "migrationErrorLoad": {
+    "message": "Failed to load credentials",
+    "description": "Load error"
+  },
+  "migrationErrorEncrypt": {
+    "message": "Failed to encrypt password",
+    "description": "Encryption error"
+  },
+  "migrationErrorSave": {
+    "message": "Failed to save credentials",
+    "description": "Save error"
+  },
+
+  "masterPasswordTitle": {
+    "message": "Create a Master Password",
+    "description": "Master password setup title"
+  },
+  "masterPasswordDescription": {
+    "message": "This password will encrypt your credentials. It cannot be recovered if forgotten.",
+    "description": "Setup description"
+  },
+  "masterPasswordLabel": {
+    "message": "Master Password",
+    "description": "Password label"
+  },
+  "masterPasswordPlaceholder": {
+    "message": "Enter your password",
+    "description": "Password placeholder"
+  },
+  "masterPasswordConfirmLabel": {
+    "message": "Confirm Password",
+    "description": "Confirmation label"
+  },
+  "masterPasswordConfirmPlaceholder": {
+    "message": "Confirm your password",
+    "description": "Confirmation placeholder"
+  },
+  "masterPasswordWarning": {
+    "message": "If you forget this password, you will lose access to all your stored credentials.",
+    "description": "Important warning"
+  },
+  "masterPasswordCreate": {
+    "message": "Create Password",
+    "description": "Create button"
+  },
+  "masterPasswordCreating": {
+    "message": "Creating...",
+    "description": "Button in progress"
+  },
+  "masterPasswordErrorLength": {
+    "message": "Password must be at least 12 characters.",
+    "description": "Length error"
+  },
+  "masterPasswordErrorMismatch": {
+    "message": "Passwords do not match.",
+    "description": "Mismatch error"
+  },
+  "masterPasswordStrengthWeak": {
+    "message": "Weak (min 12 characters)",
+    "description": "Weak strength"
+  },
+  "masterPasswordStrengthFair": {
+    "message": "Fair",
+    "description": "Fair strength"
+  },
+  "masterPasswordStrengthStrong": {
+    "message": "Strong",
+    "description": "Strong strength"
+  },
+
+  "vaultUnlockTitle": {
+    "message": "Unlock Vault",
+    "description": "Unlock title"
+  },
+  "vaultUnlockDescription": {
+    "message": "Enter your master password to access your credentials.",
+    "description": "Unlock description"
+  },
+  "vaultUnlockWarning": {
+    "message": "Multiple failed attempts. Please verify you have the correct password.",
+    "description": "Attempts warning"
+  },
+  "vaultUnlockPlaceholder": {
+    "message": "Master password",
+    "description": "Unlock placeholder"
+  },
+  "vaultUnlockButton": {
+    "message": "Unlock",
+    "description": "Unlock button"
+  },
+  "vaultUnlockUnlocking": {
+    "message": "Unlocking...",
+    "description": "Button in progress"
+  },
+  "vaultUnlockErrorEmpty": {
+    "message": "Please enter your master password.",
+    "description": "Empty field error"
+  },
+  "vaultUnlockErrorWrong": {
+    "message": "Incorrect master password.",
+    "description": "Wrong password error"
   }
 }
