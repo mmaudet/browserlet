@@ -52,9 +52,9 @@ function getStrengthColor(strength: PasswordStrength): string {
  */
 function getStrengthLabel(strength: PasswordStrength): string {
   switch (strength) {
-    case 'weak': return 'Weak (min 12 characters)';
-    case 'fair': return 'Fair';
-    case 'strong': return 'Strong';
+    case 'weak': return 'Faible (min 12 caractères)';
+    case 'fair': return 'Moyen';
+    case 'strong': return 'Fort';
     default: return '';
   }
 }
@@ -76,8 +76,9 @@ const containerStyle: Record<string, string | number> = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  justifyContent: 'center',
+  justifyContent: 'flex-start',
   padding: '24px',
+  paddingTop: '20px',
   minHeight: '100%',
 };
 
@@ -210,13 +211,13 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
 
     // Validate password length (NIST minimum)
     if (password.value.length < 12) {
-      error.value = 'Password must be at least 12 characters long.';
+      error.value = 'Le mot de passe doit contenir au moins 12 caractères.';
       return;
     }
 
     // Validate confirmation matches
     if (password.value !== confirmPassword.value) {
-      error.value = 'Passwords do not match.';
+      error.value = 'Les mots de passe ne correspondent pas.';
       return;
     }
 
@@ -240,8 +241,8 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
       onSetupComplete();
     } catch (err) {
       error.value = err instanceof Error
-        ? `Setup failed: ${err.message}`
-        : 'An unexpected error occurred during setup.';
+        ? `Échec de la configuration : ${err.message}`
+        : 'Une erreur inattendue s\'est produite.';
       isLoading.value = false;
     }
   }
@@ -262,9 +263,9 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
   return (
     <div style={containerStyle}>
       <form style={formStyle} onSubmit={handleSubmit}>
-        <h2 style={titleStyle}>Create Master Password</h2>
+        <h2 style={titleStyle}>Créer un mot de passe principal</h2>
         <p style={descriptionStyle}>
-          This password will encrypt your credentials. It cannot be recovered if forgotten.
+          Ce mot de passe chiffrera vos identifiants. Il ne pourra pas être récupéré en cas d'oubli.
         </p>
 
         {error.value && (
@@ -273,12 +274,12 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
 
         {/* Password input */}
         <div style={inputGroupStyle}>
-          <label style={labelStyle}>Master Password</label>
+          <label style={labelStyle}>Mot de passe principal</label>
           <input
             type="password"
             value={password.value}
             onInput={handlePasswordInput}
-            placeholder="Enter master password"
+            placeholder="Saisissez votre mot de passe"
             style={error.value && password.value.length < 12 ? inputErrorStyle : inputStyle}
             disabled={isLoading.value}
             autoFocus
@@ -307,12 +308,12 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
 
         {/* Confirm password input */}
         <div style={inputGroupStyle}>
-          <label style={labelStyle}>Confirm Password</label>
+          <label style={labelStyle}>Confirmer le mot de passe</label>
           <input
             type="password"
             value={confirmPassword.value}
             onInput={handleConfirmInput}
-            placeholder="Confirm master password"
+            placeholder="Confirmez votre mot de passe"
             style={error.value && password.value !== confirmPassword.value ? inputErrorStyle : inputStyle}
             disabled={isLoading.value}
           />
@@ -320,8 +321,8 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
 
         {/* Warning about password recovery */}
         <div style={warningStyle}>
-          <strong>Important:</strong> If you forget this password, you will lose access to all stored credentials.
-          There is no way to recover it.
+          <strong>Important :</strong> Si vous oubliez ce mot de passe, vous perdrez l'accès à tous vos identifiants enregistrés.
+          Il n'y a aucun moyen de le récupérer.
         </div>
 
         {/* Submit button */}
@@ -330,7 +331,7 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
           style={isDisabled ? buttonDisabledStyle : buttonStyle}
           disabled={isDisabled}
         >
-          {isLoading.value ? 'Creating...' : 'Create Master Password'}
+          {isLoading.value ? 'Création...' : 'Créer le mot de passe'}
         </button>
       </form>
     </div>
