@@ -212,47 +212,73 @@ export function TriggerConfig({ scriptId, onClose }: TriggerConfigProps) {
 
       {/* Existing triggers list */}
       <div style={{ borderTop: '1px solid #eee', paddingTop: '16px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: 500, margin: '0 0 12px 0' }}>Existing Triggers</h3>
+        <h3 style={{ fontSize: '14px', fontWeight: 500, margin: '0 0 12px 0' }}>{msg('triggerExisting') || 'Triggers existants'}</h3>
 
         {isLoading.value ? (
-          <div style={{ color: '#999', fontSize: '14px' }}>Loading...</div>
+          <div style={{ color: '#999', fontSize: '14px' }}>{msg('loading') || 'Chargement...'}</div>
         ) : triggers.value.length === 0 ? (
-          <div style={{ color: '#999', fontSize: '14px' }}>No triggers configured</div>
+          <div style={{ color: '#999', fontSize: '14px' }}>{msg('triggerNone') || 'Aucun trigger configuré'}</div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {triggers.value.map(trigger => (
               <div
                 key={trigger.id}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#f5f5f5', borderRadius: '6px' }}
+                style={{ padding: '12px', background: '#f5f5f5', borderRadius: '8px' }}
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '14px', fontWeight: 500 }}>{trigger.name}</span>
+                {/* URL pattern */}
+                <div style={{ fontSize: '13px', color: '#333', wordBreak: 'break-all', marginBottom: '8px' }}>
+                  <span style={{ color: '#666', fontWeight: 500 }}>URL: </span>
+                  {trigger.conditions[0]?.url_pattern || trigger.name}
+                </div>
+                {/* Mode and status badges */}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '10px' }}>
                   <span style={{
-                    marginLeft: '8px',
                     fontSize: '11px',
-                    padding: '2px 8px',
+                    padding: '3px 10px',
                     borderRadius: '4px',
                     background: trigger.mode === 'suggest' ? '#e3f2fd' : '#fff3e0',
-                    color: trigger.mode === 'suggest' ? '#1976d2' : '#e65100'
+                    color: trigger.mode === 'suggest' ? '#1976d2' : '#e65100',
+                    fontWeight: 500
                   }}>
-                    {trigger.mode}
+                    {trigger.mode === 'suggest' ? 'Suggérer' : 'Auto-exécuter'}
                   </span>
                   {!trigger.enabled && (
-                    <span style={{ marginLeft: '8px', fontSize: '11px', color: '#999' }}>(disabled)</span>
+                    <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', background: '#f0f0f0', color: '#999' }}>
+                      Désactivé
+                    </span>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: '4px' }}>
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: '8px' }}>
                   <button
-                    style={{ fontSize: '12px', padding: '4px 8px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
+                    style={{
+                      flex: 1,
+                      fontSize: '13px',
+                      padding: '8px 12px',
+                      color: '#1976d2',
+                      background: 'white',
+                      border: '1px solid #1976d2',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
                     onClick={() => editTrigger(trigger)}
                   >
-                    Edit
+                    {msg('triggerEdit') || 'Modifier'}
                   </button>
                   <button
-                    style={{ fontSize: '12px', padding: '4px 8px', color: '#d32f2f', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
+                    style={{
+                      flex: 1,
+                      fontSize: '13px',
+                      padding: '8px 12px',
+                      color: '#d32f2f',
+                      background: 'white',
+                      border: '1px solid #d32f2f',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
                     onClick={() => deleteTrigger(trigger.id)}
                   >
-                    {msg('triggerDelete')}
+                    {msg('triggerDelete') || 'Supprimer'}
                   </button>
                 </div>
               </div>
