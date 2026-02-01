@@ -1,11 +1,14 @@
 import { signal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
+import { Sparkles } from 'lucide-preact';
 import { llmConfigStore, getLLMConfigForServiceWorker, loadLLMConfig, isConfigValid } from '../stores/llmConfig';
 import { loadScripts } from '../stores/scripts';
 import { navigateTo } from '../router';
 import { saveScript } from '../../../utils/storage/scripts';
 import { PasswordPrompt, promptForPasswords } from './PasswordPrompt';
+import { AIExtractionSuggestions } from './AIExtractionSuggestions';
 import type { DetectedPassword } from '../../../utils/passwords/types';
+import type { ExtractionSuggestion } from '../../background/llm/prompts/extractionPrompt';
 
 // Recording state (synced with storage)
 export const isRecording = signal(false);
@@ -20,6 +23,11 @@ export const recordedActions = signal<Array<{
 // BSL generation state
 const isGeneratingBSL = signal(false);
 const generationStatus = signal<{ type: 'success' | 'error' | 'info'; message: string; usedLLM?: boolean } | null>(null);
+
+// AI extraction state
+const showExtractionUI = signal(false);
+const extractionSuggestions = signal<ExtractionSuggestion[]>([]);
+const isAnalyzing = signal(false);
 
 // Load state from storage
 async function loadRecordingState(): Promise<void> {
@@ -383,6 +391,72 @@ function LoadingIndicator() {
   );
 }
 
+/**
+ * Handle clicking "Extract This Page" button
+ * Gets page context from content script and requests AI suggestions
+ */
+async function handleExtractPage(): Promise<void> {
+  showExtractionUI.value = true;
+  isAnalyzing.value = true;
+  extractionSuggestions.value = [];
+
+  try {
+    // First, ensure LLM is configured
+    const config = getLLMConfigForServiceWorker();
+    await chrome.runtime.sendMessage({ type: 'CONFIGURE_LLM', payload: config });
+
+    // Get active tab and request page context
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!activeTab?.id) throw new Error('No active tab');
+
+    const contextResponse = await chrome.tabs.sendMessage(activeTab.id, { type: 'GET_PAGE_CONTEXT' });
+    if (!contextResponse.success) throw new Error('Failed to get page context');
+
+    // Request AI suggestions
+    const suggestionsResponse = await chrome.runtime.sendMessage({
+      type: 'SUGGEST_EXTRACTIONS',
+      payload: contextResponse.data
+    });
+
+    if (suggestionsResponse.success) {
+      extractionSuggestions.value = suggestionsResponse.data || [];
+    } else {
+      console.error('[Browserlet] AI suggestions failed:', suggestionsResponse.error);
+      extractionSuggestions.value = [];
+    }
+  } catch (error) {
+    console.error('[Browserlet] Extract page failed:', error);
+    extractionSuggestions.value = [];
+  } finally {
+    isAnalyzing.value = false;
+  }
+}
+
+/**
+ * Handle user accepting AI extraction suggestions
+ * Converts suggestions to extract actions and adds them to recording
+ */
+function handleAcceptSuggestions(selected: ExtractionSuggestion[]): void {
+  // Convert suggestions to recorded actions
+  const extractActions = selected.map(s => ({
+    type: 'extract',
+    timestamp: Date.now(),
+    url: '', // Will be filled from current page during playback
+    hints: s.semanticHints.map(h => ({ type: h.type, value: h.value })),
+    output: {
+      variable: `extracted.${s.variableName}`,
+      transform: s.suggestedTransform
+    }
+  }));
+
+  // Add to recorded actions
+  recordedActions.value = [...recordedActions.value, ...extractActions];
+
+  // Close UI
+  showExtractionUI.value = false;
+  extractionSuggestions.value = [];
+}
+
 function LLMStatusIndicator() {
   if (isGeneratingBSL.value || generationStatus.value) {
     return null;
@@ -464,11 +538,14 @@ export function RecordingView() {
     loadRecordingState();
     loadLLMConfig().catch(console.error);
 
-    // Add CSS for spinner animation if not present
+    // Add CSS for animations if not present
     if (!document.getElementById('recording-view-styles')) {
       const style = document.createElement('style');
       style.id = 'recording-view-styles';
-      style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+      style.textContent = `
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+      `;
       document.head.appendChild(style);
     }
 
@@ -531,7 +608,7 @@ export function RecordingView() {
           fontSize: '14px',
           fontWeight: 500,
           cursor: isGeneratingBSL.value ? 'not-allowed' : 'pointer',
-          marginBottom: '16px',
+          marginBottom: '12px',
           background: isGeneratingBSL.value
             ? '#ccc'
             : isRecording.value
@@ -549,6 +626,46 @@ export function RecordingView() {
             : chrome.i18n.getMessage('startRecording') || 'Start Recording'
         }
       </button>
+
+      {/* Extract This Page button (only visible during recording and when LLM configured) */}
+      {isRecording.value && llmConfigStore.isConfigured.value && isConfigValid() && (
+        <button
+          style={{
+            width: '100%',
+            padding: '10px',
+            border: '1px solid #e0e0e0',
+            borderRadius: '8px',
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            marginBottom: '16px',
+            background: 'white',
+            color: '#333',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}
+          onClick={handleExtractPage}
+          title={chrome.i18n.getMessage('extractThisPage') || 'Extract data from this page'}
+        >
+          <Sparkles size={16} style={{ color: '#4285f4' }} />
+          {chrome.i18n.getMessage('extractPage') || 'Extract This Page'}
+        </button>
+      )}
+
+      {/* AI Extraction Suggestions UI */}
+      {showExtractionUI.value && (
+        <AIExtractionSuggestions
+          suggestions={extractionSuggestions.value}
+          isLoading={isAnalyzing.value}
+          onAccept={handleAcceptSuggestions}
+          onCancel={() => {
+            showExtractionUI.value = false;
+            extractionSuggestions.value = [];
+          }}
+        />
+      )}
 
       {/* Actions section */}
       <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>

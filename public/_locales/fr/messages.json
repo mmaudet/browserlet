@@ -878,5 +878,29 @@
   "credentials": {
     "message": "Identifiants",
     "description": "Libellé pour l'action identifiants dans la barre du bas"
+  },
+  "extractThisPage": {
+    "message": "Extraire les donnees de cette page",
+    "description": "Info-bulle pour le bouton d'extraction"
+  },
+  "extractPage": {
+    "message": "Extraire cette page",
+    "description": "Bouton pour lancer l'analyse d'extraction IA"
+  },
+  "analyzingPage": {
+    "message": "Analyse de la page...",
+    "description": "Message de chargement pendant l'analyse IA"
+  },
+  "noSuggestionsFound": {
+    "message": "Aucune suggestion d'extraction trouvee sur cette page",
+    "description": "Message quand l'IA ne trouve pas de donnees a extraire"
+  },
+  "aiSuggestions": {
+    "message": "Suggestions IA",
+    "description": "Titre du panneau de suggestions d'extraction IA"
+  },
+  "addSelected": {
+    "message": "Ajouter la selection",
+    "description": "Bouton pour ajouter les suggestions selectionnees"
   }
 }

@@ -878,5 +878,29 @@
   "credentials": {
     "message": "Credentials",
     "description": "Label for credentials action in bottom bar"
+  },
+  "extractThisPage": {
+    "message": "Extract data from this page",
+    "description": "Tooltip for extract page button"
+  },
+  "extractPage": {
+    "message": "Extract This Page",
+    "description": "Button to trigger AI extraction analysis"
+  },
+  "analyzingPage": {
+    "message": "Analyzing page...",
+    "description": "Loading message while AI analyzes page"
+  },
+  "noSuggestionsFound": {
+    "message": "No extraction suggestions found on this page",
+    "description": "Message when AI finds no data to extract"
+  },
+  "aiSuggestions": {
+    "message": "AI Suggestions",
+    "description": "Title for AI extraction suggestions panel"
+  },
+  "addSelected": {
+    "message": "Add Selected",
+    "description": "Button to add selected extraction suggestions"
   }
 }
