@@ -4,6 +4,7 @@
 
 import yaml from 'js-yaml';
 import type { BSLStep, ParsedScript, ActionType, SessionCheckConfig } from '../../entrypoints/content/playback/types';
+import { extractVariableRefs } from '../../entrypoints/content/playback/variableSubstitution';
 
 // Valid action types for BSL scripts
 const VALID_ACTIONS: ActionType[] = [
@@ -190,6 +191,36 @@ function parseSessionCheck(rawConfig: unknown): SessionCheckConfig | undefined {
 }
 
 /**
+ * Validate extracted variable references in a step
+ * Returns warnings (not errors) for potential issues like forward references
+ * @param step - The BSL step to validate
+ * @param stepIndex - Step index for error messages
+ * @param previousOutputs - Set of variable names defined by previous steps
+ * @returns Array of warning messages
+ */
+function validateVariableRefs(
+  step: BSLStep,
+  stepIndex: number,
+  previousOutputs: Set<string>
+): string[] {
+  const warnings: string[] = [];
+
+  if (step.value) {
+    const refs = extractVariableRefs(step.value);
+    for (const ref of refs) {
+      if (!previousOutputs.has(ref)) {
+        warnings.push(
+          `Step ${stepIndex + 1}: Variable "${ref}" referenced but not yet defined. ` +
+          `Ensure an extract action with output.variable="${ref}" comes before this step.`
+        );
+      }
+    }
+  }
+
+  return warnings;
+}
+
+/**
  * Parse BSL YAML content into a typed ParsedScript
  * @param yamlContent - Raw YAML string
  * @returns Parsed and validated script
@@ -224,6 +255,25 @@ export function parseSteps(yamlContent: string): ParsedScript {
   const steps: BSLStep[] = rawScript.steps.map((step, index) =>
     validateStep(step, index)
   );
+
+  // Track outputs for variable validation
+  const definedOutputs = new Set<string>();
+  const warnings: string[] = [];
+
+  steps.forEach((step, index) => {
+    // Validate variable references
+    warnings.push(...validateVariableRefs(step, index, definedOutputs));
+
+    // Track this step's output for subsequent steps
+    if (step.output?.variable) {
+      definedOutputs.add(step.output.variable);
+    }
+  });
+
+  // Log warnings (don't fail parsing)
+  if (warnings.length > 0) {
+    console.warn('[Browserlet] Script validation warnings:', warnings);
+  }
 
   // Build ParsedScript
   const script: ParsedScript = {
