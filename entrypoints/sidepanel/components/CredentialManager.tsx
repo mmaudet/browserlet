@@ -325,30 +325,6 @@ function EditForm({ credential, editPassword, editAlias, onSave, onCancel }: Edi
 }
 
 /**
- * Called after master password setup is complete.
- * Updates vault state, loads passwords, and reloads LLM config.
- */
-async function handleSetupComplete(): Promise<void> {
-  await unlockVault();
-  await refreshVaultState(); // Re-fetch vault state to update needsSetup signal
-  await loadPasswords();
-  // Reload LLM config now that we can decrypt API keys
-  await loadLLMConfig();
-}
-
-/**
- * Called after vault unlock is successful.
- * Updates vault state, loads passwords, and reloads LLM config.
- */
-async function handleUnlockSuccess(): Promise<void> {
-  await unlockVault();
-  await refreshVaultState(); // Re-fetch vault state to update isLocked signal
-  await loadPasswords();
-  // Reload LLM config now that we can decrypt API keys
-  await loadLLMConfig();
-}
-
-/**
  * Lock the vault - clears cached key and updates state.
  */
 async function handleLock(): Promise<void> {
@@ -357,7 +333,15 @@ async function handleLock(): Promise<void> {
   await refreshVaultState();
 }
 
-export function CredentialManager() {
+interface CredentialManagerProps {
+  /**
+   * Called when vault becomes ready (after setup or unlock).
+   * Used by main.tsx to transition app state to 'ready'.
+   */
+  onVaultReady?: () => Promise<void>;
+}
+
+export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
   const editingId = useSignal<string | null>(null);
   const editPassword = useSignal('');
   const editAlias = useSignal('');
@@ -370,6 +354,35 @@ export function CredentialManager() {
 
   const { passwords, vaultState, isLoading, error } = passwordStore;
   const usageMap = buildUsageMap(passwords.value);
+
+  /**
+   * Called after master password setup is complete.
+   * Updates vault state, loads passwords, reloads LLM config.
+   * Does NOT call onVaultReady - migration check happens next.
+   */
+  async function handleSetupComplete(): Promise<void> {
+    await unlockVault();
+    await refreshVaultState();
+    await loadPasswords();
+    await loadLLMConfig();
+    // Don't call onVaultReady here - migration check will run next
+    // If no migration needed, the useEffect below will call onVaultReady
+  }
+
+  /**
+   * Called after vault unlock is successful.
+   * Updates vault state, loads passwords, reloads LLM config, and notifies parent.
+   */
+  async function handleUnlockSuccess(): Promise<void> {
+    await unlockVault();
+    await refreshVaultState();
+    await loadPasswords();
+    await loadLLMConfig();
+    // Notify parent that vault is ready (no migration on unlock)
+    if (onVaultReady) {
+      await onVaultReady();
+    }
+  }
 
   // Load vault state and passwords on mount
   useEffect(() => {
@@ -388,6 +401,11 @@ export function CredentialManager() {
       const state = await detectMigrationState();
       needsMigration.value = state.needsMigration;
       migrationCredentialCount.value = state.credentialCount;
+
+      // If no migration needed and vault is unlocked, notify parent
+      if (!state.needsMigration && !vaultState.value.isLocked && onVaultReady) {
+        await onVaultReady();
+      }
     }
 
     checkMigration();
@@ -395,12 +413,16 @@ export function CredentialManager() {
 
   /**
    * Called when migration is complete.
-   * Clears migration state and refreshes vault.
+   * Clears migration state, refreshes vault, and notifies parent.
    */
   async function handleMigrationComplete(): Promise<void> {
     needsMigration.value = false;
     await refreshVaultState();
     await loadPasswords();
+    // Notify parent that vault is ready after migration
+    if (onVaultReady) {
+      await onVaultReady();
+    }
   }
 
   async function handleDelete(credential: StoredPassword): Promise<void> {
