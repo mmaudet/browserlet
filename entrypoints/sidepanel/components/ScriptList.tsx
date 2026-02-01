@@ -1,6 +1,7 @@
 import { useSignal } from '@preact/signals';
 import type { Script } from '../../../utils/types';
 import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId, updateScriptInState } from '../stores/scripts';
+import { triggersState } from '../stores/triggers';
 import { startExecution } from '../stores/execution';
 import { navigateTo } from '../router';
 import { TriggerConfig } from './TriggerConfig';
@@ -14,6 +15,7 @@ interface ScriptListProps {
 interface ScriptItemProps {
   script: Script;
   isSelected: boolean;
+  triggerCount: number;
   onSelect: () => void;
   onRun: () => void;
   onConfigureTriggers: () => void;
@@ -21,7 +23,7 @@ interface ScriptItemProps {
   onRename: () => void;
 }
 
-function ScriptItem({ script, isSelected, onSelect, onRun, onConfigureTriggers, onDelete, onRename }: ScriptItemProps) {
+function ScriptItem({ script, isSelected, triggerCount, onSelect, onRun, onConfigureTriggers, onDelete, onRename }: ScriptItemProps) {
   return (
     <div
       style={{
@@ -68,7 +70,7 @@ function ScriptItem({ script, isSelected, onSelect, onRun, onConfigureTriggers, 
             &#128465;&#65039;
           </button>
           <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', padding: '4px 8px', color: '#666' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', padding: '4px 8px', color: triggerCount > 0 ? '#f59e0b' : '#666', position: 'relative' }}
             title={chrome.i18n.getMessage('configureTriggers') || 'Configure triggers'}
             onClick={(e: Event) => {
               e.stopPropagation();
@@ -76,6 +78,26 @@ function ScriptItem({ script, isSelected, onSelect, onRun, onConfigureTriggers, 
             }}
           >
             {'\u26A1'}
+            {triggerCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '0',
+                right: '0',
+                background: '#3b82f6',
+                color: 'white',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                minWidth: '14px',
+                height: '14px',
+                borderRadius: '7px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 3px'
+              }}>
+                {triggerCount}
+              </span>
+            )}
           </button>
           <button
             onClick={(e: Event) => {
@@ -183,6 +205,7 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
                 key={script.id}
                 script={script}
                 isSelected={selectedScriptId.value === script.id}
+                triggerCount={triggersState.value.filter(t => t.scriptId === script.id && t.enabled).length}
                 onSelect={() => {
                   selectScript(script.id);
                   onScriptSelect?.(script);
