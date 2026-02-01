@@ -23,6 +23,7 @@ const appState = signal<'loading' | 'needs_setup' | 'needs_unlock' | 'ready'>('l
 // Bottom action bar component
 function BottomActionBar() {
   const actions: Array<{ id: ViewName; icon: string; labelKey: string }> = [
+    { id: 'list', icon: '📋', labelKey: 'scripts' },
     { id: 'recording', icon: '🔴', labelKey: 'record' },
     { id: 'credentials', icon: '🔐', labelKey: 'credentials' },
     { id: 'settings', icon: '⚙', labelKey: 'settings' }
@@ -53,7 +54,7 @@ function BottomActionBar() {
           }}
           onClick={() => navigateTo(action.id)}
         >
-          <span style={{ fontSize: '18px' }}>{action.icon}</span>
+          <span style={{ fontSize: '24px' }}>{action.icon}</span>
           <span>{chrome.i18n.getMessage(action.labelKey) || action.labelKey}</span>
         </button>
       ))}
@@ -319,8 +320,8 @@ function App() {
         <ContentRouter />
       </div>
 
-      {/* Bottom action bar - seulement sur vue list */}
-      {currentView.value === 'list' && <BottomActionBar />}
+      {/* Bottom action bar - toujours visible pour navigation rapide */}
+      <BottomActionBar />
     </div>
   );
 }
