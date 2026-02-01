@@ -1,12 +1,13 @@
 /**
- * Action executor implementing all 8 BSL actions with proper DOM event dispatching.
+ * Action executor implementing all 9 BSL actions with proper DOM event dispatching.
  * Proper event sequences ensure compatibility with React, Vue, Angular, and legacy jQuery apps.
  */
 
 import type { HumanizerConfig } from './humanizer';
 import { typeCharacterDelay, scrollSettleDelay, DEFAULT_CONFIG } from './humanizer';
-import type { BSLStep, SemanticHint } from './types';
+import type { BSLStep, SemanticHint, OutputConfig, TableExtractionResult } from './types';
 import { waitForElement } from './semanticResolver';
+import { extractValue, extractTable } from './dataExtraction';
 
 // Password utilities for credential injection
 import { extractCredentialRefs } from '../../../utils/passwords/substitution';
@@ -162,44 +163,22 @@ export async function executeSelect(element: Element, optionValue: string): Prom
 
 /**
  * Execute an extract action to get data from an element (ACT-04)
- * Supports multiple transforms (trim, number, lowercase, json, attribute:*)
+ * Uses new extraction module with OutputConfig support
  */
-export function executeExtract(element: Element, transform?: string): unknown {
-  // Get raw value based on element type
-  let rawValue: string;
-
-  if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
-    rawValue = element.value;
-  } else if (element instanceof HTMLSelectElement) {
-    const selectedOption = element.options[element.selectedIndex];
-    rawValue = selectedOption ? selectedOption.text : '';
-  } else {
-    rawValue = element.textContent || '';
+export function executeExtract(element: Element, output?: OutputConfig): unknown {
+  if (!output) {
+    // Legacy behavior: return textContent if no output config
+    return element.textContent?.trim() ?? '';
   }
+  return extractValue(element, output);
+}
 
-  // Apply transform if specified
-  if (!transform) {
-    return rawValue;
-  }
-
-  switch (transform) {
-    case 'trim':
-      return rawValue.trim();
-    case 'number':
-      return parseFloat(rawValue);
-    case 'lowercase':
-      return rawValue.toLowerCase();
-    case 'json':
-      return JSON.parse(rawValue);
-    default:
-      // Check for attribute:name pattern
-      if (transform.startsWith('attribute:')) {
-        const attrName = transform.slice('attribute:'.length);
-        return element.getAttribute(attrName);
-      }
-      // Unknown transform, return raw value
-      return rawValue;
-  }
+/**
+ * Execute a table_extract action to get table data (ACT-04b)
+ * Returns array of objects with column headers as keys
+ */
+export function executeTableExtract(element: Element): TableExtractionResult {
+  return extractTable(element);
 }
 
 /**
@@ -295,7 +274,7 @@ function parseTimeout(timeout?: string): number {
 }
 
 /**
- * ActionExecutor class - unified interface for all 8 BSL actions
+ * ActionExecutor class - unified interface for all 9 BSL actions
  * Wraps individual functions with config management
  */
 export class ActionExecutor {
@@ -344,7 +323,11 @@ export class ActionExecutor {
 
       case 'extract':
         if (!element) throw new Error('extract action requires element');
-        return executeExtract(element, step.output?.transform);
+        return executeExtract(element, step.output);
+
+      case 'table_extract':
+        if (!element) throw new Error('table_extract action requires element');
+        return executeTableExtract(element);
 
       case 'wait_for':
         if (!step.target?.hints) throw new Error('wait_for action requires target hints');

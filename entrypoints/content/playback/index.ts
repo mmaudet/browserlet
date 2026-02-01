@@ -465,7 +465,8 @@ export class PlaybackManager {
 
 // Re-export all types and modules for convenient imports
 export * from './types';
-export { ActionExecutor } from './actionExecutor';
+export { ActionExecutor, executeExtract, executeTableExtract } from './actionExecutor';
+export { extractValue, extractTable } from './dataExtraction';
 export { SessionDetector, checkSessionActive, DEFAULT_LOGIN_PATTERNS } from './sessionDetector';
 export { humanizedWait, randomDelay, DEFAULT_CONFIG } from './humanizer';
 export type { HumanizerConfig } from './humanizer';
