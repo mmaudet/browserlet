@@ -12,6 +12,9 @@ import { extractCredentialRefs } from '../../../utils/passwords/substitution';
 import type { VaultState } from '../../../utils/passwords/types';
 import type { StoredPassword } from '../../../utils/passwords/types';
 
+// Variable substitution for extracted values
+import { substituteVariables, hasExtractedVariables } from './variableSubstitution';
+
 // Types
 import type {
   PlaybackState,
@@ -370,6 +373,22 @@ export class PlaybackManager {
    * @param index - Step index for error messages
    */
   private async executeStep(step: BSLStep, index: number): Promise<void> {
+    // Clone step to avoid mutating original
+    const processedStep = { ...step };
+
+    // Substitute extracted variables in value field (works for type action, navigate URL, etc.)
+    if (processedStep.value && hasExtractedVariables(processedStep.value)) {
+      try {
+        processedStep.value = substituteVariables(
+          processedStep.value,
+          Object.fromEntries(this.results)
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Variable substitution failed';
+        throw new Error(message);
+      }
+    }
+
     let element: Element | undefined;
 
     // Resolve element for actions that need a target
@@ -431,8 +450,14 @@ export class PlaybackManager {
     // Execute the action
     const result = await this.actionExecutor.execute(step, element);
 
-    // Store extract results if action has output
-    if (step.action === 'extract' && step.output?.variable) {
+    // Store extract/table_extract results if action has output variable
+    if ((step.action === 'extract' || step.action === 'table_extract') && step.output?.variable) {
+      // Validate variable name starts with "extracted." prefix
+      if (!step.output.variable.startsWith('extracted.')) {
+        throw new Error(
+          `Variable name must start with "extracted." prefix. Got: "${step.output.variable}"`
+        );
+      }
       this.results.set(step.output.variable, result);
     }
   }
