@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import type { Script } from '../../utils/types';
 
-export type ViewName = 'list' | 'editor' | 'recording' | 'execution' | 'settings' | 'credentials';
+export type ViewName = 'list' | 'editor' | 'recording' | 'settings' | 'credentials';
 
 export const currentView = signal<ViewName>('list');
 export const editorScript = signal<Script | null>(null);

@@ -854,5 +854,29 @@
   "vaultUnlockErrorWrong": {
     "message": "Mot de passe principal incorrect.",
     "description": "Erreur mauvais mdp"
+  },
+  "viewHistory": {
+    "message": "Voir l'historique",
+    "description": "Info-bulle pour le bouton voir l'historique"
+  },
+  "executionHistory": {
+    "message": "Historique d'exécution",
+    "description": "Titre de la modale d'historique d'exécution"
+  },
+  "noExecutionHistory": {
+    "message": "Aucune exécution",
+    "description": "Message quand aucun historique d'exécution n'existe"
+  },
+  "clearHistory": {
+    "message": "Effacer l'historique",
+    "description": "Bouton pour effacer l'historique d'exécution"
+  },
+  "executionSuccess": {
+    "message": "Succès",
+    "description": "Statut pour une exécution réussie"
+  },
+  "credentials": {
+    "message": "Identifiants",
+    "description": "Libellé pour l'action identifiants dans la barre du bas"
   }
 }

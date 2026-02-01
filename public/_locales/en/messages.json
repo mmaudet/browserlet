@@ -854,5 +854,29 @@
   "vaultUnlockErrorWrong": {
     "message": "Incorrect master password.",
     "description": "Wrong password error"
+  },
+  "viewHistory": {
+    "message": "View History",
+    "description": "Tooltip for view execution history button"
+  },
+  "executionHistory": {
+    "message": "Execution History",
+    "description": "Title for execution history modal"
+  },
+  "noExecutionHistory": {
+    "message": "No executions yet",
+    "description": "Message when no execution history exists"
+  },
+  "clearHistory": {
+    "message": "Clear History",
+    "description": "Button to clear execution history"
+  },
+  "executionSuccess": {
+    "message": "Success",
+    "description": "Status for successful execution"
+  },
+  "credentials": {
+    "message": "Credentials",
+    "description": "Label for credentials action in bottom bar"
   }
 }

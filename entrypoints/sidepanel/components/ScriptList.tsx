@@ -1,11 +1,13 @@
 import { useSignal } from '@preact/signals';
-import type { Script } from '../../../utils/types';
+import type { Script, ExecutionRecord } from '../../../utils/types';
 import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId, updateScriptInState } from '../stores/scripts';
 import { triggersState } from '../stores/triggers';
 import { startExecution } from '../stores/execution';
 import { navigateTo } from '../router';
 import { TriggerConfig } from './TriggerConfig';
 import { deleteScript, saveScript } from '../../../utils/storage/scripts';
+import { ImportButton } from './ImportExport';
+import { getExecutionHistory, clearExecutionHistory } from '../../../utils/storage/history';
 
 interface ScriptListProps {
   onScriptSelect?: (script: Script) => void;
@@ -19,11 +21,12 @@ interface ScriptItemProps {
   onSelect: () => void;
   onRun: () => void;
   onConfigureTriggers: () => void;
+  onViewHistory: () => void;
   onDelete: () => void;
   onRename: () => void;
 }
 
-function ScriptItem({ script, isSelected, triggerCount, onSelect, onRun, onConfigureTriggers, onDelete, onRename }: ScriptItemProps) {
+function ScriptItem({ script, isSelected, triggerCount, onSelect, onRun, onConfigureTriggers, onViewHistory, onDelete, onRename }: ScriptItemProps) {
   return (
     <div
       style={{
@@ -100,6 +103,16 @@ function ScriptItem({ script, isSelected, triggerCount, onSelect, onRun, onConfi
             )}
           </button>
           <button
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: '4px 6px', color: '#666' }}
+            title={chrome.i18n.getMessage('viewHistory') || 'View History'}
+            onClick={(e: Event) => {
+              e.stopPropagation();
+              onViewHistory();
+            }}
+          >
+            🕒
+          </button>
+          <button
             onClick={(e: Event) => {
               e.stopPropagation();
               onRun();
@@ -156,8 +169,148 @@ async function handleRenameScript(script: Script): Promise<void> {
   }
 }
 
+// History modal component
+interface ScriptHistoryModalProps {
+  scriptId: string;
+  scriptName: string;
+  onClose: () => void;
+}
+
+function ScriptHistoryModal({ scriptId, scriptName, onClose }: ScriptHistoryModalProps) {
+  const historyRecords = useSignal<ExecutionRecord[]>([]);
+  const isLoading = useSignal(true);
+
+  // Load history on mount
+  const loadHistory = async () => {
+    isLoading.value = true;
+    const records = await getExecutionHistory(scriptId);
+    historyRecords.value = records;
+    isLoading.value = false;
+  };
+
+  // Use effect equivalent via immediate call
+  if (historyRecords.value.length === 0 && isLoading.value) {
+    loadHistory();
+  }
+
+  const handleClearHistory = async () => {
+    const confirmMsg = chrome.i18n.getMessage('clearHistory') || 'Clear all history for this script?';
+    if (confirm(confirmMsg)) {
+      await clearExecutionHistory(scriptId);
+      historyRecords.value = [];
+    }
+  };
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString();
+  };
+
+  const formatDuration = (start: number, end?: number) => {
+    if (!end) return '-';
+    const durationMs = end - start;
+    if (durationMs < 1000) return `${durationMs}ms`;
+    return `${(durationMs / 1000).toFixed(1)}s`;
+  };
+
+  const getStatusIcon = (status: ExecutionRecord['status']) => {
+    switch (status) {
+      case 'completed': return '✅';
+      case 'failed': return '❌';
+      case 'stopped': return '⏹️';
+      case 'running': return '⏳';
+      default: return '❓';
+    }
+  };
+
+  const getStatusLabel = (status: ExecutionRecord['status']) => {
+    switch (status) {
+      case 'completed': return chrome.i18n.getMessage('executionSuccess') || 'Success';
+      case 'failed': return chrome.i18n.getMessage('executionFailed') || 'Failed';
+      case 'stopped': return chrome.i18n.getMessage('stopExecution') || 'Stopped';
+      case 'running': return chrome.i18n.getMessage('executionRunning') || 'Running';
+      default: return status;
+    }
+  };
+
+  return (
+    <div style={{ padding: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 500 }}>
+          {chrome.i18n.getMessage('executionHistory') || 'Execution History'}
+        </h3>
+        <button
+          onClick={onClose}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: '#666' }}
+        >
+          ×
+        </button>
+      </div>
+      <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
+        {scriptName}
+      </div>
+
+      {isLoading.value ? (
+        <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}>
+          {chrome.i18n.getMessage('loading') || 'Loading...'}
+        </div>
+      ) : historyRecords.value.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}>
+          {chrome.i18n.getMessage('noExecutionHistory') || 'No executions yet'}
+        </div>
+      ) : (
+        <>
+          <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            {historyRecords.value.map(record => (
+              <div
+                key={record.id}
+                style={{
+                  padding: '10px 12px',
+                  borderBottom: '1px solid #f0f0f0',
+                  background: record.status === 'failed' ? '#fff5f5' : 'white'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '12px', color: '#666' }}>
+                    {formatDate(record.startedAt)}
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                    {getStatusIcon(record.status)}
+                    <span style={{ color: record.status === 'failed' ? '#d32f2f' : record.status === 'completed' ? '#2e7d32' : '#666' }}>
+                      {getStatusLabel(record.status)}
+                    </span>
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#999' }}>
+                  <span>
+                    {chrome.i18n.getMessage('executionStep', [String(record.currentStep || 0), String(record.totalSteps || 0)]) || `${record.currentStep || 0}/${record.totalSteps || 0} steps`}
+                  </span>
+                  <span>{formatDuration(record.startedAt, record.completedAt)}</span>
+                </div>
+                {record.error && (
+                  <div style={{ marginTop: '6px', fontSize: '11px', color: '#d32f2f', background: '#ffebee', padding: '6px 8px', borderRadius: '4px' }}>
+                    {record.error}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: '12px', textAlign: 'right' }}>
+            <button
+              onClick={handleClearHistory}
+              style={{ padding: '6px 12px', fontSize: '12px', background: '#f5f5f5', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', color: '#666' }}
+            >
+              {chrome.i18n.getMessage('clearHistory') || 'Clear History'}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}) {
   const showTriggerConfig = useSignal<string | null>(null);
+  const showHistoryModal = useSignal<{ scriptId: string; scriptName: string } | null>(null);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -171,6 +324,7 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
             onInput={(e: Event) => { searchTerm.value = (e.target as HTMLInputElement).value; }}
             style={{ flex: 1, padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
           />
+          <ImportButton onImport={(script) => onScriptSelect?.(script)} />
           {onNewScript && (
             <button
               onClick={onNewScript}
@@ -212,10 +366,12 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
                 }}
                 onRun={() => {
                   startExecution(script);
-                  navigateTo('execution');
                 }}
                 onConfigureTriggers={() => {
                   showTriggerConfig.value = script.id;
+                }}
+                onViewHistory={() => {
+                  showHistoryModal.value = { scriptId: script.id, scriptName: script.name };
                 }}
                 onDelete={() => handleDeleteScript(script)}
                 onRename={() => handleRenameScript(script)}
@@ -258,6 +414,45 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
             <TriggerConfig
               scriptId={showTriggerConfig.value}
               onClose={() => { showTriggerConfig.value = null; }}
+            />
+          ) : null}
+        </div>
+      </div>
+
+      {/* History modal */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: showHistoryModal.value ? 'flex' : 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}
+        onClick={() => { showHistoryModal.value = null; }}
+      >
+        <div
+          style={{
+            background: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            maxWidth: '28rem',
+            width: 'calc(100% - 32px)',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            margin: '16px'
+          }}
+          onClick={(e: Event) => e.stopPropagation()}
+        >
+          {showHistoryModal.value ? (
+            <ScriptHistoryModal
+              scriptId={showHistoryModal.value.scriptId}
+              scriptName={showHistoryModal.value.scriptName}
+              onClose={() => { showHistoryModal.value = null; }}
             />
           ) : null}
         </div>

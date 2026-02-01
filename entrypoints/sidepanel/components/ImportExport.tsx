@@ -86,8 +86,22 @@ export function ImportButton({ onImport, className }: ImportButtonProps) {
     }
   };
 
+  // Default inline style for ScriptList integration
+  const defaultStyle = {
+    padding: '8px 12px',
+    background: '#f5f5f5',
+    border: '1px solid #ddd',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '13px',
+    color: '#333',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px'
+  };
+
   return (
-    <div style={{ display: 'inline-block' }}>
+    <div style={{ display: 'inline-block', position: 'relative' }}>
       <input
         ref={fileInputRef}
         type="file"
@@ -96,21 +110,31 @@ export function ImportButton({ onImport, className }: ImportButtonProps) {
         onChange={handleFileSelect}
       />
       <button
-        class={className || 'btn btn-secondary'}
+        class={className}
+        style={className ? undefined : defaultStyle}
         onClick={() => fileInputRef.current?.click()}
         disabled={isImporting.value}
         title={chrome.i18n.getMessage('importScript') || 'Import YAML file'}
       >
+        <span>📥</span>
         {isImporting.value
-          ? chrome.i18n.getMessage('importing') || 'Importing...'
-          : chrome.i18n.getMessage('import') || 'Import'}
+          ? chrome.i18n.getMessage('importing') || '...'
+          : null}
       </button>
       {error.value && (
         <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
           color: '#f44336',
           fontSize: '12px',
           marginTop: '4px',
-          maxWidth: '200px'
+          maxWidth: '200px',
+          background: 'white',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          zIndex: 10
         }}>
           {error.value}
         </div>

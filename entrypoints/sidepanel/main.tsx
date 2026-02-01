@@ -1,64 +1,60 @@
 import { render } from 'preact';
-import { useEffect } from 'preact/hooks';
 import { signal } from '@preact/signals';
-import { currentView, navigateTo, goBack, editorScript } from './router';
-import { loadScripts, selectedScript, selectScript } from './stores/scripts';
+import { currentView, navigateTo, goBack, editorScript, ViewName } from './router';
+import { loadScripts, selectScript } from './stores/scripts';
 import { loadLLMConfig, llmConfigStore } from './stores/llmConfig';
 import { loadPasswords, passwordStore, refreshVaultState } from './stores/passwords';
 import { ScriptList } from './components/ScriptList';
 import { ScriptEditor, disposeEditor } from './components/ScriptEditor';
 import { RecordingView } from './components/RecordingView';
-import { ExecutionView } from './components/ExecutionView';
 import { LLMSettings } from './components/LLMSettings';
 import { ContextZone } from './components/ContextZone';
-import { ImportButton, ExportButton } from './components/ImportExport';
+import { ExportButton } from './components/ImportExport';
 import { saveScript } from '../../utils/storage/scripts';
 import type { Script } from '../../utils/types';
 import { SuggestedScripts } from './components/SuggestedScripts';
 import { suggestedScriptIds, loadTriggers } from './stores/triggers';
 import { CredentialManager } from './components/CredentialManager';
+import { startExecution } from './stores/execution';
 
 // App initialization state
 const appState = signal<'loading' | 'needs_setup' | 'needs_unlock' | 'ready'>('loading');
 
-// Navigation tabs
-function NavTabs() {
-  const tabs: Array<{ id: typeof currentView.value; label: string; icon: string }> = [
-    { id: 'list', label: chrome.i18n.getMessage('scripts') || 'Scripts', icon: '📋' },
-    { id: 'recording', label: chrome.i18n.getMessage('record') || 'Record', icon: '🔴' },
-    { id: 'execution', label: chrome.i18n.getMessage('run') || 'Run', icon: '▶️' }
+// Bottom action bar component
+function BottomActionBar() {
+  const actions: Array<{ id: ViewName; icon: string; labelKey: string }> = [
+    { id: 'recording', icon: '🔴', labelKey: 'record' },
+    { id: 'credentials', icon: '🔐', labelKey: 'credentials' },
+    { id: 'settings', icon: '⚙', labelKey: 'settings' }
   ];
 
   return (
-    <nav style={{ display: 'flex', borderBottom: '1px solid #ddd', background: 'white' }}>
-      {tabs.map(tab => (
+    <nav style={{
+      display: 'flex',
+      borderTop: '1px solid #ddd',
+      background: 'white',
+      padding: '8px 0'
+    }}>
+      {actions.map(action => (
         <button
-          key={tab.id}
+          key={action.id}
           style={{
             flex: 1,
-            padding: '12px 8px',
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            fontSize: '12px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             gap: '4px',
-            color: currentView.value === tab.id || (currentView.value === 'editor' && tab.id === 'list')
-              ? '#4285f4' : '#666',
-            borderBottom: currentView.value === tab.id || (currentView.value === 'editor' && tab.id === 'list')
-              ? '2px solid #4285f4' : 'none'
+            padding: '8px',
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            color: currentView.value === action.id ? '#4285f4' : '#666',
+            fontSize: '12px'
           }}
-          onClick={() => {
-            if (currentView.value === 'editor') {
-              disposeEditor();
-            }
-            navigateTo(tab.id);
-          }}
+          onClick={() => navigateTo(action.id)}
         >
-          <span style={{ fontSize: '16px' }}>{tab.icon}</span>
-          <span>{tab.label}</span>
+          <span style={{ fontSize: '18px' }}>{action.icon}</span>
+          <span>{chrome.i18n.getMessage(action.labelKey) || action.labelKey}</span>
         </button>
       ))}
     </nav>
@@ -149,10 +145,6 @@ function ContentRouter() {
 
   if (view === 'recording') {
     return <RecordingView />;
-  }
-
-  if (view === 'execution') {
-    return <ExecutionView />;
   }
 
   if (view === 'settings') {
@@ -302,50 +294,7 @@ function App() {
   // Ready state - full app
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f5f5' }}>
-      {/* Header */}
-      <div style={{
-        padding: '12px 16px',
-        background: 'white',
-        borderBottom: '1px solid #ddd',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <span style={{ fontWeight: 600, fontSize: '16px' }}>Browserlet</span>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <ImportButton onImport={(script) => navigateTo('editor', script)} />
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '18px',
-              padding: '4px 8px',
-              color: '#666'
-            }}
-            title={chrome.i18n.getMessage('manageCredentials') || 'Manage Credentials'}
-            onClick={() => navigateTo('credentials')}
-          >
-            {'\uD83D\uDD12'}
-          </button>
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '24px',
-              padding: '4px 8px',
-              color: '#666'
-            }}
-            title={chrome.i18n.getMessage('settings') || 'Settings'}
-            onClick={() => navigateTo('settings')}
-          >
-            ⚙
-          </button>
-        </div>
-      </div>
-
-      {/* Context zone */}
+      {/* Context zone en haut */}
       <div style={{ padding: '12px 16px 0' }}>
         <ContextZone />
       </div>
@@ -359,27 +308,19 @@ function App() {
         }}>
           <SuggestedScripts
             onRunScript={(script) => {
-              navigateTo('execution');
-              chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-                if (tabs[0]?.id) {
-                  await chrome.tabs.sendMessage(tabs[0].id, {
-                    type: 'EXECUTE_SCRIPT',
-                    payload: { content: script.content }
-                  });
-                }
-              });
+              startExecution(script);
             }}
           />
         </div>
       )}
 
-      {/* Navigation */}
-      <NavTabs />
-
       {/* Content area */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <ContentRouter />
       </div>
+
+      {/* Bottom action bar - seulement sur vue list */}
+      {currentView.value === 'list' && <BottomActionBar />}
     </div>
   );
 }
