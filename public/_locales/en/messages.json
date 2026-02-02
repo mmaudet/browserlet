@@ -127,6 +127,10 @@
     "message": "Execution failed",
     "description": "Status when execution failed"
   },
+  "failedCommunicatePage": {
+    "message": "Failed to communicate with page. Please reload the page (Ctrl+R / Cmd+R) and try again.",
+    "description": "Error when content script is not injected"
+  },
   "copyJson": {
     "message": "Copy JSON",
     "description": "Button to copy results as JSON"
@@ -436,7 +440,7 @@
     "description": "Label for URL pattern input"
   },
   "triggerUrlPatternPlaceholder": {
-    "message": "*/dashboard*",
+    "message": "*dashboard*",
     "description": "Placeholder for URL pattern"
   },
   "triggerElementHints": {
@@ -938,5 +942,62 @@
   "copied": {
     "message": "Copied!",
     "description": "Feedback message after copying"
+  },
+
+  "repairs": {
+    "message": "Repairs",
+    "description": "Title for repair panel"
+  },
+  "repairsPending": {
+    "message": "pending",
+    "description": "Suffix for pending repairs count"
+  },
+  "testRepair": {
+    "message": "Test",
+    "description": "Button to test repair suggestion"
+  },
+  "applyFix": {
+    "message": "Apply Fix",
+    "description": "Button to apply repair fix to script"
+  },
+  "rejectRepair": {
+    "message": "Reject",
+    "description": "Button to reject repair suggestion"
+  },
+  "originalHints": {
+    "message": "Original (failed)",
+    "description": "Label for original hints that failed"
+  },
+  "proposedHints": {
+    "message": "Proposed",
+    "description": "Label for proposed hints from AI"
+  },
+  "confidenceScore": {
+    "message": "Confidence",
+    "description": "Label for confidence score"
+  },
+  "llmReason": {
+    "message": "Reason",
+    "description": "Label for LLM explanation"
+  },
+  "domContext": {
+    "message": "DOM Context",
+    "description": "Label for DOM excerpt section"
+  },
+  "testPassed": {
+    "message": "Test passed",
+    "description": "Message when repair test succeeds"
+  },
+  "testFailed": {
+    "message": "Test failed",
+    "description": "Message when repair test fails"
+  },
+  "saveFix": {
+    "message": "Save this fix to the script?",
+    "description": "Confirmation message before applying fix"
+  },
+  "waitingHealing": {
+    "message": "Waiting for repair approval",
+    "description": "Status when execution is paused for healing"
   }
 }

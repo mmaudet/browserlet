@@ -127,6 +127,10 @@
     "message": "Exécution échouée",
     "description": "Statut quand l'exécution a échoué"
   },
+  "failedCommunicatePage": {
+    "message": "Impossible de communiquer avec la page. Veuillez recharger la page (Ctrl+R / Cmd+R) et réessayer.",
+    "description": "Erreur quand le content script n'est pas injecté"
+  },
   "copyJson": {
     "message": "Copier JSON",
     "description": "Bouton pour copier les resultats en JSON"
@@ -436,7 +440,7 @@
     "description": "Label pour le champ motif URL"
   },
   "triggerUrlPatternPlaceholder": {
-    "message": "*/tableau-de-bord*",
+    "message": "*tableau-de-bord*",
     "description": "Placeholder pour le motif URL"
   },
   "triggerElementHints": {
@@ -938,5 +942,62 @@
   "copied": {
     "message": "Copie !",
     "description": "Message de confirmation apres copie"
+  },
+
+  "repairs": {
+    "message": "Reparations",
+    "description": "Titre du panneau de reparation"
+  },
+  "repairsPending": {
+    "message": "en attente",
+    "description": "Suffixe pour le compte des reparations en attente"
+  },
+  "testRepair": {
+    "message": "Tester",
+    "description": "Bouton pour tester la suggestion de reparation"
+  },
+  "applyFix": {
+    "message": "Appliquer",
+    "description": "Bouton pour appliquer la reparation au script"
+  },
+  "rejectRepair": {
+    "message": "Rejeter",
+    "description": "Bouton pour rejeter la suggestion de reparation"
+  },
+  "originalHints": {
+    "message": "Original (echoue)",
+    "description": "Label pour les hints originaux qui ont echoue"
+  },
+  "proposedHints": {
+    "message": "Propose",
+    "description": "Label pour les hints proposes par l'IA"
+  },
+  "confidenceScore": {
+    "message": "Confiance",
+    "description": "Label pour le score de confiance"
+  },
+  "llmReason": {
+    "message": "Raison",
+    "description": "Label pour l'explication du LLM"
+  },
+  "domContext": {
+    "message": "Contexte DOM",
+    "description": "Label pour la section extrait DOM"
+  },
+  "testPassed": {
+    "message": "Test reussi",
+    "description": "Message quand le test de reparation reussit"
+  },
+  "testFailed": {
+    "message": "Test echoue",
+    "description": "Message quand le test de reparation echoue"
+  },
+  "saveFix": {
+    "message": "Enregistrer cette correction dans le script ?",
+    "description": "Message de confirmation avant d'appliquer la correction"
+  },
+  "waitingHealing": {
+    "message": "En attente d'approbation de la reparation",
+    "description": "Statut quand l'execution est en pause pour la reparation"
   }
 }

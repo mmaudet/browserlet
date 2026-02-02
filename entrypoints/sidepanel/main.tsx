@@ -16,8 +16,9 @@ import type { Script } from '../../utils/types';
 import { SuggestedScripts } from './components/SuggestedScripts';
 import { suggestedScriptIds, loadTriggers } from './stores/triggers';
 import { CredentialManager } from './components/CredentialManager';
-import { startExecution } from './stores/execution';
-import { initializeHealingListeners } from './stores/healing';
+import { startExecution, isExecuting } from './stores/execution';
+import { initializeHealingListeners, hasPendingRepairs } from './stores/healing';
+import { RepairPanel } from './components/RepairPanel';
 
 // App initialization state
 const appState = signal<'loading' | 'needs_setup' | 'needs_unlock' | 'ready'>('loading');
@@ -360,6 +361,13 @@ function App() {
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <ContentRouter />
       </div>
+
+      {/* Repair panel - shown when there are pending repairs or during execution */}
+      {(hasPendingRepairs.value || isExecuting.value) && (
+        <div style={{ padding: '0 16px 12px', flexShrink: 0 }}>
+          <RepairPanel />
+        </div>
+      )}
 
       {/* Bottom action bar - toujours visible pour navigation rapide */}
       <BottomActionBar />
