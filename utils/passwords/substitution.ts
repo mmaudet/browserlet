@@ -71,13 +71,13 @@ export async function substituteCredentials(
 
   // Process each reference
   for (const ref of refs) {
-    // Find password by ID (exact match)
-    const password = passwords.find(p => p.id === ref.name);
+    // Find password by ID or alias (exact match)
+    const password = passwords.find(p => p.id === ref.name || p.alias === ref.name);
 
     if (!password) {
       throw new Error(
         `Credential not found: "${ref.name}". ` +
-        `Available credentials: ${passwords.map(p => p.id).join(', ') || 'none'}`
+        `Available credentials: ${passwords.map(p => p.alias || p.id).join(', ') || 'none'}`
       );
     }
 

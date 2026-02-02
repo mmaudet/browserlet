@@ -174,8 +174,11 @@ export class PlaybackManager {
     yamlContent: string,
     options?: { startStep?: number; previousResults?: Record<string, unknown> }
   ): Promise<ExecutionResult> {
+    console.log('[Browserlet] PlaybackManager.execute() called');
+
     // Don't start if already running
     if (this.state === 'running') {
+      console.log('[Browserlet] Execution blocked - already running');
       return {
         status: 'failed',
         error: 'Execution already in progress',
@@ -186,10 +189,13 @@ export class PlaybackManager {
     this.yamlContent = yamlContent;
 
     // Parse the script
+    console.log('[Browserlet] Parsing YAML content...');
     try {
       this.script = parseSteps(yamlContent);
+      console.log('[Browserlet] Script parsed successfully, steps:', this.script.steps.length);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown parse error';
+      console.error('[Browserlet] Parse error:', message);
       this.emit({ type: 'error', error: message });
       return {
         status: 'failed',
@@ -222,7 +228,8 @@ export class PlaybackManager {
       // Fetch all passwords and validate references (via messaging to background)
       const passwordsResponse = await chrome.runtime.sendMessage({ type: 'GET_PASSWORDS' });
       const passwords = (passwordsResponse?.data as StoredPassword[]) || [];
-      const passwordIds = new Set(passwords.map(p => p.id));
+      // Include both id and alias for credential lookup
+      const passwordIds = new Set(passwords.flatMap(p => [p.id, p.alias].filter(Boolean) as string[]));
 
       const missing: string[] = [];
       for (const credName of allCredentialNames) {
@@ -277,8 +284,11 @@ export class PlaybackManager {
     }
 
     // Execute steps sequentially (starting from startStep for resume)
+    console.log('[Browserlet] Starting execution loop, total steps:', totalSteps);
     try {
       for (let i = startStep; i < totalSteps; i++) {
+        console.log('[Browserlet] Processing step', i + 1, 'of', totalSteps);
+
         // Check if aborted
         if (this.abortController.signal.aborted) {
           this.setState('stopped');
@@ -291,6 +301,7 @@ export class PlaybackManager {
 
         this.currentStep = i;
         const step = this.script.steps[i];
+        console.log('[Browserlet] Step', i + 1, 'action:', step?.action);
 
         // Safety check (should never happen due to bounds)
         if (!step) {
@@ -334,10 +345,12 @@ export class PlaybackManager {
 
       // All steps completed successfully
       this.setState('idle');
+      const finalResults = this.getResults();
+      console.log('[Browserlet] Execution completed, final results:', finalResults);
       return {
         status: 'completed',
         step: totalSteps,
-        results: this.getResults(),
+        results: finalResults,
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -393,10 +406,13 @@ export class PlaybackManager {
 
     // Resolve element for actions that need a target
     if (processedStep.target?.hints && processedStep.target.hints.length > 0) {
+      console.log('[Browserlet] Resolving element with hints:', JSON.stringify(processedStep.target.hints));
       const timeout = parseTimeout(processedStep.timeout);
+      console.log('[Browserlet] Timeout:', timeout, 'ms');
 
       try {
         const result = await waitForElement(processedStep.target.hints, timeout);
+        console.log('[Browserlet] Element resolved, confidence:', result.confidence);
 
         if (result.element) {
           element = result.element;
@@ -448,7 +464,9 @@ export class PlaybackManager {
     }
 
     // Execute the action
+    console.log('[Browserlet] Executing action:', processedStep.action);
     const result = await this.actionExecutor.execute(processedStep, element);
+    console.log('[Browserlet] Action result:', result);
 
     // Store extract/table_extract results if action has output variable
     if ((processedStep.action === 'extract' || processedStep.action === 'table_extract') && processedStep.output?.variable) {
@@ -458,7 +476,9 @@ export class PlaybackManager {
           `Variable name must start with "extracted." prefix. Got: "${processedStep.output.variable}"`
         );
       }
+      console.log('[Browserlet] Storing extraction result:', { variable: processedStep.output.variable, result });
       this.results.set(processedStep.output.variable, result);
+      console.log('[Browserlet] Current results map:', Object.fromEntries(this.results));
     }
   }
 

@@ -116,6 +116,29 @@ describe('substituteCredentials', () => {
       .toThrow('Credential not found: "missing"');
   });
 
+  it('should find credential by alias', async () => {
+    const text = 'pass={{credential:Nibelis}}';
+    const passwords: StoredPassword[] = [{
+      id: 'pwd-1234567-abc',
+      alias: 'Nibelis',
+      url: 'nibelis.com',
+      username: 'user',
+      encryptedPassword: { iv: 'mockIv', ciphertext: 'mockData' },
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    }];
+
+    const mockDecrypt = vi.spyOn(storage, 'getDecryptedPassword');
+    mockDecrypt.mockResolvedValue('secretPassword');
+
+    const result = await substituteCredentials(text, passwords);
+
+    expect(result).toBe('pass=secretPassword');
+    expect(mockDecrypt).toHaveBeenCalledWith(passwords[0]);
+
+    mockDecrypt.mockRestore();
+  });
+
   it('should substitute multiple credential references', async () => {
     const text = 'user={{credential:usr}} pass={{credential:pwd}}';
     const passwords: StoredPassword[] = [
