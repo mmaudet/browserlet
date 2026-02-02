@@ -13,6 +13,7 @@ import { getAllTriggers, saveTrigger, deleteTrigger, setSiteOverride } from '../
 import { handlePasswordMessage } from './passwords';
 import { getScript, saveScript } from '../../utils/storage/scripts';
 import { updateStepHints } from '../../utils/yaml/stepParser';
+import { getHealingHistory, addHealingRecord } from '../../utils/storage/healing';
 
 // Storage key for persisted execution state
 const EXECUTION_STATE_KEY = 'browserlet_execution_state';
@@ -393,9 +394,10 @@ async function processMessage(
     }
 
     case 'GET_HEALING_HISTORY': {
-      // TODO: Plan 04 will implement storage and retrieval of healing audit trail
-      console.log('[Browserlet BG] GET_HEALING_HISTORY - not yet implemented');
-      return { success: true, data: [] };
+      const { scriptId } = message.payload as { scriptId: string };
+      console.log('[Browserlet BG] GET_HEALING_HISTORY for script:', scriptId);
+      const history = await getHealingHistory(scriptId);
+      return { success: true, data: history };
     }
 
     default:
