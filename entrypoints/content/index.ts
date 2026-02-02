@@ -5,13 +5,17 @@ import { PlaybackManager } from './playback';
 import { initializeTriggers, handleTriggerMessage } from './triggers';
 import { showAutoExecuteNotification, showCompletionNotification } from './triggers/inPageNotification';
 import { PasswordCapture } from './recording/passwordCapture';
-import { CredentialCaptureIndicator } from './recording/visualFeedback';
+import { CredentialCaptureIndicator, HighlightOverlay } from './recording/visualFeedback';
+import type { HealingOverlayState } from './recording/visualFeedback';
+import { resolveElement } from './playback/semanticResolver';
+import type { SemanticHint } from './playback/types';
 
 // Singleton instances
 let recordingManager: RecordingManager | null = null;
 let playbackManager: PlaybackManager | null = null;
 let standaloneCapturer: PasswordCapture | null = null;
 let credentialCaptureIndicator: CredentialCaptureIndicator | null = null;
+let healingOverlay: HighlightOverlay | null = null;
 
 /**
  * Get or create the PlaybackManager singleton
@@ -285,6 +289,130 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
       };
     }
 
+    case 'HIGHLIGHT_HEALING_ELEMENT': {
+      const { hints, state } = message.payload as {
+        hints: SemanticHint[];
+        state: HealingOverlayState;
+      };
+
+      // Initialize healing overlay if needed
+      if (!healingOverlay) {
+        healingOverlay = new HighlightOverlay();
+      }
+
+      try {
+        // Resolve element using semantic hints (ignore confidence threshold for preview)
+        const result = resolveElement(hints);
+
+        if (result.element) {
+          // Show healing overlay on the element
+          healingOverlay.showHealing(result.element, state);
+          console.log('[Browserlet] Healing overlay shown:', state, 'confidence:', result.confidence);
+          return {
+            success: true,
+            data: {
+              found: true,
+              confidence: result.confidence,
+              matchedHints: result.matchedHints,
+              failedHints: result.failedHints
+            }
+          };
+        } else {
+          // No element found - hide any existing overlay
+          healingOverlay.hide();
+          console.log('[Browserlet] Healing element not found, confidence:', result.confidence);
+          return {
+            success: true,
+            data: {
+              found: false,
+              confidence: result.confidence,
+              matchedHints: result.matchedHints,
+              failedHints: result.failedHints
+            }
+          };
+        }
+      } catch (error) {
+        console.error('[Browserlet] Error highlighting healing element:', error);
+        healingOverlay.hide();
+        return { success: false, error: String(error) };
+      }
+    }
+
+    case 'TEST_REPAIR': {
+      const { repairId, hints } = message.payload as {
+        repairId: string;
+        hints: SemanticHint[];
+      };
+
+      // Initialize healing overlay if needed
+      if (!healingOverlay) {
+        healingOverlay = new HighlightOverlay();
+      }
+
+      try {
+        // Show testing state
+        const result = resolveElement(hints);
+
+        if (result.element && result.confidence >= 0.7) {
+          // Show success state
+          healingOverlay.showHealing(result.element, 'success');
+          console.log('[Browserlet] Test repair succeeded:', repairId);
+
+          // Send result back to sidepanel
+          chrome.runtime.sendMessage({
+            type: 'TEST_REPAIR_RESULT',
+            payload: { repairId, success: true, confidence: result.confidence }
+          }).catch(() => {});
+
+          return { success: true, data: { found: true, confidence: result.confidence } };
+        } else {
+          // Show failed state
+          if (result.element) {
+            healingOverlay.showHealing(result.element, 'failed');
+          } else {
+            healingOverlay.hide();
+          }
+          console.log('[Browserlet] Test repair failed:', repairId, 'confidence:', result.confidence);
+
+          // Send result back to sidepanel
+          chrome.runtime.sendMessage({
+            type: 'TEST_REPAIR_RESULT',
+            payload: { repairId, success: false, confidence: result.confidence }
+          }).catch(() => {});
+
+          return { success: true, data: { found: false, confidence: result.confidence } };
+        }
+      } catch (error) {
+        console.error('[Browserlet] Error testing repair:', error);
+        healingOverlay.hide();
+
+        chrome.runtime.sendMessage({
+          type: 'TEST_REPAIR_RESULT',
+          payload: { repairId, success: false, error: String(error) }
+        }).catch(() => {});
+
+        return { success: false, error: String(error) };
+      }
+    }
+
+    case 'HEALING_APPROVED': {
+      // Hide healing overlay when repair is approved
+      if (healingOverlay) {
+        healingOverlay.hide();
+      }
+      console.log('[Browserlet] Healing approved, overlay hidden');
+      return { success: true };
+    }
+
+    case 'HEALING_REJECTED': {
+      // Hide healing overlay when repair is rejected
+      if (healingOverlay) {
+        healingOverlay.hide();
+      }
+      console.log('[Browserlet] Healing rejected, overlay hidden');
+      return { success: true };
+    }
+
     default:
       return { success: false, error: `Unknown message type: ${message.type}` };
   }
@@ -297,21 +425,186 @@ interface TextNodeContext {
   id?: string;
   ariaLabel?: string;
   nearbyLabels: string[];
+  /** Flag for priority elements (headings, amounts, dates) */
+  isPriority?: boolean;
+  /** Table name if this represents a table for extraction */
+  tableName?: string;
 }
 
 /**
  * Gather text nodes from the page with their context
+ * Prioritizes key data: headings, amounts, dates, tables
  * Used for AI extraction suggestions
  */
 function gatherTextNodes(): TextNodeContext[] {
   const nodes: TextNodeContext[] = [];
+  const seenTexts = new Set<string>();
+
+  // 1. First pass: collect priority elements (headings, key values)
+  const prioritySelectors = [
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',      // Headings
+    '[class*="title"]', '[class*="name"]',   // Title/name patterns
+    '[class*="price"]', '[class*="amount"]', '[class*="total"]', // Amounts
+    '[class*="date"]', 'time',               // Dates
+    '[class*="status"]', '[class*="badge"]', // Status values
+    '[class*="reference"]', '[class*="number"]', '[class*="id"]', // IDs/references
+    'strong', 'b', 'em',                     // Emphasized text
+    'dd', 'dt',                              // Definition lists (common in detail pages)
+    '[aria-label]',                          // Accessible elements
+  ];
+
+  for (const selector of prioritySelectors) {
+    try {
+      const elements = document.querySelectorAll(selector);
+      for (const el of elements) {
+        const text = el.textContent?.trim();
+        if (!text || text.length < 2 || text.length > 200 || seenTexts.has(text)) continue;
+        if (!isElementVisible(el)) continue;
+
+        seenTexts.add(text);
+        nodes.push({
+          text,
+          tagName: el.tagName.toLowerCase(),
+          className: (el as HTMLElement).className || undefined,
+          id: el.id || undefined,
+          ariaLabel: el.getAttribute('aria-label') || undefined,
+          nearbyLabels: findNearbyLabels(el),
+          isPriority: true
+        });
+
+        if (nodes.length >= 100) break; // Cap priority elements
+      }
+    } catch {
+      // Skip invalid selectors
+    }
+  }
+
+  // 2. Detect label-value pairs in tables (common pattern: <th>Label</th><td>Value</td>)
+  // This is the primary pattern used in detail pages like OBM
+  const labelValueRows = document.querySelectorAll('tr');
+  for (const row of labelValueRows) {
+    const th = row.querySelector('th');
+    const td = row.querySelector('td');
+    if (th && td && isElementVisible(row)) {
+      const label = th.textContent?.trim();
+      const value = td.textContent?.trim();
+      if (label && value && value.length > 0 && value.length < 300) {
+        const key = `${label}: ${value}`;
+        if (!seenTexts.has(key)) {
+          seenTexts.add(key);
+          nodes.push({
+            text: `[FIELD: "${label}" = "${value.substring(0, 100)}${value.length > 100 ? '...' : ''}"]`,
+            tagName: 'td',
+            className: (td as HTMLElement).className || undefined,
+            id: td.id || undefined,
+            ariaLabel: td.getAttribute('aria-label') || undefined,
+            nearbyLabels: [label],
+            isPriority: true
+          });
+        }
+      }
+    }
+  }
+
+  // 3. Detect data tables (for table_extract suggestions)
+  const tables = document.querySelectorAll('table');
+  let tableIndex = 0;
+  for (const table of tables) {
+    if (!isElementVisible(table)) continue;
+
+    // Get table name from multiple sources
+    let tableName = table.querySelector('caption')?.textContent?.trim() ||
+                    table.getAttribute('aria-label') ||
+                    table.getAttribute('summary') || '';
+
+    // Look for preceding heading (check multiple previous siblings and parents)
+    if (!tableName) {
+      let element: Element | null = table;
+      // Check previous siblings
+      for (let i = 0; i < 5 && element; i++) {
+        const prev = element.previousElementSibling;
+        if (prev && /^H[1-6]$/.test(prev.tagName)) {
+          tableName = prev.textContent?.trim() || '';
+          break;
+        }
+        element = prev;
+      }
+      // If still no name, check parent's previous siblings (common in Wikipedia)
+      if (!tableName) {
+        let parent = table.parentElement;
+        for (let level = 0; level < 3 && parent && !tableName; level++) {
+          let sibling = parent.previousElementSibling;
+          for (let i = 0; i < 3 && sibling; i++) {
+            if (/^H[1-6]$/.test(sibling.tagName)) {
+              tableName = sibling.textContent?.trim() || '';
+              break;
+            }
+            sibling = sibling.previousElementSibling;
+          }
+          parent = parent.parentElement;
+        }
+      }
+    }
+
+    // Get headers from multiple places
+    const headers: string[] = [];
+    // Try thead first
+    let headerCells = table.querySelectorAll('thead th');
+    if (headerCells.length === 0) {
+      // Try first row
+      headerCells = table.querySelectorAll('tr:first-child th');
+    }
+    if (headerCells.length === 0) {
+      // Try first row td if they look like headers (Wikipedia sometimes uses td in header row)
+      const firstRow = table.querySelector('tr');
+      if (firstRow) {
+        const cells = firstRow.querySelectorAll('th, td');
+        cells.forEach(cell => {
+          const h = cell.textContent?.trim();
+          if (h && h.length < 50) headers.push(h);
+        });
+      }
+    } else {
+      headerCells.forEach(th => {
+        const h = th.textContent?.trim();
+        if (h && h.length < 100) headers.push(h);
+      });
+    }
+
+    // Count data rows
+    const allRows = table.querySelectorAll('tr');
+    const rowCount = Math.max(0, allRows.length - 1);
+
+    // Suggest tables with meaningful structure
+    if (headers.length >= 2 && rowCount >= 2) {
+      tableIndex++;
+      const displayName = tableName || `Table ${tableIndex}`;
+      const safeTableName = (tableName || `table_${tableIndex}`)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_|_$/g, '')
+        .substring(0, 30);
+
+      nodes.push({
+        text: `[TABLE: "${displayName}" with ${headers.length} columns (${headers.slice(0, 4).join(', ')}${headers.length > 4 ? '...' : ''}) and ${rowCount} data rows]`,
+        tagName: 'table',
+        className: (table as HTMLElement).className || undefined,
+        id: table.id || undefined,
+        ariaLabel: table.getAttribute('aria-label') || undefined,
+        nearbyLabels: [displayName],
+        isPriority: true,
+        tableName: safeTableName
+      });
+    }
+  }
+
+  // 3. Second pass: gather remaining text nodes using tree walker
   const walker = document.createTreeWalker(
     document.body,
     NodeFilter.SHOW_TEXT,
     {
       acceptNode: (node) => {
         const text = node.textContent?.trim();
-        // Filter out empty, very short, or very long text
         if (!text || text.length < 2 || text.length > 200) {
           return NodeFilter.FILTER_REJECT;
         }
@@ -321,20 +614,24 @@ function gatherTextNodes(): TextNodeContext[] {
   );
 
   let count = 0;
-  while (walker.nextNode() && count < 100) {
+  const maxRemaining = 250 - nodes.length; // Total cap of ~250 nodes
+  while (walker.nextNode() && count < maxRemaining) {
     const textNode = walker.currentNode;
     const parent = textNode.parentElement;
     if (!parent) continue;
 
+    const text = textNode.textContent?.trim() || '';
+    if (seenTexts.has(text)) continue; // Skip duplicates
+
     // Skip hidden elements
-    const style = window.getComputedStyle(parent);
-    if (style.display === 'none' || style.visibility === 'hidden') continue;
+    if (!isElementVisible(parent)) continue;
 
     // Skip script/style tags
     if (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') continue;
 
+    seenTexts.add(text);
     nodes.push({
-      text: textNode.textContent?.trim() || '',
+      text,
       tagName: parent.tagName.toLowerCase(),
       className: parent.className || undefined,
       id: parent.id || undefined,
@@ -344,7 +641,22 @@ function gatherTextNodes(): TextNodeContext[] {
     count++;
   }
 
-  return nodes;
+  // Sort: priority elements first, then by position in DOM
+  return nodes.sort((a, b) => {
+    if (a.isPriority && !b.isPriority) return -1;
+    if (!a.isPriority && b.isPriority) return 1;
+    return 0;
+  });
+}
+
+/**
+ * Check if an element is visible
+ */
+function isElementVisible(element: Element): boolean {
+  const style = window.getComputedStyle(element);
+  if (style.display === 'none' || style.visibility === 'hidden') return false;
+  const rect = element.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
 }
 
 /**

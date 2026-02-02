@@ -35,6 +35,48 @@ export const OVERLAY_STYLES = {
   `,
 } as const;
 
+// Healing overlay styles for self-healing selector workflow
+export const HEALING_OVERLAY_STYLES = {
+  // Proposed repair - orange dashed border
+  proposed: `
+    border: 2px dashed rgba(255, 152, 0, 0.9);
+    background-color: rgba(255, 152, 0, 0.1);
+    border-radius: 2px;
+  `,
+  // Testing repair - blue solid border with pulsing animation
+  testing: `
+    border: 2px solid rgba(33, 150, 243, 0.9);
+    background-color: rgba(33, 150, 243, 0.15);
+    border-radius: 2px;
+    animation: healing-pulse 1s ease-in-out infinite;
+  `,
+  // Test succeeded - green solid border
+  success: `
+    border: 2px solid rgba(76, 175, 80, 0.9);
+    background-color: rgba(76, 175, 80, 0.2);
+    border-radius: 2px;
+  `,
+  // Test failed - red solid border
+  failed: `
+    border: 2px solid rgba(244, 67, 54, 0.9);
+    background-color: rgba(244, 67, 54, 0.15);
+    border-radius: 2px;
+  `,
+  // Keyframes for testing animation
+  keyframes: `
+    @keyframes healing-pulse {
+      0%, 100% {
+        background-color: rgba(33, 150, 243, 0.15);
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
+      }
+      50% {
+        background-color: rgba(33, 150, 243, 0.25);
+        box-shadow: 0 0 8px 2px rgba(33, 150, 243, 0.4);
+      }
+    }
+  `,
+} as const;
+
 // Recording indicator badge (shows "REC" in corner)
 export const RECORDING_INDICATOR_STYLES = {
   container: `
