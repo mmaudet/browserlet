@@ -71,7 +71,27 @@ export interface ParsedScript {
 }
 
 // Playback state machine
-export type PlaybackState = 'idle' | 'running' | 'paused' | 'waiting_auth' | 'stopped';
+export type PlaybackState = 'idle' | 'running' | 'paused' | 'waiting_auth' | 'waiting_healing' | 'stopped';
+
+// Context for healing when element resolution fails
+export interface HealingContext {
+  /** Step index in the script (0-based) */
+  stepIndex: number;
+  /** Original hints that failed to resolve */
+  originalHints: SemanticHint[];
+  /** Confidence achieved (< threshold) */
+  confidence: number;
+  /** Hints that matched */
+  matchedHints: string[];
+  /** Hints that failed */
+  failedHints: string[];
+  /** Current page URL */
+  pageUrl: string;
+  /** Current page title */
+  pageTitle: string;
+  /** DOM excerpt around expected element location */
+  domExcerpt: string;
+}
 
 // Result of script execution
 export interface ExecutionResult {
