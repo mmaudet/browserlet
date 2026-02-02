@@ -53,7 +53,17 @@ export type MessageType =
   | 'SUBSTITUTE_CREDENTIALS'
   // AI extraction suggestions
   | 'SUGGEST_EXTRACTIONS'
-  | 'GET_PAGE_CONTEXT';
+  | 'GET_PAGE_CONTEXT'
+  // Self-healing selector messages
+  | 'HEALING_REQUESTED'           // Content -> Background: trigger healing analysis
+  | 'HEALING_SUGGESTION'          // Background -> Sidepanel: LLM response ready
+  | 'TEST_REPAIR'                 // Sidepanel -> Content: test proposed hints (resolve only)
+  | 'TEST_REPAIR_RESULT'          // Content -> Sidepanel: test succeeded/failed
+  | 'APPLY_REPAIR'                // Sidepanel -> Background: persist approved repair
+  | 'HEALING_APPROVED'            // Background -> Content: resume with new hints
+  | 'HEALING_REJECTED'            // Background -> Content: stop healing, fail step
+  | 'HIGHLIGHT_HEALING_ELEMENT'   // Sidepanel -> Content: show healing overlay
+  | 'GET_HEALING_HISTORY';        // Sidepanel -> Background: fetch audit trail
 
 export interface Message {
   type: MessageType;

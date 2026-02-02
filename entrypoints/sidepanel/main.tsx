@@ -1,6 +1,6 @@
 import { render } from 'preact';
 import { signal } from '@preact/signals';
-import { List, Circle, KeyRound, Settings, ArrowLeft, Loader2, Database } from 'lucide-preact';
+import { List, Circle, KeyRound, Settings, ArrowLeft, Loader2 } from 'lucide-preact';
 import { currentView, navigateTo, goBack, editorScript, ViewName } from './router';
 import { loadScripts, selectScript } from './stores/scripts';
 import { loadLLMConfig, llmConfigStore } from './stores/llmConfig';
@@ -11,20 +11,16 @@ import { RecordingView } from './components/RecordingView';
 import { LLMSettings } from './components/LLMSettings';
 import { ContextZone } from './components/ContextZone';
 import { ExportButton } from './components/ImportExport';
-import { ExtractedDataModal } from './components/ExtractedDataModal';
-import { exportToJSON, exportToCSV } from '../../utils/export/dataExport';
 import { saveScript } from '../../utils/storage/scripts';
 import type { Script } from '../../utils/types';
 import { SuggestedScripts } from './components/SuggestedScripts';
 import { suggestedScriptIds, loadTriggers } from './stores/triggers';
 import { CredentialManager } from './components/CredentialManager';
-import { startExecution, executionResults, currentScript } from './stores/execution';
+import { startExecution } from './stores/execution';
+import { initializeHealingListeners } from './stores/healing';
 
 // App initialization state
 const appState = signal<'loading' | 'needs_setup' | 'needs_unlock' | 'ready'>('loading');
-
-// Extracted data modal state
-const showDataModal = signal(false);
 
 // Bottom action bar component
 function BottomActionBar() {
@@ -123,19 +119,6 @@ function ContentRouter() {
       return <div />;
     }
 
-    // Get extracted data from execution results
-    // Results are stored as an object with extracted.* keys
-    const extractedData = executionResults.value.length > 0 &&
-      typeof executionResults.value[0] === 'object' &&
-      executionResults.value[0] !== null
-        ? executionResults.value[0] as Record<string, unknown>
-        : {};
-    const hasExtractedData = Object.keys(extractedData).length > 0;
-
-    // Check if this is the current script that was executed
-    const isCurrentExecutedScript = currentScript.value?.id === script.id;
-    const showViewDataButton = hasExtractedData && isCurrentExecutedScript;
-
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {/* Editor toolbar */}
@@ -169,28 +152,6 @@ function ContentRouter() {
             {chrome.i18n.getMessage('back') || 'Back'}
           </button>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            {/* View Data button - only visible when extracted data exists */}
-            {showViewDataButton && (
-              <button
-                style={{
-                  background: 'none',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  padding: '6px 10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '12px',
-                  color: '#007AFF'
-                }}
-                onClick={() => { showDataModal.value = true; }}
-                title={chrome.i18n.getMessage('viewExtractedData') || 'View extracted data'}
-              >
-                <Database size={14} strokeWidth={2} />
-                {chrome.i18n.getMessage('viewData') || 'Data'}
-              </button>
-            )}
             {editorScript.value && <ExportButton script={editorScript.value} />}
           </div>
         </div>
@@ -203,16 +164,6 @@ function ContentRouter() {
             }}
           />
         </div>
-
-        {/* Extracted Data Modal */}
-        <ExtractedDataModal
-          data={extractedData}
-          scriptName={script.name}
-          isOpen={showDataModal.value}
-          onClose={() => { showDataModal.value = false; }}
-          onExportJSON={() => exportToJSON(extractedData, script.name)}
-          onExportCSV={() => exportToCSV(extractedData, script.name)}
-        />
       </div>
     );
   }
@@ -419,6 +370,9 @@ function App() {
 // Initialize
 async function init() {
   console.log('[Browserlet Sidepanel] init() started');
+
+  // Initialize healing message listeners
+  initializeHealingListeners();
 
   // Check service worker
   try {

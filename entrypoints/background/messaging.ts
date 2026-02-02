@@ -4,6 +4,9 @@ import { getLLMService } from './llm';
 import type { LLMConfig } from './llm/providers/types';
 import { buildExtractionPrompt, parseExtractionResponse } from './llm/prompts/extractionPrompt';
 import type { PageContext } from './llm/prompts/extractionPrompt';
+import { buildHealingPrompt, parseHealingResponse } from './llm/prompts/healingPrompt';
+import type { HealingPromptContext } from './llm/prompts/healingPrompt';
+import type { SemanticHint } from '../content/playback/types';
 import { getTriggerEngine, initializeTriggerEngine, broadcastTriggerUpdate } from './triggers';
 import type { ContextState, TriggerConfig } from '../../utils/triggers/types';
 import { getAllTriggers, saveTrigger, deleteTrigger, setSiteOverride } from '../../utils/storage/triggers';
@@ -267,6 +270,109 @@ async function processMessage(
     case 'SUBSTITUTE_CREDENTIALS': {
       const result = await handlePasswordMessage(message.type, message.payload);
       return result;
+    }
+
+    // Self-healing selector messages
+    case 'HEALING_REQUESTED': {
+      const healingContext = message.payload as HealingPromptContext;
+      const llmService = getLLMService();
+
+      // Check if LLM is configured
+      if (!llmService.isConfigured()) {
+        console.warn('[Browserlet BG] HEALING_REQUESTED but LLM not configured');
+        // Send error to sidepanel
+        chrome.runtime.sendMessage({
+          type: 'HEALING_ERROR',
+          payload: { error: 'LLM not configured. Please configure an LLM provider in Settings.' }
+        }).catch(() => {});
+        return { success: false, error: 'LLM not configured' };
+      }
+
+      try {
+        console.log('[Browserlet BG] Building healing prompt for step', healingContext.stepIndex);
+        const prompt = buildHealingPrompt(healingContext);
+        const response = await llmService.generate(prompt);
+        const suggestions = parseHealingResponse(response);
+
+        if (suggestions.length === 0) {
+          console.warn('[Browserlet BG] No valid healing suggestions from LLM');
+          chrome.runtime.sendMessage({
+            type: 'HEALING_ERROR',
+            payload: { error: 'LLM could not suggest alternative hints for this element.' }
+          }).catch(() => {});
+          return { success: false, error: 'No valid suggestions' };
+        }
+
+        // Send first suggestion to sidepanel
+        // (Plan 03 will add UI to browse multiple suggestions)
+        const bestSuggestion = suggestions[0];
+        console.log('[Browserlet BG] Sending HEALING_SUGGESTION to sidepanel:', bestSuggestion);
+
+        chrome.runtime.sendMessage({
+          type: 'HEALING_SUGGESTION',
+          payload: {
+            stepIndex: healingContext.stepIndex,
+            scriptId: (message.payload as { scriptId?: string }).scriptId || '',
+            scriptName: (message.payload as { scriptName?: string }).scriptName || '',
+            originalHints: healingContext.originalHints,
+            proposedHints: bestSuggestion.proposedHints,
+            confidence: bestSuggestion.confidence,
+            reason: bestSuggestion.reason,
+            domExcerpt: healingContext.domExcerpt,
+            pageUrl: healingContext.pageUrl,
+            pageTitle: healingContext.pageTitle,
+          }
+        }).catch(() => {});
+
+        return { success: true, data: suggestions };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to generate healing suggestions';
+        console.error('[Browserlet BG] HEALING_REQUESTED error:', errorMessage);
+        chrome.runtime.sendMessage({
+          type: 'HEALING_ERROR',
+          payload: { error: errorMessage }
+        }).catch(() => {});
+        return { success: false, error: errorMessage };
+      }
+    }
+
+    case 'APPLY_REPAIR': {
+      const { repairId, stepIndex, proposedHints, scriptId } = message.payload as {
+        repairId: string;
+        stepIndex: number;
+        proposedHints: SemanticHint[];
+        scriptId: string;
+      };
+
+      console.log('[Browserlet BG] APPLY_REPAIR for step', stepIndex, 'repairId:', repairId);
+
+      // Get active tab to send HEALING_APPROVED
+      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (activeTab?.id) {
+        try {
+          await chrome.tabs.sendMessage(activeTab.id, {
+            type: 'HEALING_APPROVED',
+            payload: {
+              repairId,
+              stepIndex,
+              proposedHints,
+              scriptId,
+            }
+          });
+          console.log('[Browserlet BG] HEALING_APPROVED sent to content script');
+          return { success: true };
+        } catch (error) {
+          console.error('[Browserlet BG] Failed to send HEALING_APPROVED:', error);
+          return { success: false, error: 'Failed to send healing approval to page' };
+        }
+      }
+      return { success: false, error: 'No active tab found' };
+    }
+
+    case 'GET_HEALING_HISTORY': {
+      // TODO: Plan 04 will implement storage and retrieval of healing audit trail
+      console.log('[Browserlet BG] GET_HEALING_HISTORY - not yet implemented');
+      return { success: true, data: [] };
     }
 
     default:
