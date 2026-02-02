@@ -85,3 +85,56 @@ export function validateBSL(content: string): { valid: boolean; errors: string[]
   // For now, basic validation is sufficient
   return { valid: true, errors: [] };
 }
+
+export type NormalizeResult = {
+  success: true;
+  content: string;
+  changed: boolean;
+} | {
+  success: false;
+  error: string;
+};
+
+/**
+ * Normalize YAML content with consistent indentation (2 spaces).
+ * Parses and re-dumps the YAML to fix indentation issues.
+ *
+ * @param content - Raw YAML string (possibly with inconsistent indentation)
+ * @returns Normalized YAML string or error
+ *
+ * @example
+ * const result = normalizeYAML(userInput);
+ * if (result.success) {
+ *   saveScript(result.content);
+ * } else {
+ *   showError(result.error);
+ * }
+ */
+export function normalizeYAML(content: string): NormalizeResult {
+  try {
+    // Parse the YAML
+    const parsed = yaml.load(content);
+
+    if (typeof parsed !== 'object' || parsed === null) {
+      return { success: false, error: 'Invalid YAML: expected an object' };
+    }
+
+    // Re-dump with consistent formatting
+    const normalized = yaml.dump(parsed, {
+      indent: 2,
+      lineWidth: -1,    // No line wrapping
+      noRefs: true,     // No YAML anchors/aliases
+      quotingType: '"', // Use double quotes for strings
+      forceQuotes: false, // Only quote when necessary
+      sortKeys: false,  // Preserve key order
+    });
+
+    // Check if content changed (normalize both for comparison)
+    const changed = content.trim() !== normalized.trim();
+
+    return { success: true, content: normalized, changed };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown parsing error';
+    return { success: false, error: `YAML syntax error: ${message}` };
+  }
+}

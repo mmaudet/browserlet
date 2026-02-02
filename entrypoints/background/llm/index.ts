@@ -8,6 +8,7 @@ import { ClaudeProvider } from './providers/claude';
 import { OllamaProvider } from './providers/ollama';
 import { OpenAIProvider } from './providers/openai';
 import { generateBasicBSL } from './fallback';
+import { normalizeYAML } from '../../../utils/yaml/parser';
 import type { CapturedAction } from '../../content/recording/types';
 
 /**
@@ -118,8 +119,10 @@ export class LLMService {
     // No provider configured - use fallback
     if (!this.provider || !this.initialized) {
       console.warn('[LLM Service] No provider or not initialized, using fallback');
+      const rawBsl = generateBasicBSL(actions);
+      const normalized = normalizeYAML(rawBsl);
       return {
-        bsl: generateBasicBSL(actions),
+        bsl: normalized.success ? normalized.content : rawBsl,
         usedLLM: false,
       };
     }
@@ -132,15 +135,25 @@ export class LLMService {
 
       if (!available) {
         console.warn('[LLM Service] Provider not available, using fallback');
+        const rawBsl = generateBasicBSL(actions);
+        const normalized = normalizeYAML(rawBsl);
         return {
-          bsl: generateBasicBSL(actions),
+          bsl: normalized.success ? normalized.content : rawBsl,
           usedLLM: false,
         };
       }
 
       // Generate with LLM
       console.log('[LLM Service] Generating BSL with LLM...');
-      const bsl = await this.provider.generateBSL(actions);
+      const rawBsl = await this.provider.generateBSL(actions);
+
+      // Normalize YAML indentation
+      const normalized = normalizeYAML(rawBsl);
+      const bsl = normalized.success ? normalized.content : rawBsl;
+      if (normalized.success && normalized.changed) {
+        console.log('[LLM Service] YAML normalized (fixed indentation)');
+      }
+
       console.log('[LLM Service] BSL generated successfully with LLM');
       return {
         bsl,
@@ -148,8 +161,10 @@ export class LLMService {
       };
     } catch (error) {
       console.error('[LLM Service] Provider failed, using fallback:', error);
+      const rawBsl = generateBasicBSL(actions);
+      const normalized = normalizeYAML(rawBsl);
       return {
-        bsl: generateBasicBSL(actions),
+        bsl: normalized.success ? normalized.content : rawBsl,
         usedLLM: false,
       };
     }
