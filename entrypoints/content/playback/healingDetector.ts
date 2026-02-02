@@ -315,12 +315,16 @@ export function getPageContext(): { url: string; title: string; structure: strin
 /**
  * Build complete healing context for a failed resolution
  * @param stepIndex - Step index in the script
+ * @param scriptId - Script ID for saving repairs
+ * @param scriptName - Script name for display
  * @param hints - Original hints that failed
  * @param result - Resolver result with confidence and match info
  * @returns Complete HealingContext
  */
 export function buildHealingContext(
   stepIndex: number,
+  scriptId: string,
+  scriptName: string,
   hints: SemanticHint[],
   result: ResolverResult
 ): HealingContext {
@@ -328,6 +332,8 @@ export function buildHealingContext(
 
   return {
     stepIndex,
+    scriptId,
+    scriptName,
     originalHints: hints,
     confidence: result.confidence,
     matchedHints: result.matchedHints,

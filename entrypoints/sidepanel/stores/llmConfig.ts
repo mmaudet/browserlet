@@ -82,12 +82,14 @@ export async function loadLLMConfig(): Promise<void> {
   llmConfigStore.openaiModel.value = stored.openaiModel ?? 'gpt-4o';
 
   // Handle API key decryption for Claude
+  let configuredSuccessfully = false;
   if (stored.provider === 'claude' && stored.encryptedApiKey) {
     try {
       const decrypted = await decryptApiKey(stored.encryptedApiKey);
       llmConfigStore.claudeApiKey.value = decrypted;
       llmConfigStore.needsApiKey.value = false;
       llmConfigStore.isConfigured.value = true;
+      configuredSuccessfully = true;
     } catch {
       // Decryption failed - likely new session key after browser restart
       llmConfigStore.claudeApiKey.value = '';
@@ -98,18 +100,32 @@ export async function loadLLMConfig(): Promise<void> {
     // Ollama doesn't need credentials
     llmConfigStore.needsApiKey.value = false;
     llmConfigStore.isConfigured.value = true;
+    configuredSuccessfully = true;
   } else if (stored.provider === 'openai' && stored.encryptedOpenaiApiKey) {
     try {
       const decrypted = await decryptApiKey(stored.encryptedOpenaiApiKey);
       llmConfigStore.openaiApiKey.value = decrypted;
       llmConfigStore.needsApiKey.value = false;
       llmConfigStore.isConfigured.value = true;
+      configuredSuccessfully = true;
     } catch {
       // Decryption failed - likely new session key after browser restart
       llmConfigStore.openaiApiKey.value = '';
       llmConfigStore.needsApiKey.value = true;
       llmConfigStore.isConfigured.value = false;
     }
+  }
+
+  // Send config to background service worker if successfully loaded
+  // This ensures background has the config after vault unlock
+  if (configuredSuccessfully) {
+    const config = getLLMConfigForServiceWorker(stored.provider);
+    chrome.runtime.sendMessage({
+      type: 'CONFIGURE_LLM',
+      payload: config,
+    }).catch(() => {
+      // Background may not be ready yet - ignore
+    });
   }
 }
 

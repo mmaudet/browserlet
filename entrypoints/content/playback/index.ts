@@ -100,13 +100,15 @@ export class PlaybackManager {
       currentStep: nextStep,
       results: Object.fromEntries(this.results),
       timestamp: Date.now(),
+      scriptId: this.scriptId,
+      executionId: this.executionId,
     };
     try {
       await chrome.runtime.sendMessage({
         type: 'SAVE_EXECUTION_STATE',
         payload: state
       });
-      console.log('[Browserlet] Saved execution state for navigation, resuming at step', nextStep);
+      console.log('[Browserlet] Saved execution state for navigation, resuming at step', nextStep, 'scriptId:', this.scriptId);
     } catch (error) {
       console.error('[Browserlet] Failed to save execution state:', error);
     }
@@ -326,6 +328,7 @@ export class PlaybackManager {
         // Check if aborted
         if (this.abortController.signal.aborted) {
           this.setState('stopped');
+          await PlaybackManager.clearPersistedState();
           return {
             status: 'stopped',
             step: i,
@@ -348,6 +351,7 @@ export class PlaybackManager {
         // Check if aborted after session check
         if (this.abortController.signal.aborted) {
           this.setState('stopped');
+          await PlaybackManager.clearPersistedState();
           return {
             status: 'stopped',
             step: i,
@@ -379,6 +383,17 @@ export class PlaybackManager {
 
       // All steps completed successfully
       this.setState('idle');
+
+      // Clear persisted state to prevent duplicate execution on page reload
+      await PlaybackManager.clearPersistedState();
+
+      // Emit final progress to update UI counter
+      this.emit({
+        type: 'progress',
+        step: totalSteps,
+        totalSteps,
+      });
+
       const finalResults = this.getResults();
       console.log('[Browserlet] Execution completed, final results:', finalResults);
       return {
@@ -399,6 +414,9 @@ export class PlaybackManager {
           failureReason: message,
         });
       }
+
+      // Clear persisted state to prevent duplicate execution on page reload
+      await PlaybackManager.clearPersistedState();
 
       this.emit({ type: 'error', error: errorWithStep });
       this.setState('idle');
@@ -487,7 +505,13 @@ export class PlaybackManager {
               console.log(`[Browserlet] Healing attempt ${attempts}/${MAX_HEALING_ATTEMPTS} for step ${index + 1}`);
 
               // Build healing context
-              const healingContext = buildHealingContext(index, currentHints, result);
+              const healingContext = buildHealingContext(
+                index,
+                this.scriptId,
+                this.script?.name || 'Unknown Script',
+                currentHints,
+                result
+              );
 
               // Request healing from user/LLM
               const newHints = await this.requestHealing(healingContext);
@@ -554,7 +578,13 @@ export class PlaybackManager {
 
             // Build healing context (with immediate resolve for error context)
             const immediateResult = resolveElement(currentHints);
-            const healingContext = buildHealingContext(index, currentHints, immediateResult);
+            const healingContext = buildHealingContext(
+              index,
+              this.scriptId,
+              this.script?.name || 'Unknown Script',
+              currentHints,
+              immediateResult
+            );
 
             // Request healing
             const newHints = await this.requestHealing(healingContext);
@@ -597,11 +627,15 @@ export class PlaybackManager {
 
     // Handle screenshot action (SHOT-01)
     if (processedStep.action === 'screenshot') {
+      // Clear persisted state BEFORE capturing to prevent duplicate on navigation race
+      await PlaybackManager.clearPersistedState();
+      console.log('[Browserlet] Screenshot action - scriptId:', this.scriptId, 'executionId:', this.executionId, 'stepIndex:', index + 1);
       await captureScreenshot({
         scriptId: this.scriptId,
         executionId: this.executionId,
         stepIndex: index + 1, // 1-based for display
       });
+      console.log('[Browserlet] Screenshot capture completed');
       return; // No further action needed
     }
 

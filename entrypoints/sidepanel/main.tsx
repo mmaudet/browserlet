@@ -1,6 +1,6 @@
 import { render } from 'preact';
 import { signal } from '@preact/signals';
-import { List, Circle, KeyRound, Settings, ArrowLeft, Loader2 } from 'lucide-preact';
+import { List, Circle, KeyRound, Settings, ArrowLeft, Loader2, CheckCircle } from 'lucide-preact';
 import { currentView, navigateTo, goBack, editorScript, ViewName } from './router';
 import { loadScripts, selectScript } from './stores/scripts';
 import { loadLLMConfig, llmConfigStore } from './stores/llmConfig';
@@ -16,12 +16,93 @@ import type { Script } from '../../utils/types';
 import { SuggestedScripts } from './components/SuggestedScripts';
 import { suggestedScriptIds, loadTriggers } from './stores/triggers';
 import { CredentialManager } from './components/CredentialManager';
-import { startExecution, isExecuting } from './stores/execution';
+import { startExecution, isExecuting, showCompletionModal, completedScriptName } from './stores/execution';
 import { initializeHealingListeners, hasPendingRepairs } from './stores/healing';
 import { RepairPanel } from './components/RepairPanel';
 
 // App initialization state
 const appState = signal<'loading' | 'needs_setup' | 'needs_unlock' | 'ready'>('loading');
+
+// Execution completion modal
+function CompletionModal() {
+  // Don't show completion modal if there are pending repairs
+  // The script didn't really complete successfully - it's waiting for healing
+  if (!showCompletionModal.value || hasPendingRepairs.value) return null;
+
+  const handleClose = () => {
+    showCompletionModal.value = false;
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10000
+      }}
+      onClick={handleClose}
+    >
+      <div
+        style={{
+          background: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          maxWidth: '300px',
+          width: 'calc(100% - 48px)',
+          textAlign: 'center',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+        }}
+        onClick={(e: Event) => e.stopPropagation()}
+      >
+        <div style={{
+          width: '56px',
+          height: '56px',
+          background: '#e8f5e9',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 16px'
+        }}>
+          <CheckCircle size={32} color="#4caf50" />
+        </div>
+        <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 600, color: '#333' }}>
+          {chrome.i18n.getMessage('executionSuccess') || 'Success'}
+        </h3>
+        <p style={{ margin: '0 0 20px', fontSize: '14px', color: '#666' }}>
+          {completedScriptName.value && (
+            <span style={{ fontWeight: 500 }}>{completedScriptName.value}</span>
+          )}
+          <br />
+          {chrome.i18n.getMessage('scriptCompletedSuccessfully') || 'Script completed successfully'}
+        </p>
+        <button
+          onClick={handleClose}
+          style={{
+            width: '100%',
+            padding: '12px',
+            background: '#4caf50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '15px',
+            fontWeight: 500,
+            cursor: 'pointer'
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // Bottom action bar component
 function BottomActionBar() {
@@ -371,6 +452,9 @@ function App() {
 
       {/* Bottom action bar - toujours visible pour navigation rapide */}
       <BottomActionBar />
+
+      {/* Execution completion modal */}
+      <CompletionModal />
     </div>
   );
 }

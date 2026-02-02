@@ -15,8 +15,10 @@ import {
   updateProposedHints,
   removeRepair,
   healingError,
+  isHealingInProgress,
   type RepairSuggestion
 } from '../stores/healing';
+import { resetExecution } from '../stores/execution';
 import type { SemanticHint, HintType } from '../../../entrypoints/content/playback/types';
 
 // All 10 hint types from the semantic resolver
@@ -56,9 +58,11 @@ interface HintEditorProps {
   hint: SemanticHint;
   index: number;
   onUpdate: (index: number, hint: SemanticHint) => void;
+  onDelete: (index: number) => void;
+  canDelete: boolean;
 }
 
-function HintEditor({ hint, index, onUpdate }: HintEditorProps) {
+function HintEditor({ hint, index, onUpdate, onDelete, canDelete }: HintEditorProps) {
   const isEditing = useSignal(false);
   const editType = useSignal<HintType>(hint.type);
   const editValue = useSignal(
@@ -124,6 +128,11 @@ function HintEditor({ hint, index, onUpdate }: HintEditorProps) {
       <button onClick={() => isEditing.value = true} style={editButtonStyles} title="Edit">
         <Edit2 size={12} />
       </button>
+      {canDelete && (
+        <button onClick={() => onDelete(index)} style={deleteHintButtonStyles} title="Delete hint">
+          <X size={12} />
+        </button>
+      )}
     </div>
   );
 }
@@ -142,6 +151,12 @@ function ActiveRepairView({ repair }: { repair: RepairSuggestion }) {
   const handleHintUpdate = (index: number, newHint: SemanticHint) => {
     const updatedHints = [...repair.proposedHints];
     updatedHints[index] = newHint;
+    updateProposedHints(repair.id, updatedHints);
+  };
+
+  // Delete a hint from proposed hints
+  const handleHintDelete = (index: number) => {
+    const updatedHints = repair.proposedHints.filter((_, i) => i !== index);
     updateProposedHints(repair.id, updatedHints);
   };
 
@@ -207,6 +222,9 @@ function ActiveRepairView({ repair }: { repair: RepairSuggestion }) {
 
       // Remove from queue
       removeRepair(repair.id);
+
+      // Reset execution state (script was healed, not completed)
+      resetExecution();
     } catch (error) {
       console.error('[RepairPanel] Apply failed:', error);
     }
@@ -229,9 +247,13 @@ function ActiveRepairView({ repair }: { repair: RepairSuggestion }) {
 
       // Remove from queue
       removeRepair(repair.id);
+
+      // Reset execution state
+      resetExecution();
     } catch (error) {
       console.error('[RepairPanel] Reject failed:', error);
       removeRepair(repair.id);
+      resetExecution();
     }
   };
 
@@ -276,6 +298,9 @@ function ActiveRepairView({ repair }: { repair: RepairSuggestion }) {
   // Update testStatus when repair status changes
   if (repair.status === 'approved' && testStatus.value !== 'success') {
     testStatus.value = 'success';
+  } else if (repair.status === 'pending' && testStatus.value === 'testing') {
+    // Test completed but failed - reset to idle or failed
+    testStatus.value = healingError.value ? 'failed' : 'idle';
   }
 
   const isTestPassed = repair.status === 'approved' || testStatus.value === 'success';
@@ -343,6 +368,8 @@ function ActiveRepairView({ repair }: { repair: RepairSuggestion }) {
               hint={hint}
               index={i}
               onUpdate={handleHintUpdate}
+              onDelete={handleHintDelete}
+              canDelete={repair.proposedHints.length > 1}
             />
           ))}
         </div>
@@ -490,16 +517,29 @@ function QueueItem({ repair, isActive }: { repair: RepairSuggestion; isActive: b
  */
 export function RepairPanel() {
   const hasRepairs = hasPendingRepairs.value || repairQueue.value.length > 0;
+  const healingInProgress = isHealingInProgress.value;
   const active = activeRepair.value;
   const count = pendingCount.value;
   const queue = repairQueue.value;
 
-  if (!hasRepairs) {
+  // Show panel if there are repairs OR if healing is in progress
+  if (!hasRepairs && !healingInProgress) {
     return null;
   }
 
   return (
     <div style={panelStyles}>
+      {/* CSS for blinking animation */}
+      <style>{`
+        @keyframes blink {
+          0%, 50% { opacity: 1; }
+          51%, 100% { opacity: 0.3; }
+        }
+        .healing-indicator {
+          animation: blink 1.2s ease-in-out infinite;
+        }
+      `}</style>
+
       {/* Header */}
       <div style={headerStyles}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -507,6 +547,11 @@ export function RepairPanel() {
           <span style={{ fontWeight: 500 }}>
             {chrome.i18n.getMessage('repairs') || 'Repairs'}
           </span>
+          {healingInProgress && !hasRepairs && (
+            <span className="healing-indicator" style={healingBadgeStyles}>
+              {chrome.i18n.getMessage('healingInProgress') || 'Healing...'}
+            </span>
+          )}
           {count > 0 && (
             <span style={countBadgeStyles}>
               {count} {chrome.i18n.getMessage('repairsPending') || 'pending'}
@@ -562,6 +607,15 @@ const countBadgeStyles: Record<string, string | number> = {
   background: 'rgba(255, 149, 0, 0.15)',
   padding: '2px 8px',
   borderRadius: '10px'
+};
+
+const healingBadgeStyles: Record<string, string | number> = {
+  fontSize: '11px',
+  color: '#007AFF',
+  background: 'rgba(0, 122, 255, 0.15)',
+  padding: '2px 8px',
+  borderRadius: '10px',
+  fontWeight: 500
 };
 
 const activeRepairStyles: Record<string, string | number> = {
@@ -667,6 +721,20 @@ const editButtonStyles: Record<string, string | number> = {
   alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0
+};
+
+const deleteHintButtonStyles: Record<string, string | number> = {
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  color: '#ff3b30',
+  padding: '2px',
+  borderRadius: '4px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  marginLeft: '4px'
 };
 
 const selectStyles: Record<string, string | number> = {

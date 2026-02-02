@@ -78,6 +78,10 @@ export type PlaybackState = 'idle' | 'running' | 'paused' | 'waiting_auth' | 'wa
 export interface HealingContext {
   /** Step index in the script (0-based) */
   stepIndex: number;
+  /** Script ID for saving repairs */
+  scriptId: string;
+  /** Script name for display */
+  scriptName: string;
   /** Original hints that failed to resolve */
   originalHints: SemanticHint[];
   /** Confidence achieved (< threshold) */
@@ -129,4 +133,6 @@ export interface PersistedExecutionState {
   currentStep: number;
   results: Record<string, unknown>;
   timestamp: number;
+  scriptId?: string;
+  executionId?: string;
 }

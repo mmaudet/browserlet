@@ -222,5 +222,84 @@ export function getLLMService(): LLMService {
   return instance;
 }
 
+/**
+ * Storage key for LLM configuration
+ * Must match the key used in sidepanel/stores/llmConfig.ts
+ */
+const STORAGE_KEY = 'browserlet_llm_config';
+
+/**
+ * Initialize LLM service from stored configuration
+ * Called at service worker startup to restore LLM state
+ *
+ * This handles the case where the service worker restarts and loses
+ * the in-memory LLM configuration. It reloads from chrome.storage.local
+ * and re-initializes the service.
+ */
+export async function initializeLLMFromStorage(): Promise<void> {
+  console.log('[LLM Service] Initializing from storage...');
+
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEY);
+    const stored = result[STORAGE_KEY] as {
+      provider: 'claude' | 'ollama' | 'openai';
+      claudeModel?: string;
+      ollamaHost?: string;
+      ollamaModel?: string;
+      encryptedApiKey?: { ciphertext: string; iv: string };
+      openaiEndpoint?: string;
+      openaiModel?: string;
+      encryptedOpenaiApiKey?: { ciphertext: string; iv: string };
+    } | undefined;
+
+    if (!stored) {
+      console.log('[LLM Service] No stored config found');
+      return;
+    }
+
+    console.log('[LLM Service] Found stored config for provider:', stored.provider);
+
+    // Import decryption function dynamically to avoid circular dependencies
+    const { decryptApiKey } = await import('../../../utils/crypto/encryption');
+
+    const config: LLMConfig = {
+      provider: stored.provider,
+      claudeModel: stored.claudeModel ?? 'claude-sonnet-4-5-20250514',
+      ollamaHost: stored.ollamaHost ?? 'http://localhost:11434',
+      ollamaModel: stored.ollamaModel ?? 'llama3.1',
+      openaiEndpoint: stored.openaiEndpoint ?? 'https://api.openai.com/v1/chat/completions',
+      openaiModel: stored.openaiModel ?? 'gpt-4o',
+    };
+
+    // Decrypt API keys based on provider
+    if (stored.provider === 'claude' && stored.encryptedApiKey) {
+      try {
+        config.claudeApiKey = await decryptApiKey(stored.encryptedApiKey);
+        console.log('[LLM Service] Claude API key decrypted successfully');
+      } catch (error) {
+        console.warn('[LLM Service] Failed to decrypt Claude API key:', error);
+        // Continue without key - isConfigured() will return false
+      }
+    } else if (stored.provider === 'openai' && stored.encryptedOpenaiApiKey) {
+      try {
+        config.openaiApiKey = await decryptApiKey(stored.encryptedOpenaiApiKey);
+        console.log('[LLM Service] OpenAI API key decrypted successfully');
+      } catch (error) {
+        console.warn('[LLM Service] Failed to decrypt OpenAI API key:', error);
+        // Continue without key - isConfigured() will return false
+      }
+    }
+    // Ollama doesn't need API key
+
+    // Initialize the service
+    const service = getLLMService();
+    await service.initialize(config);
+
+    console.log('[LLM Service] Initialized from storage, configured:', service.isConfigured());
+  } catch (error) {
+    console.error('[LLM Service] Failed to initialize from storage:', error);
+  }
+}
+
 // Re-export types for convenience
 export type { LLMConfig, LLMProvider } from './providers/types';

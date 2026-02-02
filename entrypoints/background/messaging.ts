@@ -282,6 +282,12 @@ async function processMessage(
       const healingContext = message.payload as HealingPromptContext;
       const llmService = getLLMService();
 
+      // Notify sidepanel that healing is starting
+      chrome.runtime.sendMessage({
+        type: 'HEALING_STARTED',
+        payload: { stepIndex: healingContext.stepIndex }
+      }).catch(() => {});
+
       // Check if LLM is configured
       if (!llmService.isConfigured()) {
         console.warn('[Browserlet BG] HEALING_REQUESTED but LLM not configured');
@@ -481,6 +487,7 @@ async function processMessage(
 
     // Screenshot messages
     case 'CAPTURE_SCREENSHOT': {
+      console.log('[Browserlet BG] CAPTURE_SCREENSHOT received:', message.payload);
       const { scriptId, executionId, stepIndex, isFailure, failureReason, pageUrl, pageTitle } =
         message.payload as {
           scriptId: string;
@@ -506,6 +513,7 @@ async function processMessage(
         );
 
         // Save to storage
+        console.log('[Browserlet BG] Saving screenshot for script:', scriptId, 'step:', stepIndex);
         await saveScreenshot({
           scriptId,
           executionId,
@@ -518,6 +526,7 @@ async function processMessage(
           dataUrl
         });
 
+        console.log('[Browserlet BG] Screenshot saved successfully');
         return { success: true };
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'Capture failed';

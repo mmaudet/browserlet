@@ -202,6 +202,13 @@ export function clearAllRepairs(): void {
 export function initializeHealingListeners(): void {
   chrome.runtime.onMessage.addListener((message) => {
     switch (message.type) {
+      case 'HEALING_STARTED': {
+        // LLM is working on a suggestion
+        isHealingInProgress.value = true;
+        healingError.value = null;
+        break;
+      }
+
       case 'HEALING_SUGGESTION': {
         const payload = message.payload as {
           stepIndex: number;

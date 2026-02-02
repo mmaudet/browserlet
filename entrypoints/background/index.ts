@@ -2,6 +2,7 @@ import { handleMessage } from './messaging';
 import { initializeState } from './storage';
 import { initializeTriggerEngine } from './triggers';
 import { initializePasswordInfrastructure } from './passwords';
+import { initializeLLMFromStorage } from './llm';
 
 export default defineBackground(() => {
   console.log('[Browserlet] Service worker started');
@@ -48,4 +49,9 @@ export default defineBackground(() => {
 
   // Initialize password infrastructure (auto-lock timer, idle detection)
   initializePasswordInfrastructure();
+
+  // Initialize LLM service from stored config (for self-healing, etc.)
+  initializeLLMFromStorage().catch(error => {
+    console.error('[Browserlet] Failed to initialize LLM from storage:', error);
+  });
 });
