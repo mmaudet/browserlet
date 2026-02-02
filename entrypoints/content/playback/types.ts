@@ -93,6 +93,16 @@ export interface HealingContext {
   domExcerpt: string;
 }
 
+// LLM-suggested repair for failed element resolution
+export interface RepairSuggestion {
+  /** Proposed semantic hints to try */
+  proposedHints: SemanticHint[];
+  /** Confidence in this suggestion (0-1) */
+  confidence: number;
+  /** Explanation of why these hints should work */
+  reason: string;
+}
+
 // Result of script execution
 export interface ExecutionResult {
   status: 'completed' | 'failed' | 'stopped';
