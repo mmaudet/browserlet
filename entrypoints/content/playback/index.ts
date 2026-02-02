@@ -22,6 +22,8 @@ import type {
   ParsedScript,
   BSLStep,
   PersistedExecutionState,
+  HealingContext,
+  SemanticHint,
 } from './types';
 
 // Modules
@@ -29,17 +31,28 @@ import { ActionExecutor } from './actionExecutor';
 import { SessionDetector } from './sessionDetector';
 import { humanizedWait, DEFAULT_CONFIG } from './humanizer';
 import type { HumanizerConfig } from './humanizer';
-import { waitForElement } from './semanticResolver';
+import { waitForElement, resolveElement } from './semanticResolver';
+import {
+  detectHealingNeeded,
+  buildHealingContext,
+  getHealingAttempts,
+  incrementHealingAttempts,
+  resetHealingAttempts,
+  maxHealingAttemptsReached,
+  HEALING_CONFIDENCE_THRESHOLD,
+  MAX_HEALING_ATTEMPTS,
+} from './healingDetector';
 
 /**
  * Event handler type for playback events
  */
 export type PlaybackEventHandler = (event: {
-  type: 'state_changed' | 'progress' | 'auth_required' | 'error';
+  type: 'state_changed' | 'progress' | 'auth_required' | 'healing_requested' | 'error';
   state?: PlaybackState;
   step?: number;
   totalSteps?: number;
   error?: string;
+  healingContext?: HealingContext;
 }) => void;
 
 /**
@@ -62,6 +75,10 @@ export class PlaybackManager {
   private sessionDetector: SessionDetector;
   private eventHandler: PlaybackEventHandler | null = null;
   private config: HumanizerConfig;
+
+  // Healing state
+  private healingResolver: ((hints: SemanticHint[] | null) => void) | null = null;
+  private pendingHealingContext: HealingContext | null = null;
 
   constructor(config: HumanizerConfig = DEFAULT_CONFIG) {
     this.config = config;
@@ -262,6 +279,9 @@ export class PlaybackManager {
     this.currentStep = startStep;
     this.results.clear();
 
+    // Reset healing attempts for new execution
+    resetHealingAttempts();
+
     // Restore previous results if resuming
     if (options?.previousResults) {
       for (const [key, value] of Object.entries(options.previousResults)) {
@@ -403,52 +423,150 @@ export class PlaybackManager {
     }
 
     let element: Element | undefined;
+    let currentHints = processedStep.target?.hints || [];
 
     // Resolve element for actions that need a target
-    if (processedStep.target?.hints && processedStep.target.hints.length > 0) {
-      console.log('[Browserlet] Resolving element with hints:', JSON.stringify(processedStep.target.hints));
+    if (currentHints.length > 0) {
+      console.log('[Browserlet] Resolving element with hints:', JSON.stringify(currentHints));
       const timeout = parseTimeout(processedStep.timeout);
       console.log('[Browserlet] Timeout:', timeout, 'ms');
 
-      try {
-        const result = await waitForElement(processedStep.target.hints, timeout);
-        console.log('[Browserlet] Element resolved, confidence:', result.confidence);
+      // Element resolution loop with healing support
+      let resolved = false;
+      let lastError: Error | null = null;
 
-        if (result.element) {
-          element = result.element;
-        } else {
-          // Try fallback selector if available
-          if (processedStep.target.fallback_selector) {
-            const fallbackElement = document.querySelector(processedStep.target.fallback_selector);
-            if (fallbackElement) {
-              element = fallbackElement;
+      while (!resolved) {
+        try {
+          const result = await waitForElement(currentHints, timeout);
+          console.log('[Browserlet] Element resolved, confidence:', result.confidence);
+
+          if (result.element) {
+            element = result.element;
+            resolved = true;
+            // Reset healing attempts on success
+            resetHealingAttempts(index);
+          } else {
+            // Low confidence - check if we should trigger healing
+            if (detectHealingNeeded(result, HEALING_CONFIDENCE_THRESHOLD)) {
+              // Check if max attempts reached
+              if (maxHealingAttemptsReached(index)) {
+                throw new Error(
+                  `Element not found after ${MAX_HEALING_ATTEMPTS} healing attempts. ` +
+                  `Last confidence: ${Math.round(result.confidence * 100)}%. ` +
+                  `Hints: [${result.matchedHints.join(', ')}] matched. ` +
+                  `Failed: [${result.failedHints.join(', ')}].`
+                );
+              }
+
+              // Increment attempts
+              const attempts = incrementHealingAttempts(index);
+              console.log(`[Browserlet] Healing attempt ${attempts}/${MAX_HEALING_ATTEMPTS} for step ${index + 1}`);
+
+              // Build healing context
+              const healingContext = buildHealingContext(index, currentHints, result);
+
+              // Request healing from user/LLM
+              const newHints = await this.requestHealing(healingContext);
+
+              if (newHints && newHints.length > 0) {
+                // User approved healing - retry with new hints
+                console.log('[Browserlet] Retrying with healed hints:', newHints);
+                currentHints = newHints;
+                this.setState('running');
+                // Continue loop to retry
+              } else {
+                // Healing rejected - fail the step
+                throw new Error(
+                  `Element not found. Healing rejected. ` +
+                  `Hints: [${result.matchedHints.join(', ')}] matched with ${Math.round(result.confidence * 100)}% confidence.`
+                );
+              }
             } else {
+              // Try fallback selector if available
+              if (processedStep.target?.fallback_selector) {
+                const fallbackElement = document.querySelector(processedStep.target.fallback_selector);
+                if (fallbackElement) {
+                  element = fallbackElement;
+                  resolved = true;
+                } else {
+                  throw new Error(
+                    `Element not found. Hints: [${result.matchedHints.join(', ')}] matched with ${Math.round(result.confidence * 100)}% confidence. ` +
+                    `Fallback selector "${processedStep.target.fallback_selector}" also failed.`
+                  );
+                }
+              } else {
+                throw new Error(
+                  `Element not found. Hints: [${result.matchedHints.join(', ')}] matched with ${Math.round(result.confidence * 100)}% confidence (< 70% threshold). ` +
+                  `Failed hints: [${result.failedHints.join(', ')}].`
+                );
+              }
+            }
+          }
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error('Unknown error');
+
+          // Check if this is a timeout - might need healing
+          if (lastError.message.includes('timeout') || lastError.message.includes('waitForElement')) {
+            // Check if max attempts reached
+            if (maxHealingAttemptsReached(index)) {
+              // Try fallback selector as last resort
+              if (processedStep.target?.fallback_selector) {
+                const fallbackElement = document.querySelector(processedStep.target.fallback_selector);
+                if (fallbackElement) {
+                  element = fallbackElement;
+                  resolved = true;
+                  continue;
+                }
+              }
               throw new Error(
-                `Element not found. Hints: [${result.matchedHints.join(', ')}] matched with ${Math.round(result.confidence * 100)}% confidence. ` +
-                `Fallback selector "${processedStep.target.fallback_selector}" also failed.`
+                `Element not found after ${MAX_HEALING_ATTEMPTS} healing attempts. ` +
+                `${lastError.message}`
+              );
+            }
+
+            // Increment attempts
+            const attempts = incrementHealingAttempts(index);
+            console.log(`[Browserlet] Healing attempt ${attempts}/${MAX_HEALING_ATTEMPTS} for step ${index + 1} (timeout)`);
+
+            // Build healing context (with immediate resolve for error context)
+            const immediateResult = resolveElement(currentHints);
+            const healingContext = buildHealingContext(index, currentHints, immediateResult);
+
+            // Request healing
+            const newHints = await this.requestHealing(healingContext);
+
+            if (newHints && newHints.length > 0) {
+              // Retry with new hints
+              console.log('[Browserlet] Retrying with healed hints after timeout:', newHints);
+              currentHints = newHints;
+              this.setState('running');
+              // Continue loop
+            } else {
+              // Healing rejected - try fallback or fail
+              if (processedStep.target?.fallback_selector) {
+                const fallbackElement = document.querySelector(processedStep.target.fallback_selector);
+                if (fallbackElement) {
+                  element = fallbackElement;
+                  resolved = true;
+                  continue;
+                }
+              }
+              throw new Error(
+                `Element not found. Healing rejected. ${lastError.message}`
               );
             }
           } else {
-            throw new Error(
-              `Element not found. Hints: [${result.matchedHints.join(', ')}] matched with ${Math.round(result.confidence * 100)}% confidence (< 70% threshold). ` +
-              `Failed hints: [${result.failedHints.join(', ')}].`
-            );
+            // Non-timeout error - try fallback or rethrow
+            if (processedStep.target?.fallback_selector) {
+              const fallbackElement = document.querySelector(processedStep.target.fallback_selector);
+              if (fallbackElement) {
+                element = fallbackElement;
+                resolved = true;
+                continue;
+              }
+            }
+            throw lastError;
           }
-        }
-      } catch (error) {
-        // Try fallback selector on timeout
-        if (processedStep.target.fallback_selector) {
-          const fallbackElement = document.querySelector(processedStep.target.fallback_selector);
-          if (fallbackElement) {
-            element = fallbackElement;
-          } else {
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            throw new Error(
-              `${message} Fallback selector "${processedStep.target.fallback_selector}" also failed.`
-            );
-          }
-        } else {
-          throw error;
         }
       }
     }
@@ -506,6 +624,86 @@ export class PlaybackManager {
     this.setState('running');
   }
 
+  /**
+   * Request healing for a failed element resolution
+   * Sends HEALING_REQUESTED message to background and waits for response
+   * @param context - Healing context with failure details
+   * @returns New hints if approved, null if rejected
+   */
+  private async requestHealing(context: HealingContext): Promise<SemanticHint[] | null> {
+    console.log('[Browserlet] Requesting healing for step', context.stepIndex + 1);
+
+    // Store context for potential retry
+    this.pendingHealingContext = context;
+
+    // Set state to waiting for healing
+    this.setState('waiting_healing');
+
+    // Emit healing_requested event for UI
+    this.emit({
+      type: 'healing_requested',
+      step: context.stepIndex + 1,
+      healingContext: context,
+    });
+
+    // Send message to background service worker
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'HEALING_REQUESTED',
+        payload: context,
+      });
+    } catch (error) {
+      console.error('[Browserlet] Failed to send healing request:', error);
+    }
+
+    // Wait for healing response (resolved by applyHealing or rejectHealing)
+    return new Promise<SemanticHint[] | null>((resolve) => {
+      this.healingResolver = resolve;
+    });
+  }
+
+  /**
+   * Apply approved healing with new hints
+   * Called by external code when user approves a repair suggestion
+   * @param hints - New semantic hints to try
+   */
+  applyHealing(hints: SemanticHint[]): void {
+    if (!this.healingResolver) {
+      console.warn('[Browserlet] No pending healing request to apply');
+      return;
+    }
+
+    console.log('[Browserlet] Applying healing with new hints:', hints);
+    this.pendingHealingContext = null;
+    const resolver = this.healingResolver;
+    this.healingResolver = null;
+    resolver(hints);
+  }
+
+  /**
+   * Reject healing and fail the step
+   * Called by external code when user rejects repair
+   */
+  rejectHealing(): void {
+    if (!this.healingResolver) {
+      console.warn('[Browserlet] No pending healing request to reject');
+      return;
+    }
+
+    console.log('[Browserlet] Healing rejected by user');
+    this.pendingHealingContext = null;
+    const resolver = this.healingResolver;
+    this.healingResolver = null;
+    resolver(null);
+  }
+
+  /**
+   * Get current pending healing context
+   */
+  getPendingHealingContext(): HealingContext | null {
+    return this.pendingHealingContext;
+  }
+
 }
 
 // Re-export all types and modules for convenient imports
@@ -517,3 +715,16 @@ export { humanizedWait, randomDelay, DEFAULT_CONFIG } from './humanizer';
 export type { HumanizerConfig } from './humanizer';
 export { waitForElement, resolveElement, isElementInteractable, HINT_WEIGHTS } from './semanticResolver';
 export { substituteVariables, hasExtractedVariables, extractVariableRefs } from './variableSubstitution';
+export {
+  detectHealingNeeded,
+  extractDOMContext,
+  getPageContext,
+  buildHealingContext,
+  getHealingAttempts,
+  incrementHealingAttempts,
+  resetHealingAttempts,
+  maxHealingAttemptsReached,
+  HEALING_CONFIDENCE_THRESHOLD,
+  AUTO_SUGGEST_CONFIDENCE_THRESHOLD,
+  MAX_HEALING_ATTEMPTS,
+} from './healingDetector';
