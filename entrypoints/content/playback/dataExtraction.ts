@@ -43,8 +43,9 @@ export function extractValue(
     const selectedOption = element.options[element.selectedIndex];
     rawValue = selectedOption?.text ?? '';
   } else {
-    // Default: use textContent (not innerText - better performance)
-    rawValue = element.textContent?.trim() ?? '';
+    // Use innerText to get only visible text (respects CSS visibility)
+    // This avoids capturing hidden elements like screen-reader-only spans
+    rawValue = (element as HTMLElement).innerText?.trim() ?? '';
   }
 
   // Apply transform if specified
@@ -77,8 +78,9 @@ export function extractTable(element: Element): TableExtractionResult {
     );
   }
 
+  // Use innerText to get only visible text (respects CSS visibility)
   const headers = Array.from(headerCells).map(th =>
-    th.textContent?.trim() ?? ''
+    (th as HTMLElement).innerText?.trim() ?? ''
   );
 
   // Extract data rows from tbody or remaining tr elements
@@ -88,13 +90,16 @@ export function extractTable(element: Element): TableExtractionResult {
     : Array.from(element.querySelectorAll('tr')).slice(1); // Skip header row
 
   const rows = dataRows.map(row => {
-    const cells = row.querySelectorAll('td');
+    // Get both th and td cells to handle tables with row headers
+    const cells = row.querySelectorAll('th, td');
     const rowData: Record<string, string> = {};
 
     Array.from(cells).forEach((cell, index) => {
       const header = headers[index];
       if (header) {
-        rowData[header] = cell.textContent?.trim() ?? '';
+        // Use innerText to get only visible text (respects CSS visibility)
+        // This avoids capturing hidden elements like screen-reader-only spans
+        rowData[header] = (cell as HTMLElement).innerText?.trim() ?? '';
       }
     });
 
