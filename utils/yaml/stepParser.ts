@@ -4,6 +4,7 @@
 
 import yaml from 'js-yaml';
 import type { BSLStep, ParsedScript, ActionType, SessionCheckConfig } from '../../entrypoints/content/playback/types';
+import type { SemanticHint } from '../../entrypoints/content/playback/types';
 import { extractVariableRefs } from '../../entrypoints/content/playback/variableSubstitution';
 
 // Valid action types for BSL scripts
@@ -12,6 +13,7 @@ const VALID_ACTIONS: ActionType[] = [
   'type',
   'select',
   'extract',
+  'table_extract',
   'wait_for',
   'navigate',
   'scroll',
@@ -24,6 +26,7 @@ const TARGET_REQUIRED_ACTIONS: ActionType[] = [
   'type',
   'select',
   'extract',
+  'table_extract',
   'wait_for',
   'scroll',
   'hover',
@@ -135,14 +138,24 @@ export function validateStep(step: unknown, index: number): BSLStep {
     bslStep.value = String(rawStep.value);
   }
 
-  if (rawStep.output && typeof rawStep.output === 'object') {
-    const output = rawStep.output as Record<string, unknown>;
-    if (typeof output.variable === 'string') {
+  // Handle output field - supports both string shorthand and object format
+  // String: output: extracted.deal_number
+  // Object: output: { variable: extracted.deal_number, transform: trim }
+  if (rawStep.output) {
+    if (typeof rawStep.output === 'string') {
+      // Shorthand format: output: extracted.deal_number
       bslStep.output = {
-        variable: output.variable,
+        variable: rawStep.output,
       };
-      if (typeof output.transform === 'string') {
-        bslStep.output.transform = output.transform;
+    } else if (typeof rawStep.output === 'object') {
+      const output = rawStep.output as Record<string, unknown>;
+      if (typeof output.variable === 'string') {
+        bslStep.output = {
+          variable: output.variable,
+        };
+        if (typeof output.transform === 'string') {
+          bslStep.output.transform = output.transform;
+        }
       }
     }
   }
@@ -302,4 +315,66 @@ export function parseSteps(yamlContent: string): ParsedScript {
   }
 
   return script;
+}
+
+/**
+ * Update hints for a specific step in YAML content
+ * Preserves original formatting and comments as much as possible
+ * @param yamlContent - Original YAML string
+ * @param stepIndex - Zero-based step index to update
+ * @param newHints - New semantic hints to apply
+ * @returns Updated YAML string
+ * @throws Error if step not found or update fails
+ */
+export function updateStepHints(
+  yamlContent: string,
+  stepIndex: number,
+  newHints: SemanticHint[]
+): string {
+  // Parse to validate and get structure
+  let parsed: unknown;
+  try {
+    parsed = yaml.load(yamlContent);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`YAML parsing failed: ${message}`);
+  }
+
+  if (typeof parsed !== 'object' || parsed === null) {
+    throw new Error('Invalid BSL script: expected an object');
+  }
+
+  const rawScript = parsed as Record<string, unknown>;
+
+  if (!rawScript.steps || !Array.isArray(rawScript.steps)) {
+    throw new Error('Invalid BSL script: missing steps array');
+  }
+
+  if (stepIndex < 0 || stepIndex >= rawScript.steps.length) {
+    throw new Error(`Step index ${stepIndex} out of range (0-${rawScript.steps.length - 1})`);
+  }
+
+  const step = rawScript.steps[stepIndex];
+  if (!step || typeof step !== 'object') {
+    throw new Error(`Step ${stepIndex} is not an object`);
+  }
+
+  const rawStep = step as Record<string, unknown>;
+  if (!rawStep.target || typeof rawStep.target !== 'object') {
+    throw new Error(`Step ${stepIndex} has no target object`);
+  }
+
+  // Update the hints
+  (rawStep.target as Record<string, unknown>).hints = newHints;
+
+  // Re-serialize with proper formatting (2-space indent like YAML convention)
+  const result = yaml.dump(parsed, {
+    indent: 2,
+    lineWidth: -1, // No line wrapping
+    noRefs: true, // Don't use YAML references
+    quotingType: '"', // Use double quotes for strings
+    forceQuotes: false, // Only quote when necessary
+  });
+
+  return result;
 }

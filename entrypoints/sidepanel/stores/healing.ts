@@ -227,10 +227,15 @@ export function initializeHealingListeners(): void {
           success: boolean;
         };
 
+        // 'approved' status means test passed and ready for user to apply
+        // The actual fix is applied when user clicks "Apply Fix"
         updateRepairStatus(repairId, success ? 'approved' : 'pending');
 
         if (!success) {
           healingError.value = 'Test failed: element not found with proposed hints';
+        } else {
+          // Clear any previous error on success
+          healingError.value = null;
         }
         break;
       }

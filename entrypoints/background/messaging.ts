@@ -11,6 +11,8 @@ import { getTriggerEngine, initializeTriggerEngine, broadcastTriggerUpdate } fro
 import type { ContextState, TriggerConfig } from '../../utils/triggers/types';
 import { getAllTriggers, saveTrigger, deleteTrigger, setSiteOverride } from '../../utils/storage/triggers';
 import { handlePasswordMessage } from './passwords';
+import { getScript, saveScript } from '../../utils/storage/scripts';
+import { updateStepHints } from '../../utils/yaml/stepParser';
 
 // Storage key for persisted execution state
 const EXECUTION_STATE_KEY = 'browserlet_execution_state';
@@ -337,36 +339,57 @@ async function processMessage(
     }
 
     case 'APPLY_REPAIR': {
-      const { repairId, stepIndex, proposedHints, scriptId } = message.payload as {
+      const { repairId, stepIndex, newHints, scriptId } = message.payload as {
         repairId: string;
         stepIndex: number;
-        proposedHints: SemanticHint[];
+        newHints: SemanticHint[];
         scriptId: string;
       };
 
       console.log('[Browserlet BG] APPLY_REPAIR for step', stepIndex, 'repairId:', repairId);
 
-      // Get active tab to send HEALING_APPROVED
-      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (activeTab?.id) {
-        try {
+      try {
+        // Get the script
+        const script = await getScript(scriptId);
+        if (!script) {
+          return { success: false, error: `Script not found: ${scriptId}` };
+        }
+
+        // Update the hints in the script content
+        const updatedContent = updateStepHints(script.content, stepIndex, newHints);
+
+        // Save the updated script
+        await saveScript({
+          ...script,
+          content: updatedContent
+        });
+
+        console.log('[Browserlet BG] Script updated with healed hints');
+
+        // Send HEALING_APPROVED to content script to hide overlay
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (activeTab?.id) {
           await chrome.tabs.sendMessage(activeTab.id, {
             type: 'HEALING_APPROVED',
-            payload: {
-              repairId,
-              stepIndex,
-              proposedHints,
-              scriptId,
-            }
-          });
-          console.log('[Browserlet BG] HEALING_APPROVED sent to content script');
-          return { success: true };
-        } catch (error) {
-          console.error('[Browserlet BG] Failed to send HEALING_APPROVED:', error);
-          return { success: false, error: 'Failed to send healing approval to page' };
+            payload: { repairId, stepIndex, newHints, scriptId }
+          }).catch(() => {}); // Ignore if tab doesn't exist
         }
+
+        return { success: true };
+      } catch (error) {
+        console.error('[Browserlet BG] Failed to apply repair:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return { success: false, error: `Failed to apply repair: ${errorMessage}` };
       }
-      return { success: false, error: 'No active tab found' };
+    }
+
+    case 'HEALING_REJECTED': {
+      const { repairId } = message.payload as { repairId: string };
+      console.log('[Browserlet BG] HEALING_REJECTED for repairId:', repairId);
+
+      // TODO: Plan 04 may log rejection to healing history
+      // For now, just acknowledge - the sidepanel handles queue removal
+      return { success: true };
     }
 
     case 'GET_HEALING_HISTORY': {
