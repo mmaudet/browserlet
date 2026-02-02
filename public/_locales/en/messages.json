@@ -1025,5 +1025,38 @@
         "example": "2024-01-15"
       }
     }
+  },
+
+  "screenshots": {
+    "message": "Screenshots",
+    "description": "Title for screenshots section"
+  },
+  "noScreenshots": {
+    "message": "No screenshots captured",
+    "description": "Empty state when no screenshots exist"
+  },
+  "downloadAllScreenshots": {
+    "message": "Download all screenshots as ZIP",
+    "description": "Tooltip for download all button"
+  },
+  "downloadAll": {
+    "message": "Download All",
+    "description": "Button to download all screenshots as ZIP"
+  },
+  "downloadPNG": {
+    "message": "Download PNG",
+    "description": "Tooltip for download PNG button"
+  },
+  "step": {
+    "message": "Step",
+    "description": "Label for step number"
+  },
+  "failure": {
+    "message": "Failure",
+    "description": "Label for failure indicator"
+  },
+  "screenshotCaptured": {
+    "message": "Screenshot captured",
+    "description": "Notification when screenshot is captured"
   }
 }

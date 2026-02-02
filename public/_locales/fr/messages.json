@@ -1025,5 +1025,38 @@
         "example": "2024-01-15"
       }
     }
+  },
+
+  "screenshots": {
+    "message": "Captures d'ecran",
+    "description": "Titre de la section captures d'ecran"
+  },
+  "noScreenshots": {
+    "message": "Aucune capture d'ecran",
+    "description": "Message quand aucune capture n'existe"
+  },
+  "downloadAllScreenshots": {
+    "message": "Telecharger toutes les captures en ZIP",
+    "description": "Info-bulle pour le bouton tout telecharger"
+  },
+  "downloadAll": {
+    "message": "Tout telecharger",
+    "description": "Bouton pour telecharger toutes les captures en ZIP"
+  },
+  "downloadPNG": {
+    "message": "Telecharger PNG",
+    "description": "Info-bulle pour le bouton telecharger PNG"
+  },
+  "step": {
+    "message": "Etape",
+    "description": "Label pour le numero d'etape"
+  },
+  "failure": {
+    "message": "Echec",
+    "description": "Label pour l'indicateur d'echec"
+  },
+  "screenshotCaptured": {
+    "message": "Capture d'ecran enregistree",
+    "description": "Notification quand une capture est enregistree"
   }
 }

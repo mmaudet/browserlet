@@ -1,14 +1,18 @@
 import { useSignal } from '@preact/signals';
-import { Type, Pencil, Trash2, Zap, History, Play, CheckCircle, XCircle, StopCircle, Loader2, X, Plus } from 'lucide-preact';
-import type { Script, ExecutionRecord } from '../../../utils/types';
+import { Type, Pencil, Trash2, Zap, History, Play, CheckCircle, XCircle, StopCircle, Loader2, X, Plus, Database } from 'lucide-preact';
+import type { Script, ExecutionRecord, ScreenshotRecord } from '../../../utils/types';
 import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId, updateScriptInState } from '../stores/scripts';
 import { triggersState } from '../stores/triggers';
-import { startExecution } from '../stores/execution';
+import { startExecution, isExecuting, currentScript, executionStatus, progressPercent, stopExecution, executionError } from '../stores/execution';
 import { navigateTo } from '../router';
 import { TriggerConfig } from './TriggerConfig';
 import { deleteScript, saveScript } from '../../../utils/storage/scripts';
 import { ImportButton } from './ImportExport';
 import { getExecutionHistory, clearExecutionHistory } from '../../../utils/storage/history';
+import { getScreenshots } from '../../../utils/storage/screenshots';
+import { ExtractedDataModal } from './ExtractedDataModal';
+import { ScreenshotGallery } from './ScreenshotGallery';
+import { exportToJSON, exportToCSV } from '../../../utils/export/dataExport';
 
 interface ScriptListProps {
   onScriptSelect?: (script: Script) => void;
@@ -19,24 +23,45 @@ interface ScriptItemProps {
   script: Script;
   isSelected: boolean;
   triggerCount: number;
+  isRunning: boolean;
+  runStatus: 'idle' | 'running' | 'completed' | 'failed' | 'stopped' | 'waiting_auth';
+  progress: number;
   onEdit: () => void;
   onRun: () => void;
+  onStop: () => void;
   onConfigureTriggers: () => void;
   onViewHistory: () => void;
   onDelete: () => void;
   onRename: () => void;
 }
 
-function ScriptItem({ script, isSelected, triggerCount, onEdit, onRun, onConfigureTriggers, onViewHistory, onDelete, onRename }: ScriptItemProps) {
+function ScriptItem({ script, isSelected, triggerCount, isRunning, runStatus, progress, onEdit, onRun, onStop, onConfigureTriggers, onViewHistory, onDelete, onRename }: ScriptItemProps) {
   return (
     <div
       style={{
         padding: '12px',
         borderBottom: '1px solid #f0f0f0',
-        background: isSelected ? '#e8f4fd' : 'white',
+        background: isRunning ? '#e6f7e6' : isSelected ? '#e8f4fd' : 'white',
         transition: 'background 0.15s'
       }}
     >
+      {/* Progress bar when running */}
+      {isRunning && (
+        <div style={{
+          height: '3px',
+          background: '#e0e0e0',
+          borderRadius: '2px',
+          marginBottom: '8px',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            height: '100%',
+            width: `${progress}%`,
+            background: '#34c759',
+            transition: 'width 0.3s ease'
+          }} />
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
         {/* Script info */}
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -45,6 +70,11 @@ function ScriptItem({ script, isSelected, triggerCount, onEdit, onRun, onConfigu
             {script.target_app && (
               <span style={{ fontSize: '10px', background: '#e0e0e0', padding: '2px 6px', borderRadius: '4px', color: '#666', flexShrink: 0 }}>
                 {script.target_app}
+              </span>
+            )}
+            {isRunning && (
+              <span style={{ fontSize: '10px', background: '#34c759', padding: '2px 6px', borderRadius: '4px', color: 'white', flexShrink: 0 }}>
+                {progress}%
               </span>
             )}
           </div>
@@ -115,17 +145,30 @@ function ScriptItem({ script, isSelected, triggerCount, onEdit, onRun, onConfigu
           >
             <History size={15} strokeWidth={1.5} />
           </button>
-          {/* Play */}
-          <button
-            onClick={(e: Event) => {
-              e.stopPropagation();
-              onRun();
-            }}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#34c759', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title={chrome.i18n.getMessage('runScript') || 'Run Script'}
-          >
-            <Play size={16} strokeWidth={1.5} fill="#34c759" />
-          </button>
+          {/* Play/Stop */}
+          {isRunning ? (
+            <button
+              onClick={(e: Event) => {
+                e.stopPropagation();
+                onStop();
+              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#ff3b30', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title={chrome.i18n.getMessage('stopExecution') || 'Stop'}
+            >
+              <StopCircle size={16} strokeWidth={1.5} />
+            </button>
+          ) : (
+            <button
+              onClick={(e: Event) => {
+                e.stopPropagation();
+                onRun();
+              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#34c759', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title={chrome.i18n.getMessage('runScript') || 'Run Script'}
+            >
+              <Play size={16} strokeWidth={1.5} fill="#34c759" />
+            </button>
+          )}
           {/* Delete (far right) */}
           <button
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#ff3b30', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '4px' }}
@@ -189,17 +232,23 @@ interface ScriptHistoryModalProps {
   scriptId: string;
   scriptName: string;
   onClose: () => void;
+  onViewData: (record: ExecutionRecord) => void;
 }
 
-function ScriptHistoryModal({ scriptId, scriptName, onClose }: ScriptHistoryModalProps) {
+function ScriptHistoryModal({ scriptId, scriptName, onClose, onViewData }: ScriptHistoryModalProps) {
   const historyRecords = useSignal<ExecutionRecord[]>([]);
+  const screenshots = useSignal<ScreenshotRecord[]>([]);
   const isLoading = useSignal(true);
 
-  // Load history on mount
+  // Load history and screenshots on mount
   const loadHistory = async () => {
     isLoading.value = true;
-    const records = await getExecutionHistory(scriptId);
+    const [records, screenshotData] = await Promise.all([
+      getExecutionHistory(scriptId),
+      getScreenshots(scriptId)
+    ]);
     historyRecords.value = records;
+    screenshots.value = screenshotData;
     isLoading.value = false;
   };
 
@@ -306,6 +355,28 @@ function ScriptHistoryModal({ scriptId, scriptName, onClose }: ScriptHistoryModa
                     {record.error}
                   </div>
                 )}
+                {/* View Data button if results exist */}
+                {record.results && Object.keys(record.results as Record<string, unknown>).length > 0 && (
+                  <button
+                    onClick={() => onViewData(record)}
+                    style={{
+                      marginTop: '8px',
+                      padding: '4px 10px',
+                      fontSize: '11px',
+                      background: '#e3f2fd',
+                      border: '1px solid #90caf9',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      color: '#1976d2',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Database size={12} />
+                    {chrome.i18n.getMessage('viewData') || 'View Data'}
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -317,6 +388,14 @@ function ScriptHistoryModal({ scriptId, scriptName, onClose }: ScriptHistoryModa
               {chrome.i18n.getMessage('clearHistory') || 'Clear History'}
             </button>
           </div>
+
+          {/* Screenshot gallery */}
+          {screenshots.value.length > 0 && (
+            <ScreenshotGallery
+              screenshots={screenshots.value}
+              scriptName={scriptName}
+            />
+          )}
         </>
       )}
     </div>
@@ -326,9 +405,40 @@ function ScriptHistoryModal({ scriptId, scriptName, onClose }: ScriptHistoryModa
 export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}) {
   const showTriggerConfig = useSignal<string | null>(null);
   const showHistoryModal = useSignal<{ scriptId: string; scriptName: string } | null>(null);
+  const showDataModal = useSignal<{ scriptName: string; results: Record<string, unknown> } | null>(null);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Error toast - shows execution errors immediately */}
+      {executionError.value && (
+        <div style={{
+          padding: '12px 16px',
+          background: '#ffebee',
+          borderBottom: '1px solid #ef9a9a',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '10px'
+        }}>
+          <XCircle size={18} color="#d32f2f" style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div style={{ flex: 1, fontSize: '13px', color: '#c62828', lineHeight: '1.4' }}>
+            {executionError.value}
+          </div>
+          <button
+            onClick={() => { executionError.value = null; }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '2px',
+              color: '#d32f2f',
+              flexShrink: 0
+            }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Search header */}
       <div style={{ padding: '12px', background: '#f5f5f5', borderBottom: '1px solid #ddd' }}>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
@@ -369,29 +479,40 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
           </div>
         ) : (
           <div>
-            {filteredScripts.value.map(script => (
-              <ScriptItem
-                key={script.id}
-                script={script}
-                isSelected={selectedScriptId.value === script.id}
-                triggerCount={triggersState.value.filter(t => t.scriptId === script.id && t.enabled).length}
-                onEdit={() => {
-                  selectScript(script.id);
-                  onScriptSelect?.(script);
-                }}
-                onRun={() => {
-                  startExecution(script);
-                }}
-                onConfigureTriggers={() => {
-                  showTriggerConfig.value = script.id;
-                }}
-                onViewHistory={() => {
-                  showHistoryModal.value = { scriptId: script.id, scriptName: script.name };
-                }}
-                onDelete={() => handleDeleteScript(script)}
-                onRename={() => handleRenameScript(script)}
-              />
-            ))}
+            {filteredScripts.value.map(script => {
+              const scriptIsRunning = isExecuting.value && currentScript.value?.id === script.id;
+              return (
+                <ScriptItem
+                  key={script.id}
+                  script={script}
+                  isSelected={selectedScriptId.value === script.id}
+                  triggerCount={triggersState.value.filter(t => t.scriptId === script.id && t.enabled).length}
+                  isRunning={scriptIsRunning}
+                  runStatus={scriptIsRunning ? executionStatus.value : 'idle'}
+                  progress={scriptIsRunning ? progressPercent.value : 0}
+                  onEdit={() => {
+                    selectScript(script.id);
+                    onScriptSelect?.(script);
+                  }}
+                  onRun={() => {
+                    console.log('[Browserlet] Play button clicked for script:', script.name);
+                    startExecution(script);
+                  }}
+                  onStop={() => {
+                    console.log('[Browserlet] Stop button clicked for script:', script.name);
+                    stopExecution();
+                  }}
+                  onConfigureTriggers={() => {
+                    showTriggerConfig.value = script.id;
+                  }}
+                  onViewHistory={() => {
+                    showHistoryModal.value = { scriptId: script.id, scriptName: script.name };
+                  }}
+                  onDelete={() => handleDeleteScript(script)}
+                  onRename={() => handleRenameScript(script)}
+                />
+              );
+            })}
           </div>
         )}
       </div>
@@ -468,10 +589,45 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
               scriptId={showHistoryModal.value.scriptId}
               scriptName={showHistoryModal.value.scriptName}
               onClose={() => { showHistoryModal.value = null; }}
+              onViewData={(record) => {
+                // Handle both array and object formats for results
+                let results = record.results as Record<string, unknown>;
+                // If results is an array, unwrap the first element or merge all
+                if (Array.isArray(record.results)) {
+                  results = record.results.reduce((acc, item) => {
+                    if (typeof item === 'object' && item !== null) {
+                      return { ...acc, ...item };
+                    }
+                    return acc;
+                  }, {} as Record<string, unknown>);
+                }
+                showDataModal.value = {
+                  scriptName: record.scriptName,
+                  results
+                };
+              }}
             />
           ) : null}
         </div>
       </div>
+
+      {/* Extracted Data modal */}
+      <ExtractedDataModal
+        data={showDataModal.value?.results || {}}
+        scriptName={showDataModal.value?.scriptName || ''}
+        isOpen={showDataModal.value !== null}
+        onClose={() => { showDataModal.value = null; }}
+        onExportJSON={() => {
+          if (showDataModal.value) {
+            exportToJSON(showDataModal.value.results, showDataModal.value.scriptName);
+          }
+        }}
+        onExportCSV={() => {
+          if (showDataModal.value) {
+            exportToCSV(showDataModal.value.results, showDataModal.value.scriptName);
+          }
+        }}
+      />
     </div>
   );
 }
