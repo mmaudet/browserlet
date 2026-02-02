@@ -183,14 +183,19 @@ function ActiveRepairView({ repair }: { repair: RepairSuggestion }) {
     showConfirmDialog.value = false;
 
     try {
-      // Send APPLY_REPAIR message to background for script update
+      // Send APPLY_REPAIR message to background for script update and audit trail
       await chrome.runtime.sendMessage({
         type: 'APPLY_REPAIR',
         payload: {
           repairId: repair.id,
           scriptId: repair.scriptId,
+          scriptName: repair.scriptName,
           stepIndex: repair.stepIndex,
-          newHints: repair.proposedHints
+          originalHints: repair.originalHints,
+          newHints: repair.proposedHints,
+          confidence: repair.confidence,
+          reason: repair.reason,
+          pageUrl: repair.pageUrl
         }
       });
 

@@ -340,11 +340,26 @@ async function processMessage(
     }
 
     case 'APPLY_REPAIR': {
-      const { repairId, stepIndex, newHints, scriptId } = message.payload as {
+      const {
+        repairId,
+        stepIndex,
+        newHints,
+        scriptId,
+        scriptName,
+        originalHints,
+        confidence,
+        reason,
+        pageUrl
+      } = message.payload as {
         repairId: string;
         stepIndex: number;
         newHints: SemanticHint[];
         scriptId: string;
+        scriptName: string;
+        originalHints: SemanticHint[];
+        confidence: number;
+        reason: string;
+        pageUrl: string;
       };
 
       console.log('[Browserlet BG] APPLY_REPAIR for step', stepIndex, 'repairId:', repairId);
@@ -366,6 +381,20 @@ async function processMessage(
         });
 
         console.log('[Browserlet BG] Script updated with healed hints');
+
+        // Create healing record in audit trail
+        await addHealingRecord({
+          scriptId,
+          scriptName,
+          stepIndex,
+          originalHints,
+          newHints,
+          confidence,
+          reason,
+          approvedBy: 'user',
+          approvedAt: Date.now(),
+          pageUrl
+        });
 
         // Send HEALING_APPROVED to content script to hide overlay
         const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
