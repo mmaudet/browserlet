@@ -25,7 +25,8 @@ export type TransformType =
   | 'uppercase'
   | 'parse_number'
   | 'parse_currency'
-  | 'parse_date';
+  | 'parse_date'
+  | 'extract_number';
 
 // Output configuration for extraction actions
 export interface OutputConfig {

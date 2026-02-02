@@ -191,6 +191,102 @@ describe('applyTransform', () => {
     });
   });
 
+  describe('extract_number', () => {
+    describe('basic extraction', () => {
+      beforeEach(() => {
+        vi.stubGlobal('navigator', { language: 'en-US' });
+      });
+
+      afterEach(() => {
+        vi.unstubAllGlobals();
+      });
+
+      it('extracts number at end of string', () => {
+        expect(applyTransform('Demandes en attente 4', 'extract_number')).toBe(4);
+      });
+
+      it('extracts number at start of string', () => {
+        expect(applyTransform('4 tâches', 'extract_number')).toBe(4);
+      });
+
+      it('extracts number in middle of string', () => {
+        expect(applyTransform('Il y a 42 messages', 'extract_number')).toBe(42);
+      });
+
+      it('extracts simple integer', () => {
+        expect(applyTransform('42', 'extract_number')).toBe(42);
+      });
+
+      it('extracts negative number', () => {
+        expect(applyTransform('Balance: -150', 'extract_number')).toBe(-150);
+      });
+    });
+
+    describe('with US locale', () => {
+      beforeEach(() => {
+        vi.stubGlobal('navigator', { language: 'en-US' });
+      });
+
+      afterEach(() => {
+        vi.unstubAllGlobals();
+      });
+
+      it('extracts US formatted number with decimal', () => {
+        expect(applyTransform('Total: $1,234.56', 'extract_number')).toBe(1234.56);
+      });
+
+      it('extracts US formatted number with thousands', () => {
+        expect(applyTransform('Population: 1,234,567', 'extract_number')).toBe(1234567);
+      });
+    });
+
+    describe('with EU locale', () => {
+      beforeEach(() => {
+        vi.stubGlobal('navigator', { language: 'fr-FR' });
+      });
+
+      afterEach(() => {
+        vi.unstubAllGlobals();
+      });
+
+      it('extracts EU formatted number with decimal', () => {
+        expect(applyTransform('Prix: 29,99€', 'extract_number')).toBe(29.99);
+      });
+
+      it('extracts EU formatted number with thousands', () => {
+        expect(applyTransform('Total: 1.234,56 EUR', 'extract_number')).toBe(1234.56);
+      });
+    });
+
+    describe('error cases', () => {
+      beforeEach(() => {
+        vi.stubGlobal('navigator', { language: 'en-US' });
+      });
+
+      afterEach(() => {
+        vi.unstubAllGlobals();
+      });
+
+      it('throws on string without numbers', () => {
+        expect(() => applyTransform('No numbers here', 'extract_number')).toThrow(
+          'Cannot extract number from "No numbers here"'
+        );
+      });
+
+      it('throws on empty string', () => {
+        expect(() => applyTransform('', 'extract_number')).toThrow(
+          'Cannot extract number from empty string'
+        );
+      });
+
+      it('throws on whitespace only', () => {
+        expect(() => applyTransform('   ', 'extract_number')).toThrow(
+          'Cannot extract number from empty string'
+        );
+      });
+    });
+  });
+
   describe('unknown transform', () => {
     it('throws on unknown transform type', () => {
       // @ts-expect-error - Testing runtime behavior with invalid type

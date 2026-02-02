@@ -38,6 +38,9 @@ export function applyTransform(
     case 'parse_date':
       return parseDate(value);
 
+    case 'extract_number':
+      return extractNumber(value);
+
     default: {
       // Exhaustive check - TypeScript will error if a transform type is missed
       const exhaustiveCheck: never = transform;
@@ -169,4 +172,66 @@ function parseDate(value: string): string {
   }
 
   return date.toISOString();
+}
+
+/**
+ * Extract the first number from a text string.
+ * Useful for extracting counts from strings like "4 tasks pending" or "Demandes en attente 4".
+ *
+ * @param value - Text containing a number
+ * @returns The first number found (as integer or float)
+ * @throws Error if no number is found in the string
+ *
+ * @example
+ * extractNumber("Demandes en attente 4") // => 4
+ * extractNumber("4 tâches") // => 4
+ * extractNumber("Prix: 29,99€") // => 29.99 (with EU locale)
+ * extractNumber("Total: $1,234.56") // => 1234.56 (with US locale)
+ */
+function extractNumber(value: string): number {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    throw new Error(`Cannot extract number from empty string`);
+  }
+
+  // Detect locale decimal separator
+  const decimalSep = getLocaleDecimalSeparator();
+
+  // Find number patterns in the string
+  // Match: optional minus, digits, optional thousand separators, optional decimal part
+  let match: RegExpMatchArray | null;
+
+  if (decimalSep === ',') {
+    // European format: look for patterns like 1.234,56 or 1234,56 or 1234
+    // Also match simple integers without separators
+    match = trimmed.match(/-?(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?/);
+  } else {
+    // US format: look for patterns like 1,234.56 or 1234.56 or 1234
+    match = trimmed.match(/-?(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?/);
+  }
+
+  if (!match) {
+    throw new Error(`Cannot extract number from "${value}"`);
+  }
+
+  const numberStr = match[0];
+
+  // Normalize to JavaScript number format
+  let normalized: string;
+  if (decimalSep === ',') {
+    // European format: remove dots (thousands), replace comma with dot
+    normalized = numberStr.replace(/\./g, '').replace(',', '.');
+  } else {
+    // US format: remove commas (thousands)
+    normalized = numberStr.replace(/,/g, '');
+  }
+
+  const num = parseFloat(normalized);
+
+  if (isNaN(num)) {
+    throw new Error(`Cannot extract number from "${value}"`);
+  }
+
+  return num;
 }
