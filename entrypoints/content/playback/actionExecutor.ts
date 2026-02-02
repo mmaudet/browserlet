@@ -345,6 +345,12 @@ export class ActionExecutor {
         if (!element) throw new Error('hover action requires element');
         return executeHover(element);
 
+      case 'screenshot':
+        // Screenshot action is handled by PlaybackManager which has execution context
+        // ActionExecutor just returns null to indicate no element interaction
+        console.log('[Browserlet] Screenshot action - delegating to PlaybackManager');
+        return null;
+
       default: {
         const exhaustiveCheck: never = step.action;
         throw new Error(`Unknown action: ${exhaustiveCheck}`);

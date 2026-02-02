@@ -6,7 +6,7 @@
 export type { SemanticHint, HintType } from '../recording/types';
 import type { SemanticHint } from '../recording/types';
 
-// BSL action types (9 actions for playback)
+// BSL action types (10 actions for playback)
 export type ActionType =
   | 'click'
   | 'type'
@@ -16,7 +16,8 @@ export type ActionType =
   | 'wait_for'
   | 'navigate'
   | 'scroll'
-  | 'hover';
+  | 'hover'
+  | 'screenshot';
 
 // Transform types for extraction
 export type TransformType =

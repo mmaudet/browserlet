@@ -64,7 +64,11 @@ export type MessageType =
   | 'HEALING_REJECTED'            // Background -> Content: stop healing, fail step
   | 'HIGHLIGHT_HEALING_ELEMENT'   // Sidepanel -> Content: show healing overlay
   | 'GET_HEALING_HISTORY'         // Sidepanel -> Background: fetch audit trail
-  | 'UNDO_HEALING';               // Sidepanel -> Background: revert a healing repair
+  | 'UNDO_HEALING'                // Sidepanel -> Background: revert a healing repair
+  // Screenshot messages
+  | 'CAPTURE_SCREENSHOT'          // Content -> Background: request viewport capture
+  | 'GET_SCREENSHOTS'             // Sidepanel -> Background: fetch screenshots for script
+  | 'DELETE_SCREENSHOT';          // Sidepanel -> Background: delete single screenshot
 
 export interface Message {
   type: MessageType;
@@ -119,4 +123,18 @@ export interface ExecutionRecord {
   totalSteps?: number;           // Total steps in script
   results?: unknown;             // Extracted data
   error?: string;                // Error message if failed
+}
+
+// Screenshot record (SHOT-03)
+export interface ScreenshotRecord {
+  id: string;                    // UUID
+  scriptId: string;              // Associated script
+  executionId?: string;          // Optional execution record ID
+  stepIndex: number;             // Step number (1-based for display)
+  timestamp: number;             // Capture time
+  pageUrl: string;               // Page URL at capture
+  pageTitle: string;             // Page title
+  isFailure: boolean;            // True if captured on step failure
+  failureReason?: string;        // Error message if failure screenshot
+  dataUrl: string;               // PNG data URL (base64)
 }

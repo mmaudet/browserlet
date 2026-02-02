@@ -46,8 +46,9 @@ export default defineConfig({
     description: '__MSG_appDescription__',
     default_locale: 'en',
     version: '0.1.0',
-    permissions: ['storage', 'sidePanel', 'tabs', 'activeTab', 'notifications', 'alarms', 'idle'],
+    permissions: ['storage', 'unlimitedStorage', 'sidePanel', 'tabs', 'activeTab', 'notifications', 'alarms', 'idle', 'scripting'],
     host_permissions: [
+      '<all_urls>',  // Required for content script injection on any page
       'https://api.anthropic.com/*',
       'http://localhost:11434/*',
       'http://127.0.0.1:11434/*',
