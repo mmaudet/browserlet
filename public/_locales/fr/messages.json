@@ -999,5 +999,31 @@
   "waitingHealing": {
     "message": "En attente d'approbation de la reparation",
     "description": "Statut quand l'execution est en pause pour la reparation"
+  },
+  "healingHistory": {
+    "message": "Historique des reparations",
+    "description": "Titre de la section historique des reparations"
+  },
+  "undoHealing": {
+    "message": "Annuler",
+    "description": "Bouton pour annuler une reparation"
+  },
+  "healingUndone": {
+    "message": "Annule",
+    "description": "Badge affiche quand une reparation a ete annulee"
+  },
+  "noHealingHistory": {
+    "message": "Aucune reparation appliquee a ce script",
+    "description": "Message quand le script n'a pas d'historique de reparation"
+  },
+  "repairedOn": {
+    "message": "Repare le $DATE$",
+    "description": "Affiche quand une reparation a ete appliquee",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2024-01-15"
+      }
+    }
   }
 }

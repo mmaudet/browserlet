@@ -999,5 +999,31 @@
   "waitingHealing": {
     "message": "Waiting for repair approval",
     "description": "Status when execution is paused for healing"
+  },
+  "healingHistory": {
+    "message": "Healing History",
+    "description": "Title for healing history section"
+  },
+  "undoHealing": {
+    "message": "Undo",
+    "description": "Button to undo a healing repair"
+  },
+  "healingUndone": {
+    "message": "Undone",
+    "description": "Badge shown when a healing has been undone"
+  },
+  "noHealingHistory": {
+    "message": "No repairs applied to this script",
+    "description": "Message when script has no healing history"
+  },
+  "repairedOn": {
+    "message": "Repaired on $DATE$",
+    "description": "Shows when a repair was applied",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2024-01-15"
+      }
+    }
   }
 }

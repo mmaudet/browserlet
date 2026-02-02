@@ -13,7 +13,8 @@ import { getAllTriggers, saveTrigger, deleteTrigger, setSiteOverride } from '../
 import { handlePasswordMessage } from './passwords';
 import { getScript, saveScript } from '../../utils/storage/scripts';
 import { updateStepHints } from '../../utils/yaml/stepParser';
-import { getHealingHistory, addHealingRecord } from '../../utils/storage/healing';
+import { getHealingHistory, addHealingRecord, markHealingUndone } from '../../utils/storage/healing';
+import type { HealingRecord } from '../../utils/storage/healing';
 
 // Storage key for persisted execution state
 const EXECUTION_STATE_KEY = 'browserlet_execution_state';
@@ -427,6 +428,54 @@ async function processMessage(
       console.log('[Browserlet BG] GET_HEALING_HISTORY for script:', scriptId);
       const history = await getHealingHistory(scriptId);
       return { success: true, data: history };
+    }
+
+    case 'UNDO_HEALING': {
+      const { scriptId, recordId } = message.payload as {
+        scriptId: string;
+        recordId: string;
+      };
+
+      console.log('[Browserlet BG] UNDO_HEALING for record:', recordId);
+
+      try {
+        // Get the healing record
+        const history = await getHealingHistory(scriptId);
+        const record = history.find(r => r.id === recordId) as HealingRecord | undefined;
+
+        if (!record) {
+          return { success: false, error: `Healing record not found: ${recordId}` };
+        }
+
+        if (record.undoneAt) {
+          return { success: false, error: 'This healing has already been undone' };
+        }
+
+        // Get the script
+        const script = await getScript(scriptId);
+        if (!script) {
+          return { success: false, error: `Script not found: ${scriptId}` };
+        }
+
+        // Revert to original hints
+        const updatedContent = updateStepHints(script.content, record.stepIndex, record.originalHints);
+
+        // Save the updated script
+        await saveScript({
+          ...script,
+          content: updatedContent
+        });
+
+        // Mark the healing as undone
+        await markHealingUndone(scriptId, recordId);
+
+        console.log('[Browserlet BG] Healing undone, script reverted');
+        return { success: true };
+      } catch (error) {
+        console.error('[Browserlet BG] Failed to undo healing:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return { success: false, error: `Failed to undo healing: ${errorMessage}` };
+      }
     }
 
     default:

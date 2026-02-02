@@ -63,7 +63,8 @@ export type MessageType =
   | 'HEALING_APPROVED'            // Background -> Content: resume with new hints
   | 'HEALING_REJECTED'            // Background -> Content: stop healing, fail step
   | 'HIGHLIGHT_HEALING_ELEMENT'   // Sidepanel -> Content: show healing overlay
-  | 'GET_HEALING_HISTORY';        // Sidepanel -> Background: fetch audit trail
+  | 'GET_HEALING_HISTORY'         // Sidepanel -> Background: fetch audit trail
+  | 'UNDO_HEALING';               // Sidepanel -> Background: revert a healing repair
 
 export interface Message {
   type: MessageType;
