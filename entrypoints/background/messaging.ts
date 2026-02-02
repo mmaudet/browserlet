@@ -15,6 +15,7 @@ import { getScript, saveScript } from '../../utils/storage/scripts';
 import { updateStepHints } from '../../utils/yaml/stepParser';
 import { getHealingHistory, addHealingRecord, markHealingUndone } from '../../utils/storage/healing';
 import type { HealingRecord } from '../../utils/storage/healing';
+import { saveScreenshot, getScreenshots, deleteScreenshot } from '../../utils/storage/screenshots';
 
 // Storage key for persisted execution state
 const EXECUTION_STATE_KEY = 'browserlet_execution_state';
@@ -476,6 +477,65 @@ async function processMessage(
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return { success: false, error: `Failed to undo healing: ${errorMessage}` };
       }
+    }
+
+    // Screenshot messages
+    case 'CAPTURE_SCREENSHOT': {
+      const { scriptId, executionId, stepIndex, isFailure, failureReason, pageUrl, pageTitle } =
+        message.payload as {
+          scriptId: string;
+          executionId?: string;
+          stepIndex: number;
+          isFailure: boolean;
+          failureReason?: string;
+          pageUrl: string;
+          pageTitle: string;
+        };
+
+      try {
+        // Get active tab and capture visible area
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab?.id || !tab.windowId) {
+          return { success: false, error: 'No active tab' };
+        }
+
+        // Capture as PNG (lossless, per user preference SHOT-06)
+        const dataUrl = await chrome.tabs.captureVisibleTab(
+          tab.windowId,
+          { format: 'png' }
+        );
+
+        // Save to storage
+        await saveScreenshot({
+          scriptId,
+          executionId,
+          stepIndex,
+          timestamp: Date.now(),
+          pageUrl,
+          pageTitle,
+          isFailure,
+          failureReason,
+          dataUrl
+        });
+
+        return { success: true };
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Capture failed';
+        console.error('[Browserlet BG] Screenshot capture error:', msg);
+        return { success: false, error: msg };
+      }
+    }
+
+    case 'GET_SCREENSHOTS': {
+      const { scriptId } = message.payload as { scriptId: string };
+      const screenshots = await getScreenshots(scriptId);
+      return { success: true, data: screenshots };
+    }
+
+    case 'DELETE_SCREENSHOT': {
+      const { scriptId, screenshotId } = message.payload as { scriptId: string; screenshotId: string };
+      await deleteScreenshot(scriptId, screenshotId);
+      return { success: true };
     }
 
     default:

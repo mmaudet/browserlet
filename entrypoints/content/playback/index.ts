@@ -42,6 +42,7 @@ import {
   HEALING_CONFIDENCE_THRESHOLD,
   MAX_HEALING_ATTEMPTS,
 } from './healingDetector';
+import { captureScreenshot, captureFailureScreenshot } from './screenshotCapture';
 
 /**
  * Event handler type for playback events
@@ -79,6 +80,10 @@ export class PlaybackManager {
   // Healing state
   private healingResolver: ((hints: SemanticHint[] | null) => void) | null = null;
   private pendingHealingContext: HealingContext | null = null;
+
+  // Screenshot context
+  private scriptId: string = '';
+  private executionId: string = '';
 
   constructor(config: HumanizerConfig = DEFAULT_CONFIG) {
     this.config = config;
@@ -189,7 +194,12 @@ export class PlaybackManager {
    */
   async execute(
     yamlContent: string,
-    options?: { startStep?: number; previousResults?: Record<string, unknown> }
+    options?: {
+      startStep?: number;
+      previousResults?: Record<string, unknown>;
+      scriptId?: string;
+      executionId?: string;
+    }
   ): Promise<ExecutionResult> {
     console.log('[Browserlet] PlaybackManager.execute() called');
 
@@ -204,6 +214,10 @@ export class PlaybackManager {
 
     // Store YAML content for potential navigation persistence
     this.yamlContent = yamlContent;
+
+    // Store script context for screenshots
+    this.scriptId = options?.scriptId ?? '';
+    this.executionId = options?.executionId ?? '';
 
     // Parse the script
     console.log('[Browserlet] Parsing YAML content...');
@@ -375,6 +389,16 @@ export class PlaybackManager {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       const errorWithStep = `Step ${this.currentStep + 1}: ${message}`;
+
+      // Capture failure screenshot (SHOT-02)
+      if (this.scriptId) {
+        await captureFailureScreenshot({
+          scriptId: this.scriptId,
+          executionId: this.executionId,
+          stepIndex: this.currentStep + 1,
+          failureReason: message,
+        });
+      }
 
       this.emit({ type: 'error', error: errorWithStep });
       this.setState('idle');
@@ -571,6 +595,16 @@ export class PlaybackManager {
       }
     }
 
+    // Handle screenshot action (SHOT-01)
+    if (processedStep.action === 'screenshot') {
+      await captureScreenshot({
+        scriptId: this.scriptId,
+        executionId: this.executionId,
+        stepIndex: index + 1, // 1-based for display
+      });
+      return; // No further action needed
+    }
+
     // For navigate action, save state BEFORE navigation (page will reload)
     if (processedStep.action === 'navigate') {
       // Save state so we can resume on the new page
@@ -728,3 +762,4 @@ export {
   AUTO_SUGGEST_CONFIDENCE_THRESHOLD,
   MAX_HEALING_ATTEMPTS,
 } from './healingDetector';
+export { captureScreenshot, captureFailureScreenshot } from './screenshotCapture';

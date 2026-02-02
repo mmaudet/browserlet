@@ -18,6 +18,7 @@ const VALID_ACTIONS: ActionType[] = [
   'navigate',
   'scroll',
   'hover',
+  'screenshot',
 ];
 
 // Actions that require a target element
