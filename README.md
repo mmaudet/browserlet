@@ -18,6 +18,29 @@ Browserlet is a Chrome extension that automates interactions with legacy web app
 - **Humanization Layer** — Gaussian-distributed delays to avoid bot detection
 - **Session Detection** — Automatic pause for manual authentication when logged out
 
+### Self-Healing Selectors
+- **Automatic Failure Detection** — Detects when element resolution fails (confidence < 70%)
+- **LLM-Powered Repair** — Uses Claude to suggest 2-3 alternative hint combinations with confidence scores
+- **DOM Context Extraction** — Extracts ~2000 character DOM excerpt around expected element location
+- **Interactive Repair Panel** — Review, edit, and test proposed fixes before applying
+- **Audit Trail** — Full history of applied repairs with undo capability
+- **Visual Highlighting** — Highlights matched elements during test phase
+
+### Screenshot Capture & Visual Debugging
+- **Automatic Capture** — Screenshots taken at each step and on failures
+- **Failure Documentation** — Captures failure reason and page state for debugging
+- **Screenshot Gallery** — Browse thumbnails with failure indicators (red border)
+- **Batch Export** — Download selected screenshots as ZIP with manifest.json
+- **Full Metadata** — Page URL, title, step index, and timestamp for each capture
+
+### Data Extraction & Export
+- **Structured Extraction** — Extract text, tables, and computed values from pages
+- **JSON Export** — Pretty-printed JSON with full data structure preservation
+- **CSV Export** — Locale-aware delimiters (semicolon for EU, comma for others)
+- **Table Flattening** — Handles complex table_extract format with headers
+- **Excel Compatible** — UTF-8 BOM ensures proper encoding in spreadsheets
+- **Transform Functions** — extract_number for numeric data extraction
+
 ### Credential Management
 - **Encrypted Vault** — Master password protection with PBKDF2 key derivation
 - **Credential Substitution** — Use `{{vault:alias}}` syntax to inject credentials during playback
@@ -34,7 +57,7 @@ Browserlet is a Chrome extension that automates interactions with legacy web app
 - **Side Panel Interface** — Full-featured UI in Chrome's side panel
 - **Monaco Editor** — YAML syntax highlighting and validation
 - **Script Management** — Create, edit, rename, delete, import/export
-- **Execution History** — Per-script history with status, duration, and errors
+- **Execution History** — Per-script history with status, duration, screenshots, and extracted data
 - **Internationalization** — French and English support
 
 ## Installation
@@ -96,6 +119,30 @@ npm run build
 3. Add credentials with aliases (e.g., "work-email")
 4. Use `{{vault:work-email}}` in scripts to inject credentials
 
+### Viewing Screenshots
+
+1. Run a script (screenshots are captured automatically)
+2. Click on an execution in the history
+3. Browse the screenshot gallery
+4. Click a thumbnail to view full-size with metadata
+5. Select multiple screenshots and export as ZIP
+
+### Exporting Extracted Data
+
+1. Run a script with `extract` actions
+2. When execution completes, click "View Data" in the result
+3. Choose export format: JSON or CSV
+4. CSV uses locale-aware delimiters (semicolon for French, comma for English)
+
+### Repairing Failed Scripts
+
+1. When a step fails to find an element, a repair suggestion appears
+2. Review the proposed hints in the Repair Panel
+3. Click "Test" to verify the element is found
+4. Edit hints manually if needed (dropdown for hint types)
+5. Click "Apply Fix" to update the script
+6. View repair history and undo if needed
+
 ## BSL (Browserlet Scripting Language)
 
 Scripts are written in YAML with semantic selectors:
@@ -133,11 +180,27 @@ steps:
 | `click` | Click on an element | `target` |
 | `type` | Enter text in a field | `target`, `value` |
 | `select` | Choose option in dropdown | `target`, `option` |
-| `extract` | Extract data from element | `target`, `output` |
+| `extract` | Extract data from element | `target`, `output`, `transform` |
 | `wait_for` | Wait for element/condition | `target`, `timeout` |
 | `navigate` | Go to URL | `url` |
 | `scroll` | Scroll to element | `target` |
 | `hover` | Hover over element | `target` |
+
+### Extract Transforms
+
+The `extract` action supports transform functions:
+
+```yaml
+- action: extract
+  target:
+    text_contains: "Total:"
+  output: total_amount
+  transform: extract_number  # Extracts numeric value from text
+```
+
+| Transform | Description | Example |
+|-----------|-------------|---------|
+| `extract_number` | Extracts first number from text | "Total: $1,234.56" → 1234.56 |
 
 ### Semantic Hints
 
@@ -225,11 +288,16 @@ browserlet/
 ├── entrypoints/
 │   ├── background/       # Service worker (message routing, storage)
 │   ├── content/          # Content scripts (recording, playback, triggers)
+│   │   └── playback/     # Playback engine (resolver, screenshotCapture)
 │   └── sidepanel/        # Side Panel UI (Preact components)
+│       ├── components/   # UI components (RepairPanel, ScreenshotGallery, etc.)
+│       └── stores/       # State management (execution, healing, etc.)
 ├── utils/
-│   ├── storage/          # Chrome storage utilities
+│   ├── storage/          # Chrome storage (scripts, history, screenshots, healing)
 │   ├── playback/         # Playback engine (resolver, executor)
 │   ├── recording/        # Recording system (hints, capture)
+│   ├── healing/          # Self-healing (detector, prompt builder)
+│   ├── export/           # Data export (JSON, CSV, screenshots)
 │   ├── llm/              # LLM providers (Claude, Ollama)
 │   ├── triggers/         # Trigger system
 │   └── vault/            # Credential encryption
@@ -247,12 +315,13 @@ browserlet/
 | v1.1 | Preact migration, Password infrastructure | ✅ Shipped |
 | v1.2 | Master password, Credential migration | ✅ Shipped |
 | v1.3 | UX refactoring, Bottom bar, History | ✅ Shipped |
+| v1.4 | Data Extraction, Self-Healing, Screenshots | ✅ Shipped |
 
-### Planned (v1.4)
+### Planned (v1.5)
 
-- **Data Extraction & Export** — Extract structured data, export to JSON/CSV
-- **Self-Healing Selectors** — LLM-assisted automatic selector repair
-- **Screenshots & Visual Debugging** — Capture page state for debugging
+- **Scheduled Execution** — Run scripts on a schedule (cron-like)
+- **Script Chaining** — Execute multiple scripts in sequence
+- **Cloud Sync** — Sync scripts across devices (optional)
 
 ## Contributing
 
