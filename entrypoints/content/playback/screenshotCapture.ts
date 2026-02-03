@@ -20,6 +20,8 @@ interface CaptureOptions {
 export async function captureScreenshot(options: CaptureOptions): Promise<void> {
   const { scriptId, executionId, stepIndex, isFailure = false, failureReason } = options;
 
+  console.log('[Browserlet] captureScreenshot called with:', { scriptId, executionId, stepIndex, isFailure, failureReason });
+
   // Skip if no scriptId (can happen during manual testing)
   if (!scriptId) {
     console.warn('[Browserlet] Screenshot skipped - no scriptId provided');

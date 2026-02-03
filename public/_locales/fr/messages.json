@@ -640,6 +640,18 @@
     "message": "Aucun identifiant enregistré.",
     "description": "Message quand pas de credentials"
   },
+  "credentialCaptureNoTab": {
+    "message": "Impossible de capturer les identifiants : aucun onglet actif trouvé.",
+    "description": "Erreur quand aucun onglet actif n'est trouvé"
+  },
+  "credentialCaptureRestrictedPage": {
+    "message": "Impossible de capturer les identifiants sur cette page. Veuillez d'abord naviguer vers un site web normal.",
+    "description": "Erreur lors de la capture sur chrome:// ou autres pages restreintes"
+  },
+  "credentialCaptureError": {
+    "message": "Impossible de capturer les identifiants sur cette page. Essayez de rafraîchir la page.",
+    "description": "Erreur quand le content script ne peut pas être injecté"
+  },
   "credentialNewPassword": {
     "message": "Nouveau mot de passe",
     "description": "Label nouveau mot de passe"
@@ -1058,5 +1070,23 @@
   "screenshotCaptured": {
     "message": "Capture d'ecran enregistree",
     "description": "Notification quand une capture est enregistree"
+  },
+  "deleteSelected": {
+    "message": "Supprimer la selection",
+    "description": "Tooltip pour le bouton de suppression des captures selectionnees"
+  },
+  "confirmDeleteScreenshots": {
+    "message": "Supprimer $1 capture(s) d'ecran ?",
+    "description": "Message de confirmation pour la suppression des captures",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "scriptCompletedSuccessfully": {
+    "message": "Le script s'est termine avec succes",
+    "description": "Message affiche quand l'execution du script se termine sans erreur"
   }
 }

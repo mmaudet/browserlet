@@ -481,9 +481,36 @@ export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
 
   async function handleStartCapture(): Promise<void> {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab?.id) {
+    if (!tab?.id) {
+      alert(msg('credentialCaptureNoTab') || 'Cannot capture credentials: no active tab found.');
+      return;
+    }
+
+    // Check if page is a restricted URL (chrome://, edge://, about:, etc.)
+    if (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') ||
+        tab.url.startsWith('about:') || tab.url.startsWith('chrome-extension://'))) {
+      alert(msg('credentialCaptureRestrictedPage') || 'Cannot capture credentials on this page. Please navigate to a regular website first.');
+      return;
+    }
+
+    try {
       await chrome.tabs.sendMessage(tab.id, { type: 'START_PASSWORD_CAPTURE' });
       captureMode.value = 'capturing';
+    } catch (error) {
+      console.error('[Browserlet] Failed to start credential capture:', error);
+      // Content script not available - try to inject it
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content-scripts/content.js']
+        });
+        // Retry sending message after injection
+        await chrome.tabs.sendMessage(tab.id, { type: 'START_PASSWORD_CAPTURE' });
+        captureMode.value = 'capturing';
+      } catch (injectError) {
+        console.error('[Browserlet] Failed to inject content script:', injectError);
+        alert(msg('credentialCaptureError') || 'Cannot capture credentials on this page. Try refreshing the page.');
+      }
     }
   }
 

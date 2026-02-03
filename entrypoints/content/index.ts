@@ -128,6 +128,8 @@ async function checkAndResumeExecution(): Promise<void> {
       const result = await manager.execute(persistedState.yamlContent, {
         startStep: persistedState.currentStep,
         previousResults: persistedState.results,
+        scriptId: persistedState.scriptId,
+        executionId: persistedState.executionId,
       });
 
       // Send completion/failure message
@@ -212,10 +214,14 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
       return { success: true, data: [] };
 
     case 'EXECUTE_SCRIPT': {
-      const { content } = message.payload as { content: string };
+      const { content, scriptId, executionId } = message.payload as {
+        content: string;
+        scriptId?: string;
+        executionId?: string;
+      };
       const manager = getPlaybackManager();
       // Execute async, send result when done
-      manager.execute(content).then((result) => {
+      manager.execute(content, { scriptId, executionId }).then((result) => {
         chrome.runtime.sendMessage({
           type: result.status === 'completed' ? 'EXECUTION_COMPLETED' : 'EXECUTION_FAILED',
           payload: result

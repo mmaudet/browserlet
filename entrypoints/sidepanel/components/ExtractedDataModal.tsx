@@ -115,6 +115,13 @@ function TableView({ entries, copiedKey, onCopy }: TableViewProps) {
   return (
     <div style={{ overflowX: 'auto' }}>
       {entries.map(([key, value]) => {
+        // Check if value is table_extract format: { headers: [], rows: [] }
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          const tableData = value as { headers?: string[]; rows?: Record<string, string>[] };
+          if (tableData.headers && tableData.rows && Array.isArray(tableData.rows)) {
+            return <TableExtractView key={key} name={key} headers={tableData.headers} rows={tableData.rows} />;
+          }
+        }
         // Check if value is table data (array of objects)
         if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
           return <TableDataView key={key} name={key} data={value as Record<string, string>[]} />;
@@ -161,6 +168,39 @@ function TableDataView({ name, data }: { name: string; data: Record<string, stri
               <tr key={i} style={{ background: i % 2 === 0 ? '#fafafa' : 'white' }}>
                 {headers.map(h => (
                   <td key={h} style={tdStyles}>{row[h]}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// Component for table_extract format with explicit headers and rows
+function TableExtractView({ name, headers, rows }: { name: string; headers: string[]; rows: Record<string, string>[] }) {
+  if (rows.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: '16px' }}>
+      <div style={{ fontWeight: 500, marginBottom: '8px', fontSize: '13px', color: '#333' }}>
+        {name.replace('extracted.', '')} ({rows.length} rows)
+      </div>
+      <div style={{ overflowX: 'auto', border: '1px solid #e0e0e0', borderRadius: '4px', maxHeight: '300px', overflowY: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+          <thead style={{ position: 'sticky', top: 0 }}>
+            <tr>
+              {headers.map(h => (
+                <th key={h} style={thStyles}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i} style={{ background: i % 2 === 0 ? '#fafafa' : 'white' }}>
+                {headers.map(h => (
+                  <td key={h} style={tdStyles}>{row[h] || ''}</td>
                 ))}
               </tr>
             ))}

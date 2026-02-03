@@ -12,6 +12,8 @@ export const executionStatus = signal<'idle' | 'running' | 'completed' | 'failed
 export const executionResults = signal<unknown[]>([]);
 export const executionError = signal<string | null>(null);
 export const currentRecordId = signal<string | null>(null);
+export const showCompletionModal = signal(false);
+export const completedScriptName = signal<string | null>(null);
 
 // Progress percentage derived
 export const progressPercent = computed(() => {
@@ -21,11 +23,13 @@ export const progressPercent = computed(() => {
 
 // Start execution - sends EXECUTE_SCRIPT to content script
 export async function startExecution(script: Script): Promise<void> {
+  console.log('[Browserlet] startExecution called with script:', script.name);
   // Parse script to get accurate step count
   let stepCount = 0;
   try {
     const parsed = parseSteps(script.content);
     stepCount = parsed.steps.length;
+    console.log('[Browserlet] Parsed script, step count:', stepCount);
   } catch (error) {
     console.error('[Browserlet] Failed to parse script:', error);
     // Use a default if parsing fails
@@ -40,6 +44,7 @@ export async function startExecution(script: Script): Promise<void> {
   executionResults.value = [];
   executionError.value = null;
 
+  console.log('[Browserlet] Creating execution record...');
   // Create execution record
   const record = await addExecutionRecord({
     scriptId: script.id,
@@ -50,20 +55,33 @@ export async function startExecution(script: Script): Promise<void> {
     totalSteps: stepCount
   });
   currentRecordId.value = record.id;
+  console.log('[Browserlet] Execution record created:', record.id);
 
   // Send to content script for execution
+  console.log('[Browserlet] Querying active tab...');
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  console.log('[Browserlet] Active tab:', tab?.id, tab?.url);
   if (tab?.id) {
     try {
+      console.log('[Browserlet] Sending EXECUTE_SCRIPT to tab', tab.id);
       await chrome.tabs.sendMessage(tab.id, {
         type: 'EXECUTE_SCRIPT',
-        payload: { content: script.content }
+        payload: {
+          content: script.content,
+          scriptId: script.id,
+          executionId: currentRecordId.value
+        }
       });
+      console.log('[Browserlet] EXECUTE_SCRIPT sent successfully');
     } catch (error) {
       console.error('[Browserlet] Failed to send execute message:', error);
-      await failExecution('Failed to communicate with page');
+      // Provide helpful error message with reload suggestion
+      const errorMsg = chrome.i18n.getMessage('failedCommunicatePage') ||
+        'Failed to communicate with page. Please reload the page (Ctrl+R / Cmd+R) and try again.';
+      await failExecution(errorMsg);
     }
   } else {
+    console.error('[Browserlet] No active tab found');
     await failExecution('No active tab found');
   }
 }
@@ -87,19 +105,30 @@ export async function updateProgress(step: number, result?: unknown): Promise<vo
 
 // Complete execution
 export async function completeExecution(results?: unknown): Promise<void> {
+  console.log('[Browserlet] completeExecution called with results:', results);
   isExecuting.value = false;
   executionStatus.value = 'completed';
   currentStep.value = totalSteps.value;
 
+  // Show completion modal
+  completedScriptName.value = currentScript.value?.name || null;
+  showCompletionModal.value = true;
+
+  // Results from PlaybackManager are already a Record<string, unknown>
+  // Don't wrap in array - store as-is for proper display in ExtractedDataModal
   if (results !== undefined) {
+    // For display purposes, keep as array for backward compatibility
     executionResults.value = Array.isArray(results) ? results : [results];
   }
 
   if (currentRecordId.value && currentScript.value) {
+    console.log('[Browserlet] Saving results to record:', { recordId: currentRecordId.value, results });
     await updateExecutionRecord(currentScript.value.id, currentRecordId.value, {
       status: 'completed',
       completedAt: Date.now(),
-      results: executionResults.value
+      currentStep: totalSteps.value, // Update to final step count
+      // Store results directly as object, not wrapped in array
+      results: results as Record<string, unknown>
     });
   }
 }
@@ -177,6 +206,7 @@ chrome.runtime.onMessage.addListener((message) => {
 
     case 'EXECUTION_COMPLETED': {
       const results = message.payload?.results;
+      console.log('[Browserlet] EXECUTION_COMPLETED received:', { payload: message.payload, results });
       completeExecution(results);
       break;
     }

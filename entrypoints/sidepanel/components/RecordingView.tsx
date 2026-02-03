@@ -18,6 +18,7 @@ export const recordedActions = signal<Array<{
   url: string;
   hints: Array<{ type: string; value: unknown }>;
   value?: string;
+  output?: { variable: string; transform?: string };
 }>>([]);
 
 // BSL generation state
@@ -69,19 +70,25 @@ function generateBasicBSL(actions: typeof recordedActions.value): string {
       return step;
     }
 
-    // Add target with top hints
+    // Add target with hints array (BSL format)
     if (action.hints && action.hints.length > 0) {
-      const target: Record<string, unknown> = {};
-      // Use top 3 hints for resilience
-      action.hints.slice(0, 3).forEach(hint => {
-        target[hint.type] = hint.value;
-      });
-      step.target = target;
+      step.target = {
+        hints: action.hints.slice(0, 3).map(hint => ({
+          type: hint.type,
+          value: hint.value
+        }))
+      };
     }
 
     // Add value for input actions
     if (action.value !== undefined) {
       step.value = action.value;
+    }
+
+    // Add output for extract actions
+    const actionWithOutput = action as typeof action & { output?: { variable: string; transform?: string } };
+    if ((action.type === 'extract' || action.type === 'table_extract') && actionWithOutput.output) {
+      step.output = actionWithOutput.output;
     }
 
     return step;
@@ -102,17 +109,30 @@ function generateBasicBSL(actions: typeof recordedActions.value): string {
     }
     if (step.target) {
       yamlLines.push('    target:');
-      const target = step.target as Record<string, unknown>;
-      Object.entries(target).forEach(([key, value]) => {
-        if (typeof value === 'string') {
-          yamlLines.push(`      ${key}: "${value}"`);
-        } else {
-          yamlLines.push(`      ${key}: ${JSON.stringify(value)}`);
-        }
-      });
+      const target = step.target as { hints?: Array<{ type: string; value: unknown }> };
+      if (target.hints && Array.isArray(target.hints)) {
+        yamlLines.push('      hints:');
+        target.hints.forEach(hint => {
+          yamlLines.push(`        - type: ${hint.type}`);
+          if (typeof hint.value === 'string') {
+            yamlLines.push(`          value: "${hint.value}"`);
+          } else {
+            yamlLines.push(`          value: ${JSON.stringify(hint.value)}`);
+          }
+        });
+      }
     }
     if (step.value !== undefined) {
       yamlLines.push(`    value: "${step.value}"`);
+    }
+    // Add output for extract actions
+    if (step.output) {
+      const output = step.output as { variable: string; transform?: string };
+      yamlLines.push('    output:');
+      yamlLines.push(`      variable: ${output.variable}`);
+      if (output.transform) {
+        yamlLines.push(`      transform: ${output.transform}`);
+      }
     }
   });
 
@@ -268,17 +288,44 @@ export async function toggleRecording(): Promise<void> {
       // First, check if we can communicate with the active tab
       try {
         const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (activeTab?.id) {
-          try {
-            await chrome.tabs.sendMessage(activeTab.id, { type: 'PING' });
-          } catch {
-            // Content script not available on this page
+        if (activeTab?.id && activeTab.url) {
+          // Check if this is a valid page (not chrome://, extension://, etc.)
+          const url = activeTab.url;
+          if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') ||
+              url.startsWith('edge://') || url.startsWith('about:') ||
+              url.startsWith('file://') && url.endsWith('.pdf')) {
             generationStatus.value = {
               type: 'error',
               message: chrome.i18n.getMessage('recordingNotAvailable') ||
                 'Recording not available on this page (browser pages, PDFs, or extensions are not supported)'
             };
             return;
+          }
+
+          try {
+            await chrome.tabs.sendMessage(activeTab.id, { type: 'PING' });
+          } catch {
+            // Content script not loaded - try to inject it
+            console.log('[Browserlet] Content script not found, attempting to inject...');
+            try {
+              await chrome.scripting.executeScript({
+                target: { tabId: activeTab.id },
+                files: ['content-scripts/content.js']
+              });
+              // Wait a bit for the script to initialize
+              await new Promise(resolve => setTimeout(resolve, 500));
+              // Try PING again
+              await chrome.tabs.sendMessage(activeTab.id, { type: 'PING' });
+              console.log('[Browserlet] Content script injected successfully');
+            } catch (injectError) {
+              console.error('[Browserlet] Failed to inject content script:', injectError);
+              generationStatus.value = {
+                type: 'error',
+                message: chrome.i18n.getMessage('recordingNotAvailable') ||
+                  'Recording not available on this page (browser pages, PDFs, or extensions are not supported)'
+              };
+              return;
+            }
           }
         }
       } catch (error) {
@@ -436,10 +483,11 @@ async function handleExtractPage(): Promise<void> {
  * Handle user accepting AI extraction suggestions
  * Converts suggestions to extract actions and adds them to recording
  */
-function handleAcceptSuggestions(selected: ExtractionSuggestion[]): void {
+async function handleAcceptSuggestions(selected: ExtractionSuggestion[]): Promise<void> {
   // Convert suggestions to recorded actions
+  // Use table_extract for tables, extract for single values
   const extractActions = selected.map(s => ({
-    type: 'extract',
+    type: s.isTable ? 'table_extract' : 'extract',
     timestamp: Date.now(),
     url: '', // Will be filled from current page during playback
     hints: s.semanticHints.map(h => ({ type: h.type, value: h.value })),
@@ -449,8 +497,20 @@ function handleAcceptSuggestions(selected: ExtractionSuggestion[]): void {
     }
   }));
 
-  // Add to recorded actions
+  // Add to local state
   recordedActions.value = [...recordedActions.value, ...extractActions];
+
+  // Sync to background storage so they're included when recording stops
+  for (const action of extractActions) {
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'ACTION_CAPTURED',
+        payload: action
+      });
+    } catch (error) {
+      console.error('[Browserlet] Failed to sync extract action to background:', error);
+    }
+  }
 
   // Close UI
   showExtractionUI.value = false;

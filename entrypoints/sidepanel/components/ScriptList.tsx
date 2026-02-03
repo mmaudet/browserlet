@@ -1,5 +1,5 @@
 import { useSignal } from '@preact/signals';
-import { Type, Pencil, Trash2, Zap, History, Play, CheckCircle, XCircle, StopCircle, Loader2, X, Plus, Database } from 'lucide-preact';
+import { Type, Pencil, Trash2, Zap, History, Play, CheckCircle, XCircle, StopCircle, Loader2, X, Plus, Database, Camera, ChevronDown, ChevronRight } from 'lucide-preact';
 import type { Script, ExecutionRecord, ScreenshotRecord } from '../../../utils/types';
 import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId, updateScriptInState } from '../stores/scripts';
 import { triggersState } from '../stores/triggers';
@@ -239,6 +239,7 @@ function ScriptHistoryModal({ scriptId, scriptName, onClose, onViewData }: Scrip
   const historyRecords = useSignal<ExecutionRecord[]>([]);
   const screenshots = useSignal<ScreenshotRecord[]>([]);
   const isLoading = useSignal(true);
+  const expandedExecutionId = useSignal<string | null>(null);
 
   // Load history and screenshots on mount
   const loadHistory = async () => {
@@ -296,6 +297,16 @@ function ScriptHistoryModal({ scriptId, scriptName, onClose, onViewData }: Scrip
     }
   };
 
+  // Get screenshots for a specific execution
+  const getExecutionScreenshots = (executionId: string): ScreenshotRecord[] => {
+    return screenshots.value.filter(s => s.executionId === executionId);
+  };
+
+  // Toggle expansion of an execution entry
+  const toggleExpanded = (executionId: string) => {
+    expandedExecutionId.value = expandedExecutionId.value === executionId ? null : executionId;
+  };
+
   return (
     <div style={{ padding: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -323,62 +334,109 @@ function ScriptHistoryModal({ scriptId, scriptName, onClose, onViewData }: Scrip
         </div>
       ) : (
         <>
-          <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-            {historyRecords.value.map(record => (
-              <div
-                key={record.id}
-                style={{
-                  padding: '10px 12px',
-                  borderBottom: '1px solid #f0f0f0',
-                  background: record.status === 'failed' ? '#fff5f5' : 'white'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '12px', color: '#666' }}>
-                    {formatDate(record.startedAt)}
-                  </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
-                    {getStatusIcon(record.status)}
-                    <span style={{ color: record.status === 'failed' ? '#d32f2f' : record.status === 'completed' ? '#2e7d32' : '#666' }}>
-                      {getStatusLabel(record.status)}
-                    </span>
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#999' }}>
-                  <span>
-                    {chrome.i18n.getMessage('executionStep', [String(record.currentStep || 0), String(record.totalSteps || 0)]) || `${record.currentStep || 0}/${record.totalSteps || 0} steps`}
-                  </span>
-                  <span>{formatDuration(record.startedAt, record.completedAt)}</span>
-                </div>
-                {record.error && (
-                  <div style={{ marginTop: '6px', fontSize: '11px', color: '#d32f2f', background: '#ffebee', padding: '6px 8px', borderRadius: '4px' }}>
-                    {record.error}
-                  </div>
-                )}
-                {/* View Data button if results exist */}
-                {record.results && Object.keys(record.results as Record<string, unknown>).length > 0 && (
-                  <button
-                    onClick={() => onViewData(record)}
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            {historyRecords.value.map(record => {
+              const executionScreenshots = getExecutionScreenshots(record.id);
+              const hasScreenshots = executionScreenshots.length > 0;
+              const isExpanded = expandedExecutionId.value === record.id;
+              const hasResults = record.results && Object.keys(record.results as Record<string, unknown>).length > 0;
+              const isClickable = hasScreenshots || hasResults;
+
+              return (
+                <div
+                  key={record.id}
+                  style={{
+                    borderBottom: '1px solid #f0f0f0',
+                    background: record.status === 'failed' ? '#fff5f5' : 'white'
+                  }}
+                >
+                  {/* Execution header - clickable if has content */}
+                  <div
+                    onClick={() => isClickable && toggleExpanded(record.id)}
                     style={{
-                      marginTop: '8px',
-                      padding: '4px 10px',
-                      fontSize: '11px',
-                      background: '#e3f2fd',
-                      border: '1px solid #90caf9',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      color: '#1976d2',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
+                      padding: '10px 12px',
+                      cursor: isClickable ? 'pointer' : 'default',
+                      transition: 'background 0.15s'
                     }}
                   >
-                    <Database size={12} />
-                    {chrome.i18n.getMessage('viewData') || 'View Data'}
-                  </button>
-                )}
-              </div>
-            ))}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#666' }}>
+                        {isClickable && (
+                          isExpanded
+                            ? <ChevronDown size={14} color="#666" />
+                            : <ChevronRight size={14} color="#666" />
+                        )}
+                        {formatDate(record.startedAt)}
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                        {/* Screenshot indicator */}
+                        {hasScreenshots && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '2px', color: '#666' }}>
+                            <Camera size={12} />
+                            <span style={{ fontSize: '10px' }}>{executionScreenshots.length}</span>
+                          </span>
+                        )}
+                        {getStatusIcon(record.status)}
+                        <span style={{ color: record.status === 'failed' ? '#d32f2f' : record.status === 'completed' ? '#2e7d32' : '#666' }}>
+                          {getStatusLabel(record.status)}
+                        </span>
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#999', marginLeft: isClickable ? '20px' : '0' }}>
+                      <span>
+                        {chrome.i18n.getMessage('executionStep', [String(record.currentStep || 0), String(record.totalSteps || 0)]) || `Step ${record.currentStep || 0}/${record.totalSteps || 0}`}
+                      </span>
+                      <span>{formatDuration(record.startedAt, record.completedAt)}</span>
+                    </div>
+                    {record.error && (
+                      <div style={{ marginTop: '6px', marginLeft: isClickable ? '20px' : '0', fontSize: '11px', color: '#d32f2f', background: '#ffebee', padding: '6px 8px', borderRadius: '4px' }}>
+                        {record.error}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Expanded content */}
+                  {isExpanded && (
+                    <div style={{ padding: '0 12px 12px 32px', background: '#fafafa' }}>
+                      {/* View Data button */}
+                      {hasResults && (
+                        <button
+                          onClick={(e: Event) => {
+                            e.stopPropagation();
+                            onViewData(record);
+                          }}
+                          style={{
+                            marginBottom: hasScreenshots ? '12px' : '0',
+                            padding: '6px 12px',
+                            fontSize: '11px',
+                            background: '#e3f2fd',
+                            border: '1px solid #90caf9',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            color: '#1976d2',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Database size={12} />
+                          {chrome.i18n.getMessage('viewData') || 'View Data'}
+                        </button>
+                      )}
+
+                      {/* Inline screenshots for this execution */}
+                      {hasScreenshots && (
+                        <ScreenshotGallery
+                          screenshots={executionScreenshots}
+                          scriptName={scriptName}
+                          onDeleted={loadHistory}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div style={{ marginTop: '12px', textAlign: 'right' }}>
             <button
@@ -388,14 +446,6 @@ function ScriptHistoryModal({ scriptId, scriptName, onClose, onViewData }: Scrip
               {chrome.i18n.getMessage('clearHistory') || 'Clear History'}
             </button>
           </div>
-
-          {/* Screenshot gallery */}
-          {screenshots.value.length > 0 && (
-            <ScreenshotGallery
-              screenshots={screenshots.value}
-              scriptName={scriptName}
-            />
-          )}
         </>
       )}
     </div>

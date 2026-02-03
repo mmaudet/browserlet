@@ -12,6 +12,9 @@ const IMPLICIT_ROLES: Record<string, string> = {
   'textarea': 'textbox',
   'img': 'img',
   'table': 'table',
+  'td': 'cell',
+  'th': 'cell',  // Also columnheader/rowheader depending on context
+  'tr': 'row',
   'nav': 'navigation',
   'main': 'main',
   'header': 'banner',
@@ -22,6 +25,15 @@ const IMPLICIT_ROLES: Record<string, string> = {
   'ul': 'list',
   'ol': 'list',
   'li': 'listitem',
+  // Headings
+  'h1': 'heading',
+  'h2': 'heading',
+  'h3': 'heading',
+  'h4': 'heading',
+  'h5': 'heading',
+  'h6': 'heading',
+  // Text elements
+  'p': 'paragraph',
 };
 
 // Implicit roles for input by type
@@ -85,19 +97,54 @@ export function isElementVisible(element: Element): boolean {
 }
 
 /**
- * Find the associated label for a form element
+ * Find the associated label for an element
+ * Handles: label[for], parent label, <th> siblings in tables, preceding text
  */
-export function findAssociatedLabel(element: Element): HTMLLabelElement | null {
+export function findAssociatedLabel(element: Element): Element | null {
   // Method 1: label[for="id"]
   const id = element.getAttribute('id');
   if (id) {
     const label = document.querySelector(`label[for="${id}"]`);
-    if (label) return label as HTMLLabelElement;
+    if (label) return label;
   }
 
   // Method 2: parent label
   const parentLabel = element.closest('label');
-  if (parentLabel) return parentLabel as HTMLLabelElement;
+  if (parentLabel) return parentLabel;
+
+  // Method 3: For table cells (td), look for th sibling in same row
+  if (element.tagName === 'TD') {
+    const row = element.closest('tr');
+    if (row) {
+      const th = row.querySelector('th');
+      if (th) return th;
+    }
+  }
+
+  // Method 4: Previous sibling that looks like a label
+  const prevSibling = element.previousElementSibling;
+  if (prevSibling) {
+    const tagName = prevSibling.tagName;
+    // Common label-like elements
+    if (tagName === 'LABEL' || tagName === 'TH' || tagName === 'DT' ||
+        tagName === 'STRONG' || tagName === 'B' ||
+        prevSibling.classList.contains('label')) {
+      return prevSibling;
+    }
+  }
+
+  // Method 5: Check parent for label-like siblings before the element
+  const parent = element.parentElement;
+  if (parent) {
+    const children = Array.from(parent.children);
+    const elementIndex = children.indexOf(element);
+    for (let i = elementIndex - 1; i >= 0; i--) {
+      const sibling = children[i];
+      if (sibling.tagName === 'LABEL' || sibling.classList.contains('label')) {
+        return sibling;
+      }
+    }
+  }
 
   return null;
 }

@@ -62,12 +62,31 @@ export function exportToCSV(
 
 /**
  * Flatten extracted data for CSV export
- * Handles mix of simple values and table arrays
+ * Handles mix of simple values, table arrays, and table_extract format
  */
 function flattenForCSV(data: Record<string, unknown>): Record<string, string>[] {
   const rows: Record<string, string>[] = [];
 
   for (const [key, value] of Object.entries(data)) {
+    // Check for table_extract format: { headers: [], rows: [] }
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      const tableData = value as { headers?: string[]; rows?: Record<string, string>[] };
+      if (tableData.headers && tableData.rows && Array.isArray(tableData.rows)) {
+        // table_extract format - use rows directly with headers
+        tableData.rows.forEach((row, index) => {
+          const prefixedRow: Record<string, string> = {
+            _source: key,
+            _row: String(index + 1),
+          };
+          for (const header of tableData.headers!) {
+            prefixedRow[header] = row[header] || '';
+          }
+          rows.push(prefixedRow);
+        });
+        continue;
+      }
+    }
+
     if (Array.isArray(value)) {
       // Table data - each row gets variable name prefix
       value.forEach((row, index) => {

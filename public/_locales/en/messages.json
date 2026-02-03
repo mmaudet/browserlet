@@ -640,6 +640,18 @@
     "message": "No credentials stored.",
     "description": "Message when no credentials"
   },
+  "credentialCaptureNoTab": {
+    "message": "Cannot capture credentials: no active tab found.",
+    "description": "Error when no active tab is found"
+  },
+  "credentialCaptureRestrictedPage": {
+    "message": "Cannot capture credentials on this page. Please navigate to a regular website first.",
+    "description": "Error when trying to capture on chrome:// or other restricted pages"
+  },
+  "credentialCaptureError": {
+    "message": "Cannot capture credentials on this page. Try refreshing the page.",
+    "description": "Error when content script cannot be injected"
+  },
   "credentialNewPassword": {
     "message": "New Password",
     "description": "Label new password"
@@ -1058,5 +1070,23 @@
   "screenshotCaptured": {
     "message": "Screenshot captured",
     "description": "Notification when screenshot is captured"
+  },
+  "deleteSelected": {
+    "message": "Delete selected",
+    "description": "Tooltip for delete selected screenshots button"
+  },
+  "confirmDeleteScreenshots": {
+    "message": "Delete $1 screenshot(s)?",
+    "description": "Confirmation message for deleting screenshots",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "scriptCompletedSuccessfully": {
+    "message": "Script completed successfully",
+    "description": "Message shown when script execution finishes without errors"
   }
 }

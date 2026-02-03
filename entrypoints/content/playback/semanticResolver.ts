@@ -75,17 +75,13 @@ function getInitialCandidates(hints: SemanticHint[]): Element[] {
     '[role="textbox"], [role="checkbox"], [role="radio"], [tabindex], [onclick]'
   ));
 
-  // If we have text_contains hint but no standard interactive elements matched,
-  // expand to include any visible element with pointer cursor (non-accessible sites)
+  // If we have text_contains hint, expand to include text-containing elements
+  // This is essential for extract actions that need to find static text
   const hasTextHint = hints.some(h => h.type === 'text_contains');
-  if (hasTextHint && standardInteractive.length === 0) {
-    return getClickableElements();
-  }
-
-  // If we have text_contains and few candidates, also include clickable elements
   if (hasTextHint) {
+    const textElements = getTextContainingElements();
     const clickableElements = getClickableElements();
-    const combined = new Set([...standardInteractive, ...clickableElements]);
+    const combined = new Set([...standardInteractive, ...textElements, ...clickableElements]);
     return Array.from(combined);
   }
 
@@ -116,6 +112,18 @@ function getClickableElements(): Element[] {
 }
 
 /**
+ * Get elements that typically contain text for extraction
+ * Used for extract action to find static text elements
+ */
+function getTextContainingElements(): Element[] {
+  return Array.from(document.querySelectorAll(
+    'h1, h2, h3, h4, h5, h6, p, span, div, li, td, th, label, ' +
+    'strong, em, b, i, code, pre, blockquote, figcaption, ' +
+    '[class*="title"], [class*="heading"], [class*="text"], [class*="label"], [class*="name"], [class*="value"]'
+  ));
+}
+
+/**
  * Get elements with a specific implicit ARIA role
  */
 function getElementsByImplicitRole(role: string): Element[] {
@@ -138,9 +146,15 @@ function getElementsByImplicitRole(role: string): Element[] {
     'list': ['ul', 'ol'],
     'listitem': ['li'],
     'table': ['table'],
+    'cell': ['td', 'th'],
+    'row': ['tr'],
+    'columnheader': ['th'],
+    'rowheader': ['th[scope="row"]'],
     'img': ['img'],
     'article': ['article'],
     'complementary': ['aside'],
+    'heading': ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+    'paragraph': ['p'],
   };
 
   const selectors = roleToTags[role];
