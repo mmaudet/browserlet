@@ -140,13 +140,25 @@ function deduplicateActions(actions: CapturedAction[]): CapturedAction[] {
  * - Produces valid YAML output
  *
  * @param actions - Array of captured user actions
+ * @param startUrl - Optional URL to navigate to at script start
  * @returns Valid BSL YAML string
  */
-export function generateBasicBSL(actions: CapturedAction[]): string {
+export function generateBasicBSL(actions: CapturedAction[], startUrl?: string): string {
   // Deduplicate consecutive actions on same target
   const dedupedActions = deduplicateActions(actions);
 
-  const steps: BSLStep[] = dedupedActions.map((action, index) => {
+  const steps: BSLStep[] = [];
+
+  // Prepend navigate to startUrl if provided
+  if (startUrl) {
+    steps.push({
+      action: 'navigate',
+      url: startUrl,
+    });
+  }
+
+  // Then add deduplicated action steps
+  const actionSteps: BSLStep[] = dedupedActions.map((action, index) => {
     const stepIndex = index + 1;
     const bslAction = mapActionType(action.type);
 
@@ -174,6 +186,8 @@ export function generateBasicBSL(actions: CapturedAction[]): string {
 
     return step;
   });
+
+  steps.push(...actionSteps);
 
   const script: BSLScript = {
     name: 'Recorded Script',

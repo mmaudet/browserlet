@@ -110,16 +110,17 @@ export class LLMService {
    * Falls back to basic generation if provider unavailable or fails
    *
    * @param actions - Array of captured user actions
+   * @param startUrl - Optional URL to navigate to at script start
    * @returns Promise resolving to BSL string and whether LLM was used
    */
-  async generateBSL(actions: CapturedAction[]): Promise<GenerateBSLResult> {
-    console.log('[LLM Service] generateBSL called with', actions.length, 'actions');
+  async generateBSL(actions: CapturedAction[], startUrl?: string): Promise<GenerateBSLResult> {
+    console.log('[LLM Service] generateBSL called with', actions.length, 'actions', startUrl ? `and startUrl: ${startUrl}` : '');
     console.log('[LLM Service] State: provider=', this.provider?.name ?? 'none', 'initialized=', this.initialized);
 
     // No provider configured - use fallback
     if (!this.provider || !this.initialized) {
       console.warn('[LLM Service] No provider or not initialized, using fallback');
-      const rawBsl = generateBasicBSL(actions);
+      const rawBsl = generateBasicBSL(actions, startUrl);
       const normalized = normalizeYAML(rawBsl);
       return {
         bsl: normalized.success ? normalized.content : rawBsl,
@@ -135,7 +136,7 @@ export class LLMService {
 
       if (!available) {
         console.warn('[LLM Service] Provider not available, using fallback');
-        const rawBsl = generateBasicBSL(actions);
+        const rawBsl = generateBasicBSL(actions, startUrl);
         const normalized = normalizeYAML(rawBsl);
         return {
           bsl: normalized.success ? normalized.content : rawBsl,
@@ -145,7 +146,7 @@ export class LLMService {
 
       // Generate with LLM
       console.log('[LLM Service] Generating BSL with LLM...');
-      const rawBsl = await this.provider.generateBSL(actions);
+      const rawBsl = await this.provider.generateBSL(actions, startUrl);
 
       // Normalize YAML indentation
       const normalized = normalizeYAML(rawBsl);
@@ -161,7 +162,7 @@ export class LLMService {
       };
     } catch (error) {
       console.error('[LLM Service] Provider failed, using fallback:', error);
-      const rawBsl = generateBasicBSL(actions);
+      const rawBsl = generateBasicBSL(actions, startUrl);
       const normalized = normalizeYAML(rawBsl);
       return {
         bsl: normalized.success ? normalized.content : rawBsl,

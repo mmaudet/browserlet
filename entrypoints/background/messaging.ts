@@ -137,10 +137,10 @@ async function processMessage(
     }
 
     case 'GENERATE_BSL': {
-      const { actions } = message.payload as { actions: CapturedAction[] };
+      const { actions, startUrl } = message.payload as { actions: CapturedAction[]; startUrl?: string };
       const llmService = getLLMService();
       try {
-        const result = await llmService.generateBSL(actions);
+        const result = await llmService.generateBSL(actions, startUrl);
         return { success: true, data: result }; // { bsl: string, usedLLM: boolean }
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
