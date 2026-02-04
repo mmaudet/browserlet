@@ -1088,5 +1088,13 @@
   "scriptCompletedSuccessfully": {
     "message": "Script completed successfully",
     "description": "Message shown when script execution finishes without errors"
+  },
+  "takeScreenshot": {
+    "message": "Take Screenshot",
+    "description": "Button to capture screenshot during recording"
+  },
+  "takeScreenshotTitle": {
+    "message": "Add screenshot action to script",
+    "description": "Tooltip for screenshot button"
   }
 }

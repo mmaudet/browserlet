@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
-import { Sparkles } from 'lucide-preact';
+import { Sparkles, Camera } from 'lucide-preact';
 import { llmConfigStore, getLLMConfigForServiceWorker, loadLLMConfig, isConfigValid } from '../stores/llmConfig';
 import { loadScripts } from '../stores/scripts';
 import { navigateTo } from '../router';
@@ -532,6 +532,32 @@ async function handleAcceptSuggestions(selected: ExtractionSuggestion[]): Promis
   extractionSuggestions.value = [];
 }
 
+/**
+ * Handle clicking "Take Screenshot" button
+ * Adds a screenshot action to the recorded action list
+ */
+async function handleTakeScreenshot(): Promise<void> {
+  const screenshotAction = {
+    type: 'screenshot',
+    timestamp: Date.now(),
+    url: '',
+    hints: []
+  };
+
+  // Add to local state
+  recordedActions.value = [...recordedActions.value, screenshotAction];
+
+  // Sync to background storage
+  try {
+    await chrome.runtime.sendMessage({
+      type: 'ACTION_CAPTURED',
+      payload: screenshotAction
+    });
+  } catch (error) {
+    console.error('[Browserlet] Failed to sync screenshot action to background:', error);
+  }
+}
+
 function LLMStatusIndicator() {
   if (isGeneratingBSL.value || generationStatus.value) {
     return null;
@@ -726,6 +752,33 @@ export function RecordingView() {
         >
           <Sparkles size={16} style={{ color: '#4285f4' }} />
           {chrome.i18n.getMessage('extractPage') || 'Extract This Page'}
+        </button>
+      )}
+
+      {/* Take Screenshot button (visible during recording, no LLM requirement) */}
+      {isRecording.value && (
+        <button
+          style={{
+            width: '100%',
+            padding: '10px',
+            border: '1px solid #e0e0e0',
+            borderRadius: '8px',
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            marginBottom: '16px',
+            background: 'white',
+            color: '#333',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}
+          onClick={handleTakeScreenshot}
+          title={chrome.i18n.getMessage('takeScreenshotTitle') || 'Add screenshot action to script'}
+        >
+          <Camera size={16} style={{ color: '#4285f4' }} />
+          {chrome.i18n.getMessage('takeScreenshot') || 'Take Screenshot'}
         </button>
       )}
 

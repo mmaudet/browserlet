@@ -1088,5 +1088,13 @@
   "scriptCompletedSuccessfully": {
     "message": "Le script s'est termine avec succes",
     "description": "Message affiche quand l'execution du script se termine sans erreur"
+  },
+  "takeScreenshot": {
+    "message": "Prendre une capture",
+    "description": "Bouton pour capturer l'ecran pendant l'enregistrement"
+  },
+  "takeScreenshotTitle": {
+    "message": "Ajouter une action de capture au script",
+    "description": "Info-bulle du bouton de capture"
   }
 }
