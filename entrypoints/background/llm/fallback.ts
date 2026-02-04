@@ -170,6 +170,13 @@ export function generateBasicBSL(actions: CapturedAction[], startUrl?: string): 
       };
     }
 
+    // Handle screenshot action specially (no target needed)
+    if (action.type === 'screenshot') {
+      return {
+        action: 'screenshot',
+      };
+    }
+
     // Build step with target for click/input/submit actions
     const step: BSLStep = {
       action: bslAction,
