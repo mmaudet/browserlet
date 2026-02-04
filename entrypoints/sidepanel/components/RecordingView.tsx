@@ -46,22 +46,32 @@ async function loadRecordingState(): Promise<void> {
 /**
  * Generate basic BSL locally without LLM (fallback mode)
  */
-function generateBasicBSL(actions: typeof recordedActions.value): string {
+function generateBasicBSL(actions: typeof recordedActions.value, startUrl?: string): string {
   const timestamp = new Date().toISOString().slice(0, 10);
   let scriptName = `Recording ${timestamp}`;
 
-  // Try to extract domain from first navigate action
-  const navigateAction = actions.find(a => a.type === 'navigate');
-  if (navigateAction) {
+  // Try to extract domain from startUrl or first navigate action
+  const urlToUse = startUrl || actions.find(a => a.type === 'navigate')?.url;
+  if (urlToUse) {
     try {
-      const url = new URL(navigateAction.url);
+      const url = new URL(urlToUse);
       scriptName = `Recording - ${url.hostname}`;
     } catch {
       // Keep default name
     }
   }
 
-  const steps = actions.map(action => {
+  const steps = [];
+
+  // Prepend navigate to startUrl if provided
+  if (startUrl) {
+    steps.push({
+      action: 'navigate',
+      url: startUrl
+    });
+  }
+
+  const actionSteps = actions.map(action => {
     const step: Record<string, unknown> = { action: action.type };
 
     // Add URL for navigate actions
@@ -93,6 +103,8 @@ function generateBasicBSL(actions: typeof recordedActions.value): string {
 
     return step;
   });
+
+  steps.push(...actionSteps);
 
   // Convert to YAML manually (simple format)
   const yamlLines = [
@@ -142,7 +154,7 @@ function generateBasicBSL(actions: typeof recordedActions.value): string {
 /**
  * Generate BSL from recorded actions - tries LLM first, falls back to basic
  */
-async function generateBSL(actions: typeof recordedActions.value): Promise<{ bsl: string; usedLLM: boolean }> {
+async function generateBSL(actions: typeof recordedActions.value, startUrl?: string): Promise<{ bsl: string; usedLLM: boolean }> {
   // Reload config from storage to ensure we have latest state
   try {
     await loadLLMConfig();
@@ -156,7 +168,7 @@ async function generateBSL(actions: typeof recordedActions.value): Promise<{ bsl
 
   if (!configured) {
     console.log('[Browserlet] LLM not configured, using basic generation');
-    return { bsl: generateBasicBSL(actions), usedLLM: false };
+    return { bsl: generateBasicBSL(actions, startUrl), usedLLM: false };
   }
 
   try {
@@ -168,7 +180,7 @@ async function generateBSL(actions: typeof recordedActions.value): Promise<{ bsl
     // Send GENERATE_BSL message to service worker
     const response = await chrome.runtime.sendMessage({
       type: 'GENERATE_BSL',
-      payload: { actions }
+      payload: { actions, startUrl }
     });
 
     if (response.success && response.data) {
@@ -176,12 +188,12 @@ async function generateBSL(actions: typeof recordedActions.value): Promise<{ bsl
     } else {
       console.error('GENERATE_BSL failed:', response.error);
       // Fall back to basic generation
-      return { bsl: generateBasicBSL(actions), usedLLM: false };
+      return { bsl: generateBasicBSL(actions, startUrl), usedLLM: false };
     }
   } catch (error) {
     console.error('Error generating BSL with LLM:', error);
     // Fall back to basic generation
-    return { bsl: generateBasicBSL(actions), usedLLM: false };
+    return { bsl: generateBasicBSL(actions, startUrl), usedLLM: false };
   }
 }
 
@@ -238,6 +250,9 @@ export async function toggleRecording(): Promise<void> {
         return;
       }
 
+      // Extract startUrl from first action
+      const startUrl = actions.length > 0 ? actions[0]?.url : undefined;
+
       // Generate BSL
       isGeneratingBSL.value = true;
       generationStatus.value = {
@@ -246,7 +261,7 @@ export async function toggleRecording(): Promise<void> {
       };
 
       try {
-        const { bsl, usedLLM } = await generateBSL(actions);
+        const { bsl, usedLLM } = await generateBSL(actions, startUrl);
 
         // Extract script name from generated BSL
         const scriptName = extractScriptName(bsl);
