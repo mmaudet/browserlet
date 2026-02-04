@@ -41,12 +41,11 @@ function getInitialCandidates(hints: SemanticHint[]): Element[] {
 
       switch (priorityType) {
         case 'role': {
-          // Try explicit role first
-          elements = document.querySelectorAll(`[role="${hint.value}"]`);
-          if (elements.length === 0) {
-            // Fallback: get elements with implicit role
-            elements = getElementsByImplicitRole(hint.value);
-          }
+          // Combine explicit role AND implicit role elements
+          const explicitRole = Array.from(document.querySelectorAll(`[role="${hint.value}"]`));
+          const implicitRole = getElementsByImplicitRole(hint.value);
+          // Merge both, removing duplicates
+          elements = [...new Set([...explicitRole, ...implicitRole])];
           break;
         }
         case 'type':

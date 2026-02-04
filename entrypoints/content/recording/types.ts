@@ -40,6 +40,8 @@ export interface CapturedAction {
   // Frame context
   frameId?: string;
   isIframe: boolean;
+  // Fallback CSS selector for resilience (e.g., href for links)
+  fallbackSelector?: string;
 }
 
 // Recording session metadata

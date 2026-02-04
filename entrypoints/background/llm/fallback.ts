@@ -186,6 +186,11 @@ export function generateBasicBSL(actions: CapturedAction[], startUrl?: string): 
       },
     };
 
+    // Add fallback_selector if available (especially useful for links with href)
+    if (action.fallbackSelector && step.target) {
+      step.target.fallback_selector = action.fallbackSelector;
+    }
+
     // Add value for input/type actions (but not masked passwords)
     if (action.value && action.value !== '[MASKED]') {
       step.value = action.value;

@@ -107,7 +107,7 @@ CORRECT (for styled links like "C'est parti !" or "Submit"):
 1. Always include 2-3 hints per target for resilience
 2. Put most reliable hints first (data_attribute, role, aria_label)
 3. **NO intent field** - The target object only has "hints" and optionally "fallback_selector"
-4. Add fallback_selector only when element has a unique, stable ID or data attribute
+4. **FALLBACK SELECTOR**: If the captured action includes a \`fallbackSelector\` field, ALWAYS include it in the target as \`fallback_selector\`. This is especially important for links (\`<a>\` elements) where the href provides a stable backup selector.
 5. Use wait_for before actions on dynamically loaded elements (after navigation, AJAX, etc.)
 6. Group related actions logically with appropriate timeouts
 7. For input fields, prefer type action over click
@@ -129,6 +129,11 @@ CORRECT (for styled links like "C'est parti !" or "Submit"):
       - **trim**: Remove whitespace
       - **lowercase/uppercase**: Change case
 12. **SCREENSHOT ACTIONS**: The screenshot action captures the current viewport. It has NO target, NO hints, NO value - just \`action: screenshot\`. ALWAYS preserve screenshot actions from captured actions in the output script.
+13. **TEXT NORMALIZATION**: The text_contains and placeholder_contains hints are automatically normalized (lowercase, accents/diacritics removed). Use plain ASCII text without accents in hint values - e.g., use "communaute" instead of "Communauté", "francais" instead of "Français". The resolver will match regardless of case or accents in the actual page content.
+14. **NAVIGATION MENUS & DROPDOWNS**: If an action targets an element inside a navigation menu, dropdown, or popover (detected via attributes like \`data-slot="navigation-menu-link"\`, \`data-radix-*\`, \`aria-expanded\`, or classes containing "dropdown", "popover", "menu"), the element may be hidden until its container is opened. In such cases:
+    - Check if the captured actions include a click on the menu trigger BEFORE the target action
+    - If not present, add a \`wait_for\` with timeout for the menu trigger, then a \`click\` action on it
+    - Elements with role="menuitem" or inside \`[role="menu"]\` typically require opening the parent menu first
 
 ## BSL Examples (Correct Format)
 \`\`\`yaml
@@ -246,6 +251,9 @@ Rules:
 - Styled links (<a class="btn">) use class_contains: btn, NOT role: button
 - Preserve actual user input values, only use {{credential:name}} for passwords
 - If startUrl provided, first step MUST be navigate to that URL
+- TEXT NORMALIZATION: Use plain ASCII in text_contains (e.g., "communaute" not "Communauté") - resolver handles accents
+- NAVIGATION MENUS: If element is inside dropdown/menu (data-radix-*, navigation-menu-link), add click to open menu first
+- FALLBACK SELECTOR: If action has fallbackSelector field, include it as fallback_selector in target (important for links)
 
 Output ONLY YAML.`;
 }

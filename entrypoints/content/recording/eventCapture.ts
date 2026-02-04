@@ -138,7 +138,7 @@ export class EventCapture {
     element: Element,
     extra: Partial<CapturedAction> = {}
   ): CapturedAction {
-    return {
+    const action: CapturedAction = {
       type,
       timestamp: Date.now(),
       url: window.location.href,
@@ -147,6 +147,23 @@ export class EventCapture {
       frameId: this.getFrameId(),
       ...extra
     };
+
+    // Capture fallback selector for links (href is very stable)
+    if (element.tagName.toLowerCase() === 'a') {
+      const href = element.getAttribute('href');
+      if (href && !href.startsWith('javascript:') && !href.startsWith('#')) {
+        // Use href attribute selector as fallback
+        action.fallbackSelector = `a[href="${href}"]`;
+      }
+    }
+
+    // Capture fallback selector for elements with stable data-* attributes
+    const testId = element.getAttribute('data-testid') || element.getAttribute('data-test-id');
+    if (testId && !action.fallbackSelector) {
+      action.fallbackSelector = `[data-testid="${testId}"], [data-test-id="${testId}"]`;
+    }
+
+    return action;
   }
 
   /**

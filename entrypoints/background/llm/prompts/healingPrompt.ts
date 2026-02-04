@@ -129,6 +129,8 @@ Analyze the DOM excerpt and suggest 2-3 alternative hint combinations that could
 - Combine multiple hints for higher confidence (aim for 70%+ total weight)
 - Avoid using IDs that look auto-generated (random strings, numbers, hashes)
 - For data_attribute, use the object format: { "name": "...", "value": "..." }
+- **Text normalization**: The text_contains hint is normalized (lowercase, accents removed). Use plain ASCII - e.g., "communaute" not "Communauté"
+- **Hidden elements**: If the DOM shows the element inside a navigation menu, dropdown, or popover (data-radix-*, navigation-menu-*, aria-expanded, [role="menu"]), it may be hidden. In your reason, note if a menu needs to be opened first
 
 ## Response Format
 

@@ -209,7 +209,8 @@ function findPartialMatches(hints: SemanticHint[]): Element[] {
       }
       case 'class_contains': {
         if (typeof hint.value === 'string') {
-          elements = Array.from(document.querySelectorAll(`.${hint.value}`));
+          // Use CSS.escape() to handle special characters in class names (e.g., Tailwind's data-[active=true]:focus:bg-accent)
+          elements = Array.from(document.querySelectorAll(`.${CSS.escape(hint.value)}`));
         }
         break;
       }
