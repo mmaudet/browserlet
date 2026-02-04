@@ -31,7 +31,7 @@ name: Script Name
 version: "1.0.0"
 description: Brief description of what the script does
 steps:
-  - action: click|type|select|navigate|wait_for|scroll|hover|extract|table_extract
+  - action: click|type|select|navigate|wait_for|scroll|hover|extract|table_extract|screenshot
     target:
       hints:
         - type: data_attribute|role|type|aria_label|name|text_contains|placeholder_contains|near_label|class_contains|id
@@ -128,6 +128,7 @@ CORRECT (for styled links like "C'est parti !" or "Submit"):
       - **parse_date**: Parse date to ISO format
       - **trim**: Remove whitespace
       - **lowercase/uppercase**: Change case
+12. **SCREENSHOT ACTIONS**: The screenshot action captures the current viewport. It has NO target, NO hints, NO value - just \`action: screenshot\`. ALWAYS preserve screenshot actions from captured actions in the output script.
 
 ## BSL Examples (Correct Format)
 \`\`\`yaml
@@ -239,6 +240,7 @@ Rules:
 - NO "intent" field in target - only "hints" array
 - role hint value must be ARIA role, NOT HTML tag (heading, NOT h1)
 - navigate action: ONLY use value field with URL, NO target/hints
+- screenshot action: NO target, NO hints, NO value - just "action: screenshot". ALWAYS preserve screenshot actions.
 - extract output is OBJECT: { variable: "extracted.xxx", transform: "extract_number" }
 - Transforms: extract_number (for counts in text), parse_currency, parse_number, trim
 - Styled links (<a class="btn">) use class_contains: btn, NOT role: button
