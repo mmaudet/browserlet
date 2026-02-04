@@ -90,14 +90,15 @@ export class ClaudeProvider implements LLMProvider {
   /**
    * Generate BSL script from captured actions using Claude
    * @param actions - Array of captured user actions
+   * @param startUrl - Optional URL to navigate to at script start
    * @returns Promise resolving to BSL YAML string
    * @throws Error if API call fails or generated BSL is invalid YAML
    */
-  async generateBSL(actions: CapturedAction[]): Promise<string> {
-    console.log('[Claude] generateBSL called with', actions.length, 'actions');
+  async generateBSL(actions: CapturedAction[], startUrl?: string): Promise<string> {
+    console.log('[Claude] generateBSL called with', actions.length, 'actions', startUrl ? `and startUrl: ${startUrl}` : '');
     console.log('[Claude] Using model:', this.model);
 
-    const prompt = buildBSLPrompt(actions);
+    const prompt = buildBSLPrompt(actions, startUrl);
     console.log('[Claude] Prompt length:', prompt.length, 'chars');
 
     const response = await this.rateLimiter.execute(async () => {

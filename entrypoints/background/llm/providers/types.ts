@@ -20,9 +20,10 @@ export interface LLMProvider {
   /**
    * Generate BSL script from captured actions
    * @param actions - Array of captured user actions
+   * @param startUrl - Optional URL to navigate to at script start
    * @returns Promise resolving to BSL YAML string
    */
-  generateBSL(actions: CapturedAction[]): Promise<string>;
+  generateBSL(actions: CapturedAction[], startUrl?: string): Promise<string>;
 
   /**
    * Generate raw text response from a prompt

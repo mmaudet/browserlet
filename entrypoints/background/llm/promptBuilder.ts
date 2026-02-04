@@ -16,9 +16,10 @@ import type { CapturedAction } from '../../content/recording/types';
  * - Serialized captured actions
  *
  * @param actions - Array of captured user actions
+ * @param startUrl - Optional URL to navigate to at script start
  * @returns Structured prompt string for LLM
  */
-export function buildBSLPrompt(actions: CapturedAction[]): string {
+export function buildBSLPrompt(actions: CapturedAction[], startUrl?: string): string {
   const actionsJson = JSON.stringify(actions, null, 2);
 
   return `You are a BSL (Browserlet Scripting Language) expert. Convert the following captured user actions into a valid BSL script.
@@ -113,6 +114,11 @@ CORRECT (for styled links like "C'est parti !" or "Submit"):
 8. **NAVIGATE ACTIONS**: The navigate action ONLY takes a URL in the \`value\` field. Do NOT include \`target\` or \`hints\` for navigate - just \`action: navigate\` and \`value: "https://..."\`
 9. **PRESERVE USER INPUT VALUES**: Keep the actual values the user typed (usernames, emails, search terms, etc.). Only use \`{{credential:name}}\` placeholder syntax for PASSWORD fields. Never replace usernames or other non-password inputs with placeholders like \`{{username}}\` - that syntax is not supported.
 10. **EXTRACT ACTIONS**: Use extract to capture single values and table_extract for tabular data.
+11. **START URL**: If a startUrl is provided, the FIRST step MUST be:
+    \`\`\`yaml
+    - action: navigate
+      value: "{startUrl}"
+    \`\`\`
     - The "output" field is an OBJECT with "variable" (required) and "transform" (optional)
     - Variable MUST start with "extracted." prefix (e.g., "extracted.deal_number")
     - Available transforms:
@@ -189,6 +195,9 @@ CORRECT (for styled links like "C'est parti !" or "Submit"):
         value: "Learn more"
 \`\`\`
 
+## Start URL
+${startUrl || 'Not provided - infer from first action URL'}
+
 ## Captured Actions
 \`\`\`json
 ${actionsJson}
@@ -202,14 +211,17 @@ Generate a complete, valid BSL script. Output ONLY the YAML, no explanations or 
  * Useful for Ollama/local models with limited context
  *
  * @param actions - Array of captured user actions
+ * @param startUrl - Optional URL to navigate to at script start
  * @returns Compact prompt string for LLM
  */
-export function buildCompactBSLPrompt(actions: CapturedAction[]): string {
+export function buildCompactBSLPrompt(actions: CapturedAction[], startUrl?: string): string {
   const actionsJson = JSON.stringify(actions, null, 2);
 
   return `Convert these browser actions to BSL YAML:
 
 ${actionsJson}
+
+${startUrl ? `Start URL: ${startUrl} (MUST be first step with navigate action)` : ''}
 
 BSL format:
 - name: string
@@ -231,6 +243,7 @@ Rules:
 - Transforms: extract_number (for counts in text), parse_currency, parse_number, trim
 - Styled links (<a class="btn">) use class_contains: btn, NOT role: button
 - Preserve actual user input values, only use {{credential:name}} for passwords
+- If startUrl provided, first step MUST be navigate to that URL
 
 Output ONLY YAML.`;
 }

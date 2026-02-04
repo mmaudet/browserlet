@@ -72,14 +72,15 @@ export class OllamaProvider implements LLMProvider {
   /**
    * Generate BSL script from captured actions using Ollama
    * @param actions - Array of captured user actions
+   * @param startUrl - Optional URL to navigate to at script start
    * @returns Promise resolving to BSL YAML string
    * @throws Error if API call fails or generated BSL is invalid YAML
    */
-  async generateBSL(actions: CapturedAction[]): Promise<string> {
-    console.log('[Ollama] generateBSL called with', actions.length, 'actions');
+  async generateBSL(actions: CapturedAction[], startUrl?: string): Promise<string> {
+    console.log('[Ollama] generateBSL called with', actions.length, 'actions', startUrl ? `and startUrl: ${startUrl}` : '');
     console.log('[Ollama] Using model:', this.model);
 
-    const prompt = buildBSLPrompt(actions);
+    const prompt = buildBSLPrompt(actions, startUrl);
     console.log('[Ollama] Prompt length:', prompt.length, 'chars');
 
     console.log('[Ollama] Sending request...');
