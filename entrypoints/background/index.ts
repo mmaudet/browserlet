@@ -3,6 +3,7 @@ import { initializeState } from './storage';
 import { initializeTriggerEngine } from './triggers';
 import { initializePasswordInfrastructure } from './passwords';
 import { initializeLLMFromStorage } from './llm';
+import { isFirefox } from '../../utils/browser-detect';
 
 export default defineBackground(() => {
   console.log('[Browserlet] Service worker started');
@@ -26,7 +27,11 @@ export default defineBackground(() => {
 
   // Open side panel when extension action is clicked
   chrome.action.onClicked.addListener(async (tab) => {
-    if (tab.id) {
+    if (isFirefox) {
+      // Firefox: use sidebarAction API (opens globally, not per-tab)
+      await browser.sidebarAction.toggle();
+    } else if (tab.id) {
+      // Chrome: use sidePanel API (per-tab)
       await chrome.sidePanel.open({ tabId: tab.id });
     }
   });

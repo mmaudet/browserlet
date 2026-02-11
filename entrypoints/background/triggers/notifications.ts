@@ -1,9 +1,11 @@
 /**
  * Chrome notification handling for auto-execute triggers
- * Creates system notifications with Stop/Disable buttons
+ * Creates system notifications with Stop/Disable buttons (Chrome only)
+ * Firefox notifications don't support buttons
  */
 
 import { setSiteOverride } from '../../../utils/storage/triggers';
+import { isFirefox } from '../../../utils/browser-detect';
 
 // Store active notifications to track script associations
 const activeNotifications = new Map<string, { scriptId: string; tabId: number; url: string }>();
@@ -25,19 +27,26 @@ export async function notifyAutoExecution(
   const notificationId = `script_${scriptId}_${Date.now()}`;
 
   try {
-    await chrome.notifications.create(notificationId, {
+    // Firefox doesn't support notification buttons
+    const notificationOptions: chrome.notifications.NotificationOptions = {
       type: 'basic',
       iconUrl: chrome.runtime.getURL('icon/128.png'),
       title: chrome.i18n.getMessage('notificationAutoExecuteTitle') || 'Script Auto-Executing',
       message: chrome.i18n.getMessage('notificationAutoExecuteMessage', [scriptName]) ||
                `Running: ${scriptName}`,
-      buttons: [
+      requireInteraction: false,
+      priority: 0,
+    };
+
+    // Add buttons only for Chrome (Firefox doesn't support them)
+    if (!isFirefox) {
+      notificationOptions.buttons = [
         { title: chrome.i18n.getMessage('notificationStop') || 'Stop' },
         { title: chrome.i18n.getMessage('notificationDisableSite') || 'Disable for this site' }
-      ],
-      requireInteraction: false,
-      priority: 0
-    });
+      ];
+    }
+
+    await chrome.notifications.create(notificationId, notificationOptions);
 
     // Track notification for button handling
     activeNotifications.set(notificationId, { scriptId, tabId, url });
@@ -88,32 +97,36 @@ export async function notifyExecutionComplete(
 /**
  * Set up notification button click handlers
  * Must be called once during service worker initialization
+ * Note: Button handlers only work on Chrome (Firefox doesn't support notification buttons)
  */
 export function setupNotificationListeners(): void {
-  chrome.notifications.onButtonClicked.addListener(
-    async (notificationId: string, buttonIndex: number) => {
-      const info = activeNotifications.get(notificationId);
-      if (!info) return;
+  // Button click handlers only work on Chrome
+  if (!isFirefox) {
+    chrome.notifications.onButtonClicked.addListener(
+      async (notificationId: string, buttonIndex: number) => {
+        const info = activeNotifications.get(notificationId);
+        if (!info) return;
 
-      if (buttonIndex === 0) {
-        // Stop execution
-        try {
-          await chrome.tabs.sendMessage(info.tabId, { type: 'STOP_EXECUTION' });
-        } catch {
-          // Tab might be closed
+        if (buttonIndex === 0) {
+          // Stop execution
+          try {
+            await chrome.tabs.sendMessage(info.tabId, { type: 'STOP_EXECUTION' });
+          } catch {
+            // Tab might be closed
+          }
+        } else if (buttonIndex === 1) {
+          // Disable for this site
+          await setSiteOverride(info.scriptId, info.url, false);
         }
-      } else if (buttonIndex === 1) {
-        // Disable for this site
-        await setSiteOverride(info.scriptId, info.url, false);
+
+        // Clear notification
+        chrome.notifications.clear(notificationId);
+        activeNotifications.delete(notificationId);
       }
+    );
+  }
 
-      // Clear notification
-      chrome.notifications.clear(notificationId);
-      activeNotifications.delete(notificationId);
-    }
-  );
-
-  // Clean up when notification is closed by user
+  // Clean up when notification is closed by user (works on both browsers)
   chrome.notifications.onClosed.addListener((notificationId: string) => {
     activeNotifications.delete(notificationId);
   });
