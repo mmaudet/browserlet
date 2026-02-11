@@ -45,12 +45,12 @@ export default defineConfig({
     const isFirefox = browser === 'firefox';
 
     // Base permissions (common to all browsers)
-    const basePermissions = ['storage', 'unlimitedStorage', 'tabs', 'activeTab', 'notifications', 'alarms', 'idle', 'scripting'];
+    const basePermissions = ['storage', 'unlimitedStorage', 'tabs', 'activeTab', 'notifications', 'alarms', 'idle'];
 
     // Chrome-specific permissions
-    const chromePermissions = [...basePermissions, 'sidePanel'];
+    const chromePermissions = [...basePermissions, 'scripting', 'sidePanel'];
 
-    // Firefox-specific permissions
+    // Firefox-specific permissions (scripting API not available in MV2)
     const firefoxPermissions = basePermissions;
 
     return {
@@ -58,6 +58,14 @@ export default defineConfig({
       description: '__MSG_appDescription__',
       default_locale: 'en',
       version: '0.1.0',
+      ...(isFirefox ? {
+        browser_specific_settings: {
+          gecko: {
+            id: 'browserlet@browserlet.dev',
+            strict_min_version: '109.0',
+          },
+        },
+      } : {}),
       permissions: isFirefox ? firefoxPermissions : chromePermissions,
       host_permissions: [
         '<all_urls>',  // Required for content script injection on any page

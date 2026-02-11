@@ -1,3 +1,4 @@
+import '../../utils/firefoxPolyfill';
 import { sendMessageSafe } from './messaging';
 import { isContextValid } from '../../utils/context-check';
 import { RecordingManager } from './recording';

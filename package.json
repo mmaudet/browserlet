@@ -47,6 +47,7 @@
     "monaco-yaml": "^5.4.0",
     "ollama": "^0.6.3",
     "preact": "^10.28.2",
-    "vite-plugin-monaco-editor": "^1.1.0"
+    "vite-plugin-monaco-editor": "^1.1.0",
+    "webextension-polyfill": "^0.12.0"
   }
 }

@@ -1,4 +1,5 @@
 import { hasMasterPasswordSetup } from '../crypto/masterPassword';
+import { storage } from '../storage/browserCompat';
 
 const VAULT_STATE_KEY = 'browserlet_vault_state';
 
@@ -15,7 +16,7 @@ export interface VaultState {
  */
 export async function getVaultState(): Promise<VaultState> {
   const [sessionState, hasSetup] = await Promise.all([
-    chrome.storage.session.get(VAULT_STATE_KEY),
+    storage.session.get(VAULT_STATE_KEY),
     hasMasterPasswordSetup()
   ]);
 
@@ -33,7 +34,7 @@ export async function getVaultState(): Promise<VaultState> {
  * Sets isLocked to false and records unlock time.
  */
 export async function unlockVault(): Promise<void> {
-  await chrome.storage.session.set({
+  await storage.session.set({
     [VAULT_STATE_KEY]: { isLocked: false, lastUnlockTime: Date.now() }
   });
 }
@@ -43,7 +44,7 @@ export async function unlockVault(): Promise<void> {
  * Sets isLocked to true and clears unlock time.
  */
 export async function lockVault(): Promise<void> {
-  await chrome.storage.session.set({
+  await storage.session.set({
     [VAULT_STATE_KEY]: { isLocked: true, lastUnlockTime: 0 }
   });
 }

@@ -1,4 +1,5 @@
 import { signal, computed } from '@preact/signals';
+import { storage } from '../../../utils/storage/browserCompat';
 import type { TriggerConfig, ContextState } from '../../../utils/triggers/types';
 import { getAllTriggers, getTriggers } from '../../../utils/storage/triggers';
 
@@ -43,7 +44,7 @@ export async function loadSuggestionsForCurrentTab(): Promise<void> {
     const tabId = tabs[0]?.id;
     if (tabId) {
       const key = `suggested_scripts_${tabId}`;
-      const data = await chrome.storage.session.get(key);
+      const data = await storage.session.get(key);
       const scriptIds = (data[key] as string[] | undefined) ?? [];
       console.log('[Browserlet] Loaded suggestions for tab', tabId, ':', scriptIds);
       suggestedScriptIds.value = scriptIds;
@@ -82,7 +83,7 @@ export function setCurrentContext(context: ContextState | null): void {
 }
 
 // Listen for storage changes (sync across contexts)
-chrome.storage.onChanged.addListener((changes, area) => {
+storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.browserlet_triggers) {
     triggersState.value = (changes.browserlet_triggers.newValue as TriggerConfig[] | undefined) ?? [];
   }

@@ -9,6 +9,7 @@
  */
 
 import { hasMasterPasswordSetup, getCachedDerivedKey } from './masterPassword';
+import { storage } from '../storage/browserCompat';
 
 /**
  * Encrypted data structure for storage
@@ -52,7 +53,7 @@ function base64ToBuffer(base64: string): ArrayBuffer {
 /**
  * Get or create the session encryption key.
  *
- * The key is stored in chrome.storage.session which is:
+ * The key is stored in storage.session which is:
  * - Memory-only (not persisted to disk)
  * - Cleared when browser restarts
  * - Only accessible to the extension
@@ -61,7 +62,7 @@ function base64ToBuffer(base64: string): ArrayBuffer {
  */
 export async function getOrCreateSessionKey(): Promise<CryptoKey> {
   // Try to get existing key from session storage
-  const result = await chrome.storage.session.get(SESSION_KEY_STORAGE_KEY);
+  const result = await storage.session.get(SESSION_KEY_STORAGE_KEY);
   const storedKey = result[SESSION_KEY_STORAGE_KEY];
 
   if (storedKey) {
@@ -84,7 +85,7 @@ export async function getOrCreateSessionKey(): Promise<CryptoKey> {
 
   // Export and store as JWK
   const jwk = await crypto.subtle.exportKey('jwk', key);
-  await chrome.storage.session.set({ [SESSION_KEY_STORAGE_KEY]: jwk });
+  await storage.session.set({ [SESSION_KEY_STORAGE_KEY]: jwk });
 
   return key;
 }

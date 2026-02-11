@@ -1,3 +1,4 @@
+import '../../utils/firefoxPolyfill';
 import { render } from 'preact';
 import { signal } from '@preact/signals';
 import { List, Circle, KeyRound, Settings, ArrowLeft, Loader2, CheckCircle } from 'lucide-preact';

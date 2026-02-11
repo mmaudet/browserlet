@@ -10,6 +10,7 @@
  */
 
 import { hasMasterPasswordSetup } from '../crypto/masterPassword';
+import { storage } from '../storage/browserCompat';
 import { getPasswords } from './storage';
 import type { StoredPassword } from './types';
 
@@ -58,7 +59,7 @@ export async function detectMigrationState(): Promise<MigrationState> {
   const [passwords, hasMasterPassword, migrationResult] = await Promise.all([
     getPasswords(),
     hasMasterPasswordSetup(),
-    chrome.storage.local.get(MIGRATION_COMPLETED_KEY),
+    storage.local.get(MIGRATION_COMPLETED_KEY),
   ]);
 
   const hasLegacyCredentials = passwords.length > 0;
@@ -83,11 +84,11 @@ export async function detectMigrationState(): Promise<MigrationState> {
 /**
  * Mark migration as complete to prevent re-prompting.
  *
- * Stores timestamp in chrome.storage.local. Once set, the migration
+ * Stores timestamp in storage.local. Once set, the migration
  * flow will not appear again even if there are legacy credentials.
  */
 export async function markMigrationComplete(): Promise<void> {
-  await chrome.storage.local.set({
+  await storage.local.set({
     [MIGRATION_COMPLETED_KEY]: Date.now(),
   });
 }
@@ -123,7 +124,7 @@ export async function getLegacyCredentialMetadata(): Promise<LegacyCredentialMet
 export async function saveMigratedCredentials(
   credentials: StoredPassword[]
 ): Promise<void> {
-  await chrome.storage.local.set({
+  await storage.local.set({
     [PASSWORDS_STORAGE_KEY]: credentials,
   });
 }

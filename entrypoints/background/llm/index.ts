@@ -4,6 +4,7 @@
  */
 
 import type { LLMProvider, LLMConfig } from './providers/types';
+import { storage } from '../../../utils/storage/browserCompat';
 import { ClaudeProvider } from './providers/claude';
 import { OllamaProvider } from './providers/ollama';
 import { OpenAIProvider } from './providers/openai';
@@ -115,7 +116,18 @@ export class LLMService {
    */
   async generateBSL(actions: CapturedAction[], startUrl?: string): Promise<GenerateBSLResult> {
     console.log('[LLM Service] generateBSL called with', actions.length, 'actions', startUrl ? `and startUrl: ${startUrl}` : '');
-    console.log('[LLM Service] State: provider=', this.provider?.name ?? 'none', 'initialized=', this.initialized);
+    console.log('[LLM Service] State: provider=', this.provider?.name ?? 'none', 'initialized=', this.initialized, 'useFallback=', this.config?.useFallbackGenerator);
+
+    // Force fallback generator if configured
+    if (this.config?.useFallbackGenerator) {
+      console.log('[LLM Service] Using fallback generator (forced by config)');
+      const rawBsl = generateBasicBSL(actions, startUrl);
+      const normalized = normalizeYAML(rawBsl);
+      return {
+        bsl: normalized.success ? normalized.content : rawBsl,
+        usedLLM: false,
+      };
+    }
 
     // No provider configured - use fallback
     if (!this.provider || !this.initialized) {
@@ -234,14 +246,14 @@ const STORAGE_KEY = 'browserlet_llm_config';
  * Called at service worker startup to restore LLM state
  *
  * This handles the case where the service worker restarts and loses
- * the in-memory LLM configuration. It reloads from chrome.storage.local
+ * the in-memory LLM configuration. It reloads from storage.local
  * and re-initializes the service.
  */
 export async function initializeLLMFromStorage(): Promise<void> {
   console.log('[LLM Service] Initializing from storage...');
 
   try {
-    const result = await chrome.storage.local.get(STORAGE_KEY);
+    const result = await storage.local.get(STORAGE_KEY);
     const stored = result[STORAGE_KEY] as {
       provider: 'claude' | 'ollama' | 'openai';
       claudeModel?: string;
@@ -251,6 +263,7 @@ export async function initializeLLMFromStorage(): Promise<void> {
       openaiEndpoint?: string;
       openaiModel?: string;
       encryptedOpenaiApiKey?: { ciphertext: string; iv: string };
+      useFallbackGenerator?: boolean;
     } | undefined;
 
     if (!stored) {
@@ -270,6 +283,7 @@ export async function initializeLLMFromStorage(): Promise<void> {
       ollamaModel: stored.ollamaModel ?? 'llama3.1',
       openaiEndpoint: stored.openaiEndpoint ?? 'https://api.openai.com/v1/chat/completions',
       openaiModel: stored.openaiModel ?? 'gpt-4o',
+      useFallbackGenerator: stored.useFallbackGenerator ?? false,
     };
 
     // Decrypt API keys based on provider

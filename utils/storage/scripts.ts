@@ -1,10 +1,11 @@
+import { storage } from './browserCompat';
 import type { Script } from '../types';
 
 const SCRIPTS_KEY = 'browserlet_scripts';
 
 // Get all scripts
 export async function getScripts(): Promise<Script[]> {
-  const result = await chrome.storage.local.get(SCRIPTS_KEY);
+  const result = await storage.local.get(SCRIPTS_KEY);
   return (result[SCRIPTS_KEY] as Script[] | undefined) ?? [];
 }
 
@@ -32,7 +33,7 @@ export async function saveScript(script: Omit<Script, 'id' | 'createdAt' | 'upda
         updatedAt: now
       };
       scripts[index] = updated;
-      await chrome.storage.local.set({ [SCRIPTS_KEY]: scripts });
+      await storage.local.set({ [SCRIPTS_KEY]: scripts });
       return updated;
     }
   }
@@ -45,7 +46,7 @@ export async function saveScript(script: Omit<Script, 'id' | 'createdAt' | 'upda
     updatedAt: now
   } as Script;
 
-  await chrome.storage.local.set({ [SCRIPTS_KEY]: [...scripts, newScript] });
+  await storage.local.set({ [SCRIPTS_KEY]: [...scripts, newScript] });
   return newScript;
 }
 
@@ -53,7 +54,7 @@ export async function saveScript(script: Omit<Script, 'id' | 'createdAt' | 'upda
 export async function deleteScript(id: string): Promise<void> {
   const scripts = await getScripts();
   const filtered = scripts.filter(s => s.id !== id);
-  await chrome.storage.local.set({ [SCRIPTS_KEY]: filtered });
+  await storage.local.set({ [SCRIPTS_KEY]: filtered });
 }
 
 // Search scripts (UI-02: by name, app, tag)

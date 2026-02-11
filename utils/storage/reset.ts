@@ -3,6 +3,8 @@
  * Clears ALL stored data: scripts, settings, history, triggers, etc.
  */
 
+import { storage } from './browserCompat';
+
 // All storage keys used by Browserlet
 const STORAGE_KEYS = [
   'appState',                    // Recording state and recorded actions
@@ -26,29 +28,29 @@ const SESSION_KEYS = [
  */
 export async function resetAllExtensionData(): Promise<void> {
   // 1. Clear known keys from local storage
-  await chrome.storage.local.remove(STORAGE_KEYS);
+  await storage.local.remove(STORAGE_KEYS);
 
   // 2. Find and remove all history entries (they have dynamic keys)
-  const allData = await chrome.storage.local.get(null);
+  const allData = await storage.local.get(null);
   const historyKeys = Object.keys(allData).filter(key => key.startsWith(HISTORY_PREFIX));
   if (historyKeys.length > 0) {
-    await chrome.storage.local.remove(historyKeys);
+    await storage.local.remove(historyKeys);
   }
 
   // 3. Find and remove all site override keys (browserlet_site_override_*)
   const siteOverrideKeys = Object.keys(allData).filter(key => key.startsWith('browserlet_site_override_'));
   if (siteOverrideKeys.length > 0) {
-    await chrome.storage.local.remove(siteOverrideKeys);
+    await storage.local.remove(siteOverrideKeys);
   }
 
   // 4. Clear session storage
-  await chrome.storage.session.remove(SESSION_KEYS);
+  await storage.session.remove(SESSION_KEYS);
 
   // 5. Find and remove any suggested scripts in session storage
-  const sessionData = await chrome.storage.session.get(null);
+  const sessionData = await storage.session.get(null);
   const suggestedKeys = Object.keys(sessionData).filter(key => key.startsWith('browserlet_suggested_'));
   if (suggestedKeys.length > 0) {
-    await chrome.storage.session.remove(suggestedKeys);
+    await storage.session.remove(suggestedKeys);
   }
 
   console.log('[Browserlet] All extension data has been reset');

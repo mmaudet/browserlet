@@ -1,3 +1,4 @@
+import { storage } from './browserCompat';
 import type { TriggerConfig, SiteOverride } from '../triggers/types';
 
 const TRIGGERS_KEY = 'browserlet_triggers';
@@ -5,20 +6,20 @@ const OVERRIDE_PREFIX = 'trigger_override_';
 
 // Get all triggers for a script
 export async function getTriggers(scriptId: string): Promise<TriggerConfig[]> {
-  const data = await chrome.storage.local.get(TRIGGERS_KEY);
+  const data = await storage.local.get(TRIGGERS_KEY);
   const all = (data[TRIGGERS_KEY] as TriggerConfig[] | undefined) ?? [];
   return all.filter(t => t.scriptId === scriptId);
 }
 
 // Get all triggers (for engine)
 export async function getAllTriggers(): Promise<TriggerConfig[]> {
-  const data = await chrome.storage.local.get(TRIGGERS_KEY);
+  const data = await storage.local.get(TRIGGERS_KEY);
   return (data[TRIGGERS_KEY] as TriggerConfig[] | undefined) ?? [];
 }
 
 // Save trigger (create or update)
 export async function saveTrigger(trigger: TriggerConfig): Promise<void> {
-  const data = await chrome.storage.local.get(TRIGGERS_KEY);
+  const data = await storage.local.get(TRIGGERS_KEY);
   const triggers = (data[TRIGGERS_KEY] as TriggerConfig[] | undefined) ?? [];
 
   const index = triggers.findIndex(t => t.id === trigger.id);
@@ -28,23 +29,23 @@ export async function saveTrigger(trigger: TriggerConfig): Promise<void> {
     triggers.push({ ...trigger, createdAt: Date.now(), updatedAt: Date.now() });
   }
 
-  await chrome.storage.local.set({ [TRIGGERS_KEY]: triggers });
+  await storage.local.set({ [TRIGGERS_KEY]: triggers });
 }
 
 // Delete trigger
 export async function deleteTrigger(triggerId: string): Promise<void> {
-  const data = await chrome.storage.local.get(TRIGGERS_KEY);
+  const data = await storage.local.get(TRIGGERS_KEY);
   const triggers = (data[TRIGGERS_KEY] as TriggerConfig[] | undefined) ?? [];
   const filtered = triggers.filter(t => t.id !== triggerId);
-  await chrome.storage.local.set({ [TRIGGERS_KEY]: filtered });
+  await storage.local.set({ [TRIGGERS_KEY]: filtered });
 }
 
 // Delete all triggers for a script
 export async function deleteTriggersForScript(scriptId: string): Promise<void> {
-  const data = await chrome.storage.local.get(TRIGGERS_KEY);
+  const data = await storage.local.get(TRIGGERS_KEY);
   const triggers = (data[TRIGGERS_KEY] as TriggerConfig[] | undefined) ?? [];
   const filtered = triggers.filter(t => t.scriptId !== scriptId);
-  await chrome.storage.local.set({ [TRIGGERS_KEY]: filtered });
+  await storage.local.set({ [TRIGGERS_KEY]: filtered });
 }
 
 // Get per-site override
@@ -54,7 +55,7 @@ export async function getSiteOverride(
 ): Promise<boolean | null> {
   const domain = new URL(url).hostname;
   const key = `${OVERRIDE_PREFIX}${scriptId}_${domain}`;
-  const result = await chrome.storage.local.get(key);
+  const result = await storage.local.get(key);
   const override = result[key] as SiteOverride | undefined;
   return override ? override.enabled : null; // null = use trigger default
 }
@@ -67,7 +68,7 @@ export async function setSiteOverride(
 ): Promise<void> {
   const domain = new URL(url).hostname;
   const key = `${OVERRIDE_PREFIX}${scriptId}_${domain}`;
-  await chrome.storage.local.set({
+  await storage.local.set({
     [key]: {
       domain,
       enabled,
@@ -83,5 +84,5 @@ export async function clearSiteOverride(
 ): Promise<void> {
   const domain = new URL(url).hostname;
   const key = `${OVERRIDE_PREFIX}${scriptId}_${domain}`;
-  await chrome.storage.local.remove(key);
+  await storage.local.remove(key);
 }

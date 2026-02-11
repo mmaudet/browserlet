@@ -1,9 +1,11 @@
+import '../../utils/firefoxPolyfill';
 import { handleMessage } from './messaging';
 import { initializeState } from './storage';
 import { initializeTriggerEngine } from './triggers';
 import { initializePasswordInfrastructure } from './passwords';
 import { initializeLLMFromStorage } from './llm';
 import { isFirefox } from '../../utils/browser-detect';
+import { storage } from '../../utils/storage/browserCompat';
 
 export default defineBackground(() => {
   console.log('[Browserlet] Service worker started');
@@ -13,7 +15,7 @@ export default defineBackground(() => {
   chrome.runtime.onMessage.addListener(handleMessage);
 
   // Listen for storage changes and broadcast to extension pages
-  chrome.storage.onChanged.addListener((changes, namespace) => {
+  storage.onChanged.addListener((changes, namespace) => {
     if (namespace !== 'local') return;
 
     // Broadcast to all extension pages (side panel, popup if any)
