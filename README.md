@@ -2,7 +2,7 @@
 
 **Resilient web automation for legacy applications — no recurring AI costs**
 
-Browserlet is a Chrome extension that automates interactions with legacy web applications (without APIs) in a deterministic, resilient, and maintainable way. Unlike full-AI solutions that consume tokens on every execution, Browserlet uses AI only during script creation to generate automation scripts in a semantic meta-language (BSL). Execution is then 100% deterministic, fast, and cost-free.
+Browserlet is a browser extension for Chrome and Firefox that automates interactions with legacy web applications (without APIs) in a deterministic, resilient, and maintainable way. Unlike full-AI solutions that consume tokens on every execution, Browserlet uses AI only during script creation to generate automation scripts in a semantic meta-language (BSL). Execution is then 100% deterministic, fast, and cost-free.
 
 ## Key Features
 
@@ -54,7 +54,7 @@ Browserlet is a Chrome extension that automates interactions with legacy web app
 - **Cooldown System** — Prevent trigger spam with configurable delays
 
 ### Professional UI
-- **Side Panel Interface** — Full-featured UI in Chrome's side panel
+- **Side Panel Interface** — Full-featured UI in Chrome's side panel or Firefox's sidebar
 - **Monaco Editor** — YAML syntax highlighting and validation
 - **Script Management** — Create, edit, rename, delete, import/export
 - **Execution History** — Per-script history with status, duration, screenshots, and extracted data
@@ -85,6 +85,16 @@ npm run build
 2. Enable "Developer mode"
 3. Click "Load unpacked"
 4. Select the `.output/chrome-mv3` directory
+
+### Load in Firefox
+
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click "Load Temporary Add-on..."
+3. Select the `manifest.json` file in the `.output/firefox-mv3` directory
+
+> **Note:** Firefox uses a global sidebar instead of Chrome's per-tab side panel. Some features differ:
+> - Notification action buttons (Stop/Disable) are not supported in Firefox
+> - The sidebar is shared across all tabs
 
 ## Usage
 

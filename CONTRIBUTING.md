@@ -12,8 +12,11 @@ Thank you for your interest in contributing to Browserlet!
 ## Development
 
 ```bash
-# Start development server with HMR
+# Start development server with HMR (Chrome)
 npm run dev
+
+# Start development server for Firefox
+npm run dev:firefox
 
 # Run tests
 npm run test
@@ -21,9 +24,20 @@ npm run test
 # Type check
 npm run typecheck
 
-# Build for production
+# Build for production (Chrome)
 npm run build
+
+# Build for production (Firefox)
+npm run build:firefox
 ```
+
+### Browser-Specific Development
+
+Browserlet supports both Chrome and Firefox. The build output is located in:
+- Chrome: `.output/chrome-mv3`
+- Firefox: `.output/firefox-mv3`
+
+When working on browser-specific code, use the `isFirefox` and `isChrome` utilities from `utils/browser-detect.ts`.
 
 ## Pull Request Process
 
