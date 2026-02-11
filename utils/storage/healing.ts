@@ -4,6 +4,7 @@
  * Follows pattern established by history.ts
  */
 
+import { storage } from './browserCompat';
 import type { SemanticHint } from '../../entrypoints/content/playback/types';
 
 const HEALING_PREFIX = 'browserlet_healing_';
@@ -53,7 +54,7 @@ function healingKey(scriptId: string): string {
  */
 export async function getHealingHistory(scriptId: string): Promise<HealingRecord[]> {
   const key = healingKey(scriptId);
-  const result = await chrome.storage.local.get(key);
+  const result = await storage.local.get(key);
   const records = (result[key] as HealingRecord[] | undefined) ?? [];
   // Ensure sorted by approvedAt descending (most recent first)
   return records.sort((a, b) => b.approvedAt - a.approvedAt);
@@ -77,7 +78,7 @@ export async function addHealingRecord(
 
   // Prepend new record, cap at MAX_HEALING_PER_SCRIPT
   const updated = [newRecord, ...history].slice(0, MAX_HEALING_PER_SCRIPT);
-  await chrome.storage.local.set({ [key]: updated });
+  await storage.local.set({ [key]: updated });
 
   console.log('[Browserlet] Added healing record:', newRecord.id, 'for script:', record.scriptId);
   return newRecord;
@@ -100,7 +101,7 @@ export async function markHealingUndone(
     const record = history[index];
     if (record && !record.undoneAt) {
       history[index] = { ...record, undoneAt: Date.now() };
-      await chrome.storage.local.set({ [key]: history });
+      await storage.local.set({ [key]: history });
       console.log('[Browserlet] Marked healing undone:', recordId);
     }
   }
@@ -112,6 +113,6 @@ export async function markHealingUndone(
  */
 export async function clearHealingHistory(scriptId: string): Promise<void> {
   const key = healingKey(scriptId);
-  await chrome.storage.local.remove(key);
+  await storage.local.remove(key);
   console.log('[Browserlet] Cleared healing history for script:', scriptId);
 }

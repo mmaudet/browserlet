@@ -1,4 +1,5 @@
 import type { AppState, Message, MessageResponse, PingResponse, CapturedAction } from '../../utils/types';
+import { storage } from '../../utils/storage/browserCompat';
 import { getState, setState, setRecordingState, addRecordedAction, clearRecordedActions } from './storage';
 import { getLLMService } from './llm';
 import type { LLMConfig } from './llm/providers/types';
@@ -109,13 +110,13 @@ async function processMessage(
 
     case 'SAVE_EXECUTION_STATE': {
       const state = message.payload as PersistedExecutionState;
-      await chrome.storage.local.set({ [EXECUTION_STATE_KEY]: state });
+      await storage.local.set({ [EXECUTION_STATE_KEY]: state });
       console.log('[Browserlet] Saved execution state, resuming at step', state.currentStep);
       return { success: true };
     }
 
     case 'GET_EXECUTION_STATE': {
-      const data = await chrome.storage.local.get(EXECUTION_STATE_KEY);
+      const data = await storage.local.get(EXECUTION_STATE_KEY);
       const state = data[EXECUTION_STATE_KEY] as PersistedExecutionState | undefined;
 
       if (!state) {
@@ -124,7 +125,7 @@ async function processMessage(
 
       // Check if state is stale (more than 30 seconds old)
       if (Date.now() - state.timestamp > 30000) {
-        await chrome.storage.local.remove(EXECUTION_STATE_KEY);
+        await storage.local.remove(EXECUTION_STATE_KEY);
         return { success: true, data: null };
       }
 
@@ -132,7 +133,7 @@ async function processMessage(
     }
 
     case 'CLEAR_EXECUTION_STATE': {
-      await chrome.storage.local.remove(EXECUTION_STATE_KEY);
+      await storage.local.remove(EXECUTION_STATE_KEY);
       return { success: true };
     }
 

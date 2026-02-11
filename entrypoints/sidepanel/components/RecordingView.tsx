@@ -1,4 +1,5 @@
 import { signal } from '@preact/signals';
+import { storage } from '../../../utils/storage/browserCompat';
 import { useEffect } from 'preact/hooks';
 import { Sparkles, Camera } from 'lucide-preact';
 import { llmConfigStore, getLLMConfigForServiceWorker, loadLLMConfig, isConfigValid } from '../stores/llmConfig';
@@ -662,10 +663,10 @@ export function RecordingView() {
       }
     };
 
-    chrome.storage.onChanged.addListener(handleStorageChange);
+    storage.onChanged.addListener(handleStorageChange);
 
     return () => {
-      chrome.storage.onChanged.removeListener(handleStorageChange);
+      storage.onChanged.removeListener(handleStorageChange);
     };
   }, []);
 

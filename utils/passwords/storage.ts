@@ -11,6 +11,7 @@
  */
 
 import { encryptApiKey, decryptApiKey } from '../crypto/encryption';
+import { storage } from '../storage/browserCompat';
 import type { StoredPassword } from './types';
 
 const PASSWORDS_KEY = 'browserlet_passwords';
@@ -19,7 +20,7 @@ const PASSWORDS_KEY = 'browserlet_passwords';
  * Get all stored passwords (encrypted).
  */
 export async function getPasswords(): Promise<StoredPassword[]> {
-  const data = await chrome.storage.local.get(PASSWORDS_KEY);
+  const data = await storage.local.get(PASSWORDS_KEY);
   return (data[PASSWORDS_KEY] as StoredPassword[] | undefined) ?? [];
 }
 
@@ -45,7 +46,7 @@ export async function savePassword(
     if (alias !== undefined) {
       existing.alias = alias || undefined;
     }
-    await chrome.storage.local.set({ [PASSWORDS_KEY]: passwords });
+    await storage.local.set({ [PASSWORDS_KEY]: passwords });
     return existing;
   }
 
@@ -64,7 +65,7 @@ export async function savePassword(
     entry.alias = alias;
   }
 
-  await chrome.storage.local.set({ [PASSWORDS_KEY]: [...passwords, entry] });
+  await storage.local.set({ [PASSWORDS_KEY]: [...passwords, entry] });
   return entry;
 }
 
@@ -93,7 +94,7 @@ export async function updatePasswordAlias(id: string, alias: string | null): Pro
   }
   credential.updatedAt = Date.now();
 
-  await chrome.storage.local.set({ [PASSWORDS_KEY]: passwords });
+  await storage.local.set({ [PASSWORDS_KEY]: passwords });
 }
 
 /**
@@ -102,5 +103,5 @@ export async function updatePasswordAlias(id: string, alias: string | null): Pro
 export async function deletePassword(id: string): Promise<void> {
   const passwords = await getPasswords();
   const filtered = passwords.filter(p => p.id !== id);
-  await chrome.storage.local.set({ [PASSWORDS_KEY]: filtered });
+  await storage.local.set({ [PASSWORDS_KEY]: filtered });
 }
