@@ -10,7 +10,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
 import type { Page } from 'playwright';
+import pc from 'picocolors';
 import { parseSteps } from '@browserlet/core/parser';
 import {
   substituteVariables,
@@ -26,7 +28,13 @@ import { StepReporter } from './output.js';
 import { CLIPasswordStorage } from './credentials/resolver.js';
 import { ClaudeProvider } from './llm/providers/claude.js';
 import { OllamaProvider } from './llm/providers/ollama.js';
+import type { LLMProvider } from './llm/providers/types.js';
 import { installMicroPromptBridge } from './llm/bridge.js';
+import { RepairEngine } from './repair/repairEngine.js';
+import type { RepairContext, RepairSuggestion } from './repair/types.js';
+import { applyRepair } from './repair/repairApplier.js';
+import { RepairHistoryLogger } from './repair/repairHistory.js';
+import { captureDOMContext } from './repair/domCapture.js';
 
 /** Actions that do not require selector resolution */
 const NO_SELECTOR_ACTIONS = new Set(['navigate', 'screenshot']);
@@ -47,6 +55,8 @@ export interface BSLRunnerOptions {
     ollamaHost?: string;
     ollamaModel?: string;
   };
+  autoRepair?: boolean;    // --auto-repair: apply repairs >= 0.70 confidence automatically
+  interactive?: boolean;   // --interactive: prompt user to approve each repair
 }
 
 /**
@@ -109,7 +119,28 @@ export class BSLRunner {
       console.log('[BSLRunner] Running deterministic-only (stages 1-2)');
     }
 
-    // 5. Create executor, resolvers (cascade + fallback), and reporter
+    // 5. Create repair engine if auto-repair or interactive mode enabled
+    let repairEngine: RepairEngine | null = null;
+    let repairHistory: RepairHistoryLogger | null = null;
+
+    if (this.options.autoRepair || this.options.interactive) {
+      if (!this.options.llmConfig) {
+        throw new Error('--auto-repair / --interactive requires LLM configuration (set ANTHROPIC_API_KEY or configure Ollama)');
+      }
+      const { provider: providerName, claudeApiKey, claudeModel, ollamaHost, ollamaModel } = this.options.llmConfig;
+      let repairProvider: LLMProvider;
+      if (providerName === 'claude') {
+        if (!claudeApiKey) throw new Error('--auto-repair with provider=claude requires ANTHROPIC_API_KEY');
+        repairProvider = new ClaudeProvider(claudeApiKey, claudeModel);
+      } else {
+        repairProvider = new OllamaProvider(ollamaHost, ollamaModel);
+      }
+      repairEngine = new RepairEngine(this.page, repairProvider);
+      repairHistory = new RepairHistoryLogger(scriptPath);
+      console.log(`[BSLRunner] Auto-repair enabled (mode: ${this.options.autoRepair ? 'auto' : 'interactive'})`);
+    }
+
+    // Create executor, resolvers (cascade + fallback), and reporter
     const executor = new PlaywrightExecutor(this.page, this.options.globalTimeout);
     const cascadeResolver = new CascadeCLIResolver(this.page, this.options.globalTimeout);
     await cascadeResolver.inject();
@@ -162,14 +193,116 @@ export class BSLRunner {
         const needsSelector = !NO_SELECTOR_ACTIONS.has(step.action) ||
           (step.action === 'screenshot' && step.target != null);
 
-        // Resolve selector: cascade resolver first, fallback to SimpleResolver
+        // Resolve selector: cascade resolver first, fallback to SimpleResolver, then repair
         let selector = '';
         if (needsSelector) {
+          let cascadeError: string | null = null;
           try {
             selector = await cascadeResolver.resolve(step);
-          } catch {
-            // Cascade failed -- fall back to SimpleResolver (CSS/text selectors)
-            selector = await simpleResolver.resolve(step);
+          } catch (err: unknown) {
+            cascadeError = err instanceof Error ? err.message : String(err);
+            // Cascade failed -- try SimpleResolver
+            try {
+              selector = await simpleResolver.resolve(step);
+              cascadeError = null; // Simple resolver succeeded, no repair needed
+            } catch {
+              // Both resolvers failed
+              if (!repairEngine) {
+                // No repair available, throw cascade error
+                throw new Error(cascadeError ?? 'Both cascade and simple resolver failed');
+              }
+            }
+          }
+
+          // Attempt repair if both resolvers failed and repair engine exists
+          if (cascadeError && repairEngine) {
+            console.log(`[BSLRunner] Both resolvers failed for step ${i + 1}, attempting repair...`);
+
+            // Capture DOM context
+            const domExcerpt = await captureDOMContext(this.page, step);
+
+            // Parse cascade diagnostics from error message
+            const failedMatch = cascadeError.match(/failed=\[([^\]]*)\]/);
+            const matchedMatch = cascadeError.match(/matched=\[([^\]]*)\]/);
+
+            const repairContext: RepairContext = {
+              scriptPath,
+              stepIndex: i,
+              step,
+              failedHints: failedMatch?.[1]?.split(', ').filter(Boolean) ?? [],
+              matchedHints: matchedMatch?.[1]?.split(', ').filter(Boolean) ?? [],
+              cascadeError,
+              domExcerpt,
+              pageUrl: this.page.url(),
+            };
+
+            const repairResult = await repairEngine.attemptRepair(repairContext);
+
+            if (repairResult.suggestions.length > 0) {
+              const topSuggestion = repairResult.suggestions[0]!;
+              console.log(
+                `[BSLRunner] Repair suggestion: confidence=${topSuggestion.confidence.toFixed(2)}, ` +
+                `${topSuggestion.hints.length} hints — ${topSuggestion.reasoning}`
+              );
+
+              let shouldApply = false;
+
+              if (this.options.autoRepair && topSuggestion.confidence >= 0.70) {
+                shouldApply = true;
+                console.log(`[BSLRunner] Auto-applying repair (confidence ${topSuggestion.confidence.toFixed(2)} >= 0.70)`);
+              } else if (this.options.interactive) {
+                shouldApply = await promptRepairApproval(topSuggestion);
+              } else if (this.options.autoRepair && topSuggestion.confidence < 0.70) {
+                console.log(
+                  `[BSLRunner] Skipping repair: confidence ${topSuggestion.confidence.toFixed(2)} < 0.70 threshold`
+                );
+              }
+
+              if (shouldApply) {
+                // Apply the repair to the BSL file on disk
+                const applied = applyRepair(scriptPath, i, topSuggestion.hints);
+
+                if (applied) {
+                  // Log to repair history
+                  repairHistory?.logRepair({
+                    timestamp: new Date().toISOString(),
+                    scriptPath,
+                    stepIndex: i,
+                    stepId: step.id,
+                    originalHints: step.target?.hints ?? [],
+                    appliedHints: topSuggestion.hints,
+                    confidence: topSuggestion.confidence,
+                    reasoning: topSuggestion.reasoning,
+                    pageUrl: repairContext.pageUrl,
+                  });
+
+                  // Update the step's hints in memory for this run
+                  if (step.target) {
+                    step.target.hints = topSuggestion.hints;
+                  }
+
+                  // Re-attempt resolution with the new hints
+                  try {
+                    selector = await cascadeResolver.resolve(step);
+                    console.log(`[BSLRunner] Repair successful! Resolved with new hints.`);
+                  } catch {
+                    // Even repaired hints didn't work
+                    throw new Error(
+                      `Repair applied but resolution still failed for step ${step.id || step.action}`
+                    );
+                  }
+                } else {
+                  throw new Error(`Failed to write repair to ${scriptPath}`);
+                }
+              } else {
+                // Repair not applied (user rejected or below threshold)
+                throw new Error(cascadeError);
+              }
+            } else {
+              // No suggestions from LLM
+              console.log(`[BSLRunner] No repair suggestions available`);
+              throw new Error(cascadeError);
+            }
           }
         }
 
@@ -214,4 +347,30 @@ export class BSLRunner {
     reporter.scriptPass(totalDuration);
     return { exitCode: 0 };
   }
+}
+
+/**
+ * Prompt user to approve or reject a repair suggestion in interactive mode.
+ * Shows the suggestion details and waits for y/n input.
+ */
+async function promptRepairApproval(suggestion: RepairSuggestion): Promise<boolean> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+  console.log('');
+  console.log(pc.bold('  Repair suggestion:'));
+  console.log(pc.dim(`    Confidence: ${suggestion.confidence.toFixed(2)}`));
+  console.log(pc.dim(`    Reasoning: ${suggestion.reasoning}`));
+  console.log(pc.dim(`    New hints:`));
+  for (const hint of suggestion.hints) {
+    const val = typeof hint.value === 'string' ? hint.value : JSON.stringify(hint.value);
+    console.log(pc.dim(`      - ${hint.type}: ${val}`));
+  }
+  console.log('');
+
+  return new Promise<boolean>((resolve) => {
+    rl.question(pc.bold('  Apply this repair? (y/n) '), (answer) => {
+      rl.close();
+      resolve(answer.trim().toLowerCase() === 'y');
+    });
+  });
 }
