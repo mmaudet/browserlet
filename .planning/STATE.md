@@ -12,8 +12,8 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 Milestone: v1.6 CLI Runner & Automated Testing
 Phase: 24+26 of 26 (parallel: CLI Runner & Credential Bridge Security)
 Plan: 24-02 of 3 complete (Phase 24), 26-03 of 3 complete (Phase 26)
-Status: Phase 24 Plan 02 + Phase 26 Complete
-Last activity: 2026-02-14 -- Completed 26-03 (HTTP bridge server with one-time token auth)
+Status: Phase 24 Plan 02 + Phase 26 Complete (all 3 plans)
+Last activity: 2026-02-14 -- Completed 26-02 (vault storage, credential adapter, sanitizer)
 
 Progress: [████████░░] 67%
 
@@ -107,6 +107,12 @@ Progress: [████████░░] 67%
 - 26-01: Extractable keys (exportable: true) to allow JWK comparison in tests and future caching
 - 26-03: Map.get() + immediate delete for one-time tokens -- 256-bit entropy makes timing attacks irrelevant
 - 26-03: 127.0.0.1 string literal over 'localhost' to prevent IPv6 ::1 resolution on dual-stack systems
+- 26-02: env-paths('browserlet', { suffix: '' }) for cross-platform vault path (~/.config/browserlet on Linux, ~/Library/Preferences/browserlet on macOS)
+- 26-02: Credential ID format cred-{timestamp}-{randomHex} for uniqueness without UUID dependency
+- 26-02: split+join for value redaction instead of regex to handle special characters in passwords
+- 26-02: Longest-first value sorting in redactCredentialValues to prevent partial match corruption
+- 26-03: Map.get() + immediate delete for one-time tokens -- 256-bit entropy makes timing attacks irrelevant
+- 26-03: 127.0.0.1 string literal over 'localhost' to prevent IPv6 ::1 resolution on dual-stack systems
 - 26-03: Callback injection (getDecryptedCredential) decouples bridge from vault storage for standalone and extension modes
 
 ### Pending Todos
@@ -121,6 +127,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 26-03-PLAN.md (HTTP bridge server with one-time token auth)
+Stopped at: Completed 26-02-PLAN.md (vault storage, credential adapter, sanitizer)
 Resume file: None
-Next action: Execute Phase 24 Plan 03 or Phase 26 Plan 02 (remaining parallel plans)
+Next action: Execute Phase 24 Plan 03 (BSL runner integration with credentials)
