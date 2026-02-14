@@ -12,6 +12,9 @@ import { Command } from 'commander';
 import { chromium } from 'playwright';
 import pc from 'picocolors';
 import { BSLRunner } from './runner.js';
+import { promptMasterPassword, deriveKey } from './vault/encryption.js';
+import { vaultExists, readVault } from './vault/storage.js';
+import { base64ToBuffer } from './vault/encryption.js';
 
 // Re-export core modules for programmatic usage
 export { PlaywrightExecutor, parseTimeout } from './executor.js';
@@ -36,7 +39,8 @@ program
   .option('--headed', 'Run browser in headed mode', false)
   .option('--timeout <ms>', 'Global step timeout in milliseconds', '30000')
   .option('--output-dir <dir>', 'Directory for failure screenshots', 'browserlet-output')
-  .action(async (scriptPath: string, options: { headed: boolean; timeout: string; outputDir: string }) => {
+  .option('--vault', 'Use encrypted credential vault for {{credential:name}} substitution', false)
+  .action(async (scriptPath: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean }) => {
     // Validate script path
     if (!fs.existsSync(scriptPath)) {
       console.error(pc.red(`Error: Script file not found: ${scriptPath}`));
@@ -48,6 +52,27 @@ program
     if (isNaN(timeout) || timeout <= 0) {
       console.error(pc.red(`Error: Invalid timeout value: ${options.timeout}. Must be a positive integer.`));
       process.exit(2);
+    }
+
+    // Handle vault flag
+    let derivedKey: CryptoKey | undefined;
+    if (options.vault) {
+      // Check vault exists
+      if (!(await vaultExists())) {
+        console.error(pc.red('Vault not found. Initialize with browserlet vault init'));
+        process.exit(2);
+      }
+
+      // Prompt for master password
+      const password = await promptMasterPassword();
+
+      // Read vault and derive key
+      const vault = await readVault();
+      const saltBuffer = base64ToBuffer(vault.salt);
+      derivedKey = await deriveKey(password, new Uint8Array(saltBuffer));
+
+      // Note: Password verification happens during first credential decryption attempt
+      // If wrong password, decryption will fail with clear error
     }
 
     let browser = null;
@@ -62,6 +87,7 @@ program
       const runner = new BSLRunner(page, {
         globalTimeout: timeout,
         outputDir: options.outputDir,
+        derivedKey,
       });
 
       const result = await runner.run(scriptPath);

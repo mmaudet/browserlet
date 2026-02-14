@@ -16,12 +16,14 @@ import {
   substituteVariables,
   hasExtractedVariables,
   CREDENTIAL_PATTERN,
+  substituteCredentials,
 } from '@browserlet/core/substitution';
 import { PlaywrightExecutor } from './executor.js';
 import type { StepError } from './executor.js';
 import { CascadeCLIResolver } from './cascadeResolver.js';
 import { SimpleResolver } from './resolver.js';
 import { StepReporter } from './output.js';
+import { CLIPasswordStorage } from './credentials/resolver.js';
 
 /** Actions that do not require selector resolution */
 const NO_SELECTOR_ACTIONS = new Set(['navigate', 'screenshot']);
@@ -33,6 +35,7 @@ export interface RunResult {
 export interface BSLRunnerOptions {
   globalTimeout: number;
   outputDir: string; // Directory for failure screenshots
+  derivedKey?: CryptoKey; // Optional: if provided, enables credential substitution
 }
 
 /**
@@ -78,7 +81,12 @@ export class BSLRunner {
     // 5. Runtime context for extracted variable substitution
     const extractedData: Record<string, unknown> = {};
 
-    // 6. Begin script execution
+    // 6. Create password storage if vault is unlocked
+    const passwordStorage = this.options.derivedKey
+      ? new CLIPasswordStorage(this.options.derivedKey)
+      : null;
+
+    // 7. Begin script execution
     reporter.scriptStart(script.name, script.steps.length);
     const scriptStartTime = performance.now();
 
@@ -92,13 +100,18 @@ export class BSLRunner {
       try {
         // Handle variable substitution in step.value
         if (step.value) {
-          // Check for credential references (Phase 26 feature)
-          CREDENTIAL_PATTERN.lastIndex = 0;
-          if (CREDENTIAL_PATTERN.test(step.value)) {
-            console.warn(
-              `[Browserlet] Warning: Step ${i + 1} contains credential references. ` +
-              `Credential substitution requires --vault or extension bridge (Phase 26).`,
-            );
+          // Substitute credentials if vault is unlocked
+          if (passwordStorage) {
+            step.value = await substituteCredentials(step.value, passwordStorage);
+          } else {
+            // Check for credential references without vault
+            CREDENTIAL_PATTERN.lastIndex = 0;
+            if (CREDENTIAL_PATTERN.test(step.value)) {
+              throw new Error(
+                `Step ${i + 1} contains credential references but --vault flag not provided. ` +
+                `Use --vault to unlock credential vault.`
+              );
+            }
           }
 
           // Substitute extracted variables

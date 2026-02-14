@@ -11,6 +11,8 @@
  * @see utils/crypto/encryption.ts (extension implementation)
  */
 
+import readline from 'node:readline/promises';
+
 // Cryptographic constants - MUST match extension exactly
 const SALT_LENGTH = 16; // 128 bits (NIST recommendation)
 const ITERATIONS = 600000; // OWASP 2025/2026 standard
@@ -196,5 +198,28 @@ export async function verifyMasterPassword(
   } catch {
     // Decryption failed - wrong password (AES-GCM authentication tag mismatch)
     return { valid: false, key: null };
+  }
+}
+
+/**
+ * Prompt the user to enter the vault master password.
+ *
+ * Uses readline interface to prompt for password input.
+ * Note: Input is visible by default (readline does not mask input).
+ * For production-grade masking, would need external dependency like `read` package.
+ *
+ * @returns The password string entered by the user
+ */
+export async function promptMasterPassword(): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  try {
+    const password = await rl.question('Enter vault master password: ');
+    return password;
+  } finally {
+    rl.close();
   }
 }
