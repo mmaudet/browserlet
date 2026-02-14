@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 Milestone: v1.6 CLI Runner & Automated Testing
 Phase: 24+26 of 26 (parallel: CLI Runner & Credential Bridge Security)
-Plan: 24-01 of 3 complete (Phase 24), 26-01 of 3 complete (Phase 26)
-Status: Phase 24 Plan 01 + Phase 26 Plan 01 Complete
-Last activity: 2026-02-14 -- Completed 24-01 (CLI workspace & Playwright executor)
+Plan: 24-02 of 3 complete (Phase 24), 26-01 of 3 complete (Phase 26)
+Status: Phase 24 Plan 02 + Phase 26 Plan 01 Complete
+Last activity: 2026-02-14 -- Completed 24-02 (BSL runner & CLI entry point)
 
-Progress: [██████░░░░] 40%
+Progress: [███████░░░] 50%
 
 ## Performance Metrics
 
@@ -98,6 +98,10 @@ Progress: [██████░░░░] 40%
 - 24-01: Exhaustive switch with never type guard for ActionType compile-time coverage
 - 24-01: page.fill() over page.type() for type action (faster, clears field first)
 - 24-01: StepError classification: TIMEOUT (exit 2) vs STEP_FAILURE (exit 1) for proper CLI exit codes
+- 24-02: SimpleResolver uses locator.count() existence checks for hint-chain resolution
+- 24-02: BSLRunner mutates step.value in-place for variable substitution before execution
+- 24-02: CLI index.ts dual purpose: re-exports modules and runs program.parse() for bin entry
+- 24-02: Credential substitution deferred to Phase 26 with console.warn on detection
 - 26-01: Buffer.from().toString('base64') for Node.js base64 -- identical output to extension's btoa(String.fromCharCode(...bytes))
 - 26-01: globalThis.crypto.subtle over node:crypto legacy API for parameter-level compatibility with extension
 - 26-01: Extractable keys (exportable: true) to allow JWK comparison in tests and future caching
@@ -114,6 +118,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 24-01-PLAN.md (CLI workspace & Playwright executor)
+Stopped at: Completed 24-02-PLAN.md (BSL runner & CLI entry point)
 Resume file: None
-Next action: Execute Phase 24 Plan 02 (BSL runner & CLI entry point)
+Next action: Execute Phase 24 Plan 03 (integration testing / end-to-end validation)
