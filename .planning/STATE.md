@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 Milestone: v1.6 CLI Runner & Automated Testing
 Phase: 24+26 of 26 (parallel: CLI Runner & Credential Bridge Security)
-Plan: 26-01 of 3 complete (Phase 26)
-Status: Phase 26 Plan 01 Complete
-Last activity: 2026-02-14 -- Completed 26-01 (CLI encryption module)
+Plan: 24-01 of 3 complete (Phase 24), 26-01 of 3 complete (Phase 26)
+Status: Phase 24 Plan 01 + Phase 26 Plan 01 Complete
+Last activity: 2026-02-14 -- Completed 24-01 (CLI workspace & Playwright executor)
 
-Progress: [█████░░░░░] 33%
+Progress: [██████░░░░] 40%
 
 ## Performance Metrics
 
@@ -93,6 +93,11 @@ Progress: [█████░░░░░] 33%
 - 23-03: Re-export shim pattern for migration: original files forward to @browserlet/core, preserving all existing import paths
 - 23-03: NodeNext module resolution for @browserlet/core enables Node.js standalone ESM imports
 - 23-03: PasswordStorage adapter wrapper in utils/passwords/substitution.ts preserves backward-compatible call signature
+- 24-01: Merged CLI package.json with Phase 26 -- added playwright/commander/picocolors/ora alongside existing env-paths
+- 24-01: Used '*' over 'workspace:*' for @browserlet/core -- npm 10 does not support workspace: protocol natively
+- 24-01: Exhaustive switch with never type guard for ActionType compile-time coverage
+- 24-01: page.fill() over page.type() for type action (faster, clears field first)
+- 24-01: StepError classification: TIMEOUT (exit 2) vs STEP_FAILURE (exit 1) for proper CLI exit codes
 - 26-01: Buffer.from().toString('base64') for Node.js base64 -- identical output to extension's btoa(String.fromCharCode(...bytes))
 - 26-01: globalThis.crypto.subtle over node:crypto legacy API for parameter-level compatibility with extension
 - 26-01: Extractable keys (exportable: true) to allow JWK comparison in tests and future caching
@@ -109,6 +114,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 26-01-PLAN.md (CLI encryption module with PBKDF2 + AES-GCM)
+Stopped at: Completed 24-01-PLAN.md (CLI workspace & Playwright executor)
 Resume file: None
-Next action: Execute Phase 26 Plan 02 (vault store)
+Next action: Execute Phase 24 Plan 02 (BSL runner & CLI entry point)
