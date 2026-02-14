@@ -1,0 +1,429 @@
+/**
+ * Semantic resolver for finding DOM elements using multi-hint weighted scoring
+ * Core of resilient automation - survives DOM restructuring unlike CSS/XPath
+ *
+ * AUTO-ADAPTED for CLI resolver bundle
+ * Changes from extension version:
+ * - Imports from ./types and ./domUtils instead of @browserlet/core and utils/hints/*
+ * - No re-export of HINT_WEIGHTS (available from ./types directly)
+ */
+
+import type { SemanticHint, HintType, ResolverResult } from './types';
+import { HINT_WEIGHTS } from './types';
+import { getElementRole, isElementVisible, findAssociatedLabel, normalizeText } from './domUtils';
+import { extractDOMContext } from './domContextExtractor';
+
+/**
+ * Get initial candidate elements based on first reliable hint
+ * Optimizes by narrowing search space before full scoring
+ */
+function getInitialCandidates(hints: SemanticHint[]): Element[] {
+  // Priority order for initial filtering
+  // 'type' before 'role' because password fields have type but no role
+  const priorityHints: HintType[] = ['type', 'role', 'name', 'id'];
+
+  for (const priorityType of priorityHints) {
+    const hint = hints.find(h => h.type === priorityType);
+    if (hint && typeof hint.value === 'string') {
+      let elements: NodeListOf<Element> | Element[];
+
+      switch (priorityType) {
+        case 'role': {
+          // Combine explicit role AND implicit role elements
+          const explicitRole = Array.from(document.querySelectorAll(`[role="${hint.value}"]`));
+          const implicitRole = getElementsByImplicitRole(hint.value);
+          // Merge both, removing duplicates
+          elements = [...new Set([...explicitRole, ...implicitRole])];
+          break;
+        }
+        case 'type':
+          elements = document.querySelectorAll(`[type="${hint.value}"]`);
+          break;
+        case 'id': {
+          const el = document.getElementById(hint.value);
+          elements = el ? [el] : [];
+          break;
+        }
+        case 'name':
+          elements = document.querySelectorAll(`[name="${hint.value}"]`);
+          break;
+        default:
+          elements = [];
+      }
+
+      if (elements.length > 0) {
+        return Array.from(elements);
+      }
+    }
+  }
+
+  // Fallback: get all interactive elements
+  const standardInteractive = Array.from(document.querySelectorAll(
+    'a, button, input, select, textarea, [role="button"], [role="link"], ' +
+    '[role="textbox"], [role="checkbox"], [role="radio"], [tabindex], [onclick]'
+  ));
+
+  // If we have text_contains hint, expand to include text-containing elements
+  // This is essential for extract actions that need to find static text
+  const hasTextHint = hints.some(h => h.type === 'text_contains');
+  if (hasTextHint) {
+    const textElements = getTextContainingElements();
+    const clickableElements = getClickableElements();
+    const combined = new Set([...standardInteractive, ...textElements, ...clickableElements]);
+    return Array.from(combined);
+  }
+
+  return standardInteractive;
+}
+
+/**
+ * Get elements that appear clickable (cursor: pointer) even without semantic markup
+ * Used as fallback for non-accessible websites
+ */
+function getClickableElements(): Element[] {
+  const candidates: Element[] = [];
+
+  // Query common clickable containers
+  const potentialClickables = document.querySelectorAll(
+    'div, span, li, td, article, section, [class*="btn"], [class*="button"], [class*="card"], [class*="click"]'
+  );
+
+  for (const el of potentialClickables) {
+    const style = window.getComputedStyle(el);
+    // Element has pointer cursor = likely clickable
+    if (style.cursor === 'pointer') {
+      candidates.push(el);
+    }
+  }
+
+  return candidates;
+}
+
+/**
+ * Get elements that typically contain text for extraction
+ * Used for extract action to find static text elements
+ */
+function getTextContainingElements(): Element[] {
+  return Array.from(document.querySelectorAll(
+    'h1, h2, h3, h4, h5, h6, p, span, div, li, td, th, label, ' +
+    'strong, em, b, i, code, pre, blockquote, figcaption, ' +
+    '[class*="title"], [class*="heading"], [class*="text"], [class*="label"], [class*="name"], [class*="value"]'
+  ));
+}
+
+/**
+ * Get elements with a specific implicit ARIA role
+ */
+function getElementsByImplicitRole(role: string): Element[] {
+  const roleToTags: Record<string, string[]> = {
+    'button': ['button', 'input[type="button"]', 'input[type="submit"]', 'input[type="reset"]'],
+    'link': ['a[href]'],
+    'textbox': ['input:not([type])', 'input[type="text"]', 'input[type="email"]', 'input[type="tel"]', 'input[type="url"]', 'input[type="search"]', 'textarea'],
+    'checkbox': ['input[type="checkbox"]'],
+    'radio': ['input[type="radio"]'],
+    'combobox': ['select'],
+    'listbox': ['select[multiple]'],
+    'searchbox': ['input[type="search"]'],
+    'spinbutton': ['input[type="number"]'],
+    'slider': ['input[type="range"]'],
+    'navigation': ['nav'],
+    'main': ['main'],
+    'banner': ['header'],
+    'contentinfo': ['footer'],
+    'form': ['form'],
+    'list': ['ul', 'ol'],
+    'listitem': ['li'],
+    'table': ['table'],
+    'cell': ['td', 'th'],
+    'row': ['tr'],
+    'columnheader': ['th'],
+    'rowheader': ['th[scope="row"]'],
+    'img': ['img'],
+    'article': ['article'],
+    'complementary': ['aside'],
+    'heading': ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+    'paragraph': ['p'],
+  };
+
+  const selectors = roleToTags[role];
+  if (!selectors) return [];
+
+  const elements: Element[] = [];
+  for (const selector of selectors) {
+    elements.push(...Array.from(document.querySelectorAll(selector)));
+  }
+  return elements;
+}
+
+/**
+ * Check if an element matches a specific hint
+ */
+function matchHint(element: Element, hint: SemanticHint): boolean {
+  switch (hint.type) {
+    case 'role': {
+      if (typeof hint.value !== 'string') return false;
+      const elementRole = getElementRole(element);
+      return elementRole === hint.value;
+    }
+
+    case 'id': {
+      if (typeof hint.value !== 'string') return false;
+      return element.id === hint.value;
+    }
+
+    case 'text_contains': {
+      if (typeof hint.value !== 'string') return false;
+      const textContent = element.textContent || '';
+      return normalizeText(textContent).includes(normalizeText(hint.value));
+    }
+
+    case 'type': {
+      if (typeof hint.value !== 'string') return false;
+      return element.getAttribute('type') === hint.value;
+    }
+
+    case 'name': {
+      if (typeof hint.value !== 'string') return false;
+      return element.getAttribute('name') === hint.value;
+    }
+
+    case 'aria_label': {
+      if (typeof hint.value !== 'string') return false;
+      return element.getAttribute('aria-label') === hint.value;
+    }
+
+    case 'placeholder_contains': {
+      if (typeof hint.value !== 'string') return false;
+      const placeholder = element.getAttribute('placeholder') || '';
+      return normalizeText(placeholder).includes(normalizeText(hint.value));
+    }
+
+    case 'near_label': {
+      if (typeof hint.value !== 'string') return false;
+      const label = findAssociatedLabel(element);
+      if (!label) return false;
+      const labelText = label.textContent || '';
+      return normalizeText(labelText).includes(normalizeText(hint.value));
+    }
+
+    case 'class_contains': {
+      if (typeof hint.value !== 'string') return false;
+      return element.classList.contains(hint.value);
+    }
+
+    case 'data_attribute': {
+      if (typeof hint.value === 'string') return false;
+      const { name, value } = hint.value;
+      return element.getAttribute(name) === value;
+    }
+
+    case 'fieldset_context': {
+      if (typeof hint.value !== 'string') return false;
+      const context = extractDOMContext(element);
+      return context.fieldset_legend !== null &&
+        normalizeText(context.fieldset_legend).includes(normalizeText(hint.value));
+    }
+
+    case 'associated_label': {
+      if (typeof hint.value !== 'string') return false;
+      const ctx = extractDOMContext(element);
+      return ctx.associated_label !== null &&
+        normalizeText(ctx.associated_label).includes(normalizeText(hint.value));
+    }
+
+    case 'section_context': {
+      if (typeof hint.value !== 'string') return false;
+      const sctx = extractDOMContext(element);
+      return sctx.section_heading !== null &&
+        normalizeText(sctx.section_heading).includes(normalizeText(hint.value));
+    }
+
+    default:
+      return false;
+  }
+}
+
+/**
+ * Resolve an element from semantic hints using weighted scoring
+ * Returns the best match if confidence >= 0.7 threshold
+ */
+export function resolveElement(hints: SemanticHint[]): ResolverResult {
+  if (hints.length === 0) {
+    return {
+      element: null,
+      confidence: 0,
+      matchedHints: [],
+      failedHints: [],
+    };
+  }
+
+  const allCandidates = getInitialCandidates(hints);
+
+  // Filter to only visible/interactable candidates first
+  // This prevents hidden duplicates from being selected over visible ones
+  const candidates = allCandidates.filter(el => {
+    const rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  });
+
+  // Fallback to all candidates if no visible ones found
+  const finalCandidates = candidates.length > 0 ? candidates : allCandidates;
+
+  // Calculate max possible score
+  const maxPossibleScore = hints.reduce((sum, hint) => sum + HINT_WEIGHTS[hint.type], 0);
+
+  let bestMatch: Element | null = null;
+  let bestScore = 0;
+  let bestMatchedHints: string[] = [];
+  let bestFailedHints: string[] = [];
+
+  for (const candidate of finalCandidates) {
+    let score = 0;
+    const matchedHints: string[] = [];
+    const failedHints: string[] = [];
+
+    for (const hint of hints) {
+      const hintDescription = typeof hint.value === 'string'
+        ? `${hint.type}:${hint.value}`
+        : `${hint.type}:${hint.value.name}=${hint.value.value}`;
+
+      if (matchHint(candidate, hint)) {
+        score += HINT_WEIGHTS[hint.type];
+        matchedHints.push(hintDescription);
+      } else {
+        failedHints.push(hintDescription);
+      }
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = candidate;
+      bestMatchedHints = matchedHints;
+      bestFailedHints = failedHints;
+    }
+  }
+
+  // Normalize score to 0-1 range
+  const confidence = maxPossibleScore > 0 ? bestScore / maxPossibleScore : 0;
+
+  // Apply confidence threshold
+  const CONFIDENCE_THRESHOLD = 0.7;
+
+  if (confidence >= CONFIDENCE_THRESHOLD && bestMatch) {
+    return {
+      element: bestMatch,
+      confidence,
+      matchedHints: bestMatchedHints,
+      failedHints: bestFailedHints,
+    };
+  }
+
+  // No match above threshold
+  return {
+    element: null,
+    confidence,
+    matchedHints: bestMatchedHints,
+    failedHints: bestFailedHints,
+  };
+}
+
+/**
+ * Check if an element is interactable (visible + enabled + has dimensions)
+ * More strict than isElementVisible - ensures element is ready for interaction
+ */
+export function isElementInteractable(element: Element): boolean {
+  // Must be visible first
+  if (!isElementVisible(element)) {
+    return false;
+  }
+
+  // Check disabled state
+  if (element.hasAttribute('disabled')) {
+    return false;
+  }
+
+  // Check aria-disabled
+  if (element.getAttribute('aria-disabled') === 'true') {
+    return false;
+  }
+
+  // Check dimensions
+  const rect = element.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Wait for an element to appear and become interactable
+ * Uses MutationObserver for efficient DOM change detection with timeout fallback
+ */
+export function waitForElement(
+  hints: SemanticHint[],
+  timeoutMs: number = 10000
+): Promise<ResolverResult> {
+  return new Promise((resolve, reject) => {
+    // Try immediate resolution first
+    const immediateResult = resolveElement(hints);
+    if (immediateResult.element && isElementInteractable(immediateResult.element)) {
+      resolve(immediateResult);
+      return;
+    }
+
+    // Set up MutationObserver for DOM changes
+    let observer: MutationObserver | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    };
+
+    const checkElement = () => {
+      const result = resolveElement(hints);
+      if (result.element && isElementInteractable(result.element)) {
+        cleanup();
+        resolve(result);
+        return true;
+      }
+      return false;
+    };
+
+    // Set up MutationObserver
+    observer = new MutationObserver(() => {
+      checkElement();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style', 'hidden', 'aria-hidden', 'disabled', 'aria-disabled'],
+    });
+
+    // Set up timeout fallback
+    timeoutId = setTimeout(() => {
+      cleanup();
+
+      const hintsDebug = hints.map(hint => {
+        if (typeof hint.value === 'string') {
+          return `${hint.type}:${hint.value}`;
+        }
+        return `${hint.type}:${hint.value.name}=${hint.value.value}`;
+      }).join(', ');
+
+      reject(new Error(
+        `waitForElement timeout after ${timeoutMs}ms. ` +
+        `Could not find interactable element matching hints: [${hintsDebug}]`
+      ));
+    }, timeoutMs);
+  });
+}
