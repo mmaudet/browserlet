@@ -5,57 +5,45 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** Phase 28 - LLM Micro-Prompt Bridge
+**Current focus:** Phases 27-28 complete, ready for Phase 29-30
 
 ## Current Position
 
 Milestone: v1.7 CLI Completion & Batch Testing
-Phase: 28 of 31 (LLM Micro-Prompt Bridge)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-14 — Completed plan 28-02 (Bridge integration)
+Phase: 28 of 31 (Phases 27+28 complete)
+Status: Ready for next wave (29+30)
+Last activity: 2026-02-14 — Phases 27 and 28 verified and complete
 
-Progress: [████████████████████░░░░░░░░░░] 84% (phases 1-26 complete, phase 28 in progress)
+Progress: [██████████████████████████░░░░] 90% (phases 1-28 complete)
 
 ## Performance Metrics
 
-**Overall Velocity (v1.0-v1.6):**
-- Total plans completed: 95
-- Total phases completed: 26
-- 7 milestones shipped
-
-**Recent Milestones:**
-- v1.6: 4 phases, 11 plans, 1 day (2026-02-14)
-- v1.5: 6 phases, 14 plans, 2 days (2026-02-12 → 2026-02-13)
-- v1.4: 3 phases, 12 plans, 2 days (2026-02-01 → 2026-02-02)
+**Overall Velocity (v1.0-v1.7):**
+- Total plans completed: 99
+- Total phases completed: 28
+- 7 milestones shipped, v1.7 in progress
 
 **v1.7 Status:**
-- Phases: 5 planned (27-31), Phase 28 in progress
-- Plans completed: 2 (28-01, 28-02)
-- Requirements: 21 total, 100% mapped to phases
+- Phases: 5 planned (27-31)
+- Phases complete: 2 (27, 28)
+- Phases remaining: 3 (29, 30, 31)
+- Plans completed: 4 (27-01, 28-01, 28-02, 28-03)
+- Requirements: 21 total
 
 **Recent Plans:**
+- 28-03: Integration tests + human verification (5 min, 2 tasks) - 2026-02-14
 - 28-02: Bridge integration (3 min, 2 tasks, 3 files) - 2026-02-14
 - 28-01: LLM provider abstraction (2 min, 2 tasks, 4 files) - 2026-02-14
+- 27-01: Credential wiring (15 min, 3 tasks, 3 files) - 2026-02-14
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting v1.7 work:
-
-- **28-02**: Bridge installed after page creation, before resolver injection — follows Phase 26 credential bridge pattern
-- **28-02**: Default behavior is deterministic-only (stages 1-2) — LLM stages require explicit --micro-prompts flag
-- **28-02**: Environment variable configuration — ANTHROPIC_API_KEY for Claude, BROWSERLET_LLM_PROVIDER for provider selection
-- **28-01**: Provider passed as parameter (not singleton) — CLI creates provider per run, no service worker pattern
-- **28-01**: Simple availability checks (no network calls) — avoid latency, fail fast on generate()
-- **28-01**: No dangerouslyAllowBrowser flag — server-side Node.js execution
-- **v1.6**: esbuild IIFE for resolver bundle — 43KB self-contained bundle for page.evaluate() injection
-- **v1.6**: globalThis.crypto.subtle for CLI — parameter-level compatibility with extension's Web Crypto API
-- **v1.6**: One-time bearer tokens — Map.get()+delete for bridge auth, 256-bit entropy
-- **v1.5**: Cascade resolver architecture — deterministic-first (80%+ without LLM), micro-prompts for edge cases
-- **v1.5**: Micro-prompts (<600 tokens) — replace monolithic 5000-token prompt, -88% LLM cost
+- **27-01**: Password verification upfront via verifyMasterPassword() — originally deferred, caused silent failures with wrong passwords
+- **28-02**: Bridge installed after page creation, before resolver injection
+- **28-02**: Default behavior is deterministic-only (stages 1-2)
+- **28-01**: Provider passed as parameter (not singleton)
 
 ### Pending Todos
 
@@ -63,30 +51,20 @@ None.
 
 ### Blockers/Concerns
 
-**Research flags identified for phase planning:**
-
-**Phase 28 (LLM Bridge):**
-- page.exposeFunction timing in headed vs headless mode needs empirical testing
-- Error recovery strategy when LLM unavailable needs validation
-- Function namespace collision prevention (session ID sufficient?)
-
 **Phase 29 (Batch Runner):**
 - Worker pool sizing formula needs RAM-based calculation
-- Resource monitoring (how to detect overload and suggest reducing workers?)
+- Resource monitoring (how to detect overload?)
 
 **Phase 30 (AI Auto-Repair):**
-- Repair quality threshold (>0.70 confidence) needs empirical validation with controlled page changes
-- Circuit breaker tuning (3 retries optimal or vary by failure type?)
-- Hint caching strategy (DOM context hash collision rate?)
-
-These are flagged in research/SUMMARY.md and will be addressed during phase planning.
+- Repair quality threshold (>0.70 confidence) needs empirical validation
+- Circuit breaker tuning (3 retries optimal?)
 
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed plan 28-02 (Bridge integration)
-Resume with: Execute plan 28-03 (Integration testing)
+Stopped at: Phases 27+28 complete, all human verification passed
+Resume with: Plan and execute Phase 29 (Batch Runner) and Phase 30 (AI Auto-Repair) — can run in parallel
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-14 after completing plan 28-02*
+*Last updated: 2026-02-14 after completing phases 27+28*

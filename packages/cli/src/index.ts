@@ -12,7 +12,7 @@ import { Command } from 'commander';
 import { chromium } from 'playwright';
 import pc from 'picocolors';
 import { BSLRunner } from './runner.js';
-import { promptMasterPassword, deriveKey } from './vault/encryption.js';
+import { promptMasterPassword, verifyMasterPassword } from './vault/encryption.js';
 import { vaultExists, readVault } from './vault/storage.js';
 import { base64ToBuffer } from './vault/encryption.js';
 
@@ -67,13 +67,15 @@ program
       // Prompt for master password
       const password = await promptMasterPassword();
 
-      // Read vault and derive key
+      // Read vault and verify password against stored validation data
       const vault = await readVault();
       const saltBuffer = base64ToBuffer(vault.salt);
-      derivedKey = await deriveKey(password, new Uint8Array(saltBuffer));
-
-      // Note: Password verification happens during first credential decryption attempt
-      // If wrong password, decryption will fail with clear error
+      const verification = await verifyMasterPassword(password, new Uint8Array(saltBuffer), vault.validationData);
+      if (!verification.valid) {
+        console.error(pc.red('Invalid master password'));
+        process.exit(2);
+      }
+      derivedKey = verification.key!
     }
 
     // Handle --micro-prompts flag: read LLM config from environment
