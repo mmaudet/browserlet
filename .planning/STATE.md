@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Automatisation web resiliente pour applications legacy, sans cout recurrent d'IA
-**Current focus:** v1.6 CLI Runner & Automated Testing -- Phase 23: Monorepo & Shared Core
+**Current focus:** v1.6 CLI Runner & Automated Testing -- Phases 24 & 26 (parallel)
 
 ## Current Position
 
 Milestone: v1.6 CLI Runner & Automated Testing
-Phase: 23 of 26 (Monorepo & Shared Core)
-Plan: 3 of 3 complete
-Status: Phase 23 Complete
-Last activity: 2026-02-14 -- Completed 23-03 (import rewiring to @browserlet/core)
+Phase: 24+26 of 26 (parallel: CLI Runner & Credential Bridge Security)
+Plan: 26-01 of 3 complete (Phase 26)
+Status: Phase 26 Plan 01 Complete
+Last activity: 2026-02-14 -- Completed 26-01 (CLI encryption module)
 
-Progress: [████░░░░░░] 25%
+Progress: [█████░░░░░] 33%
 
 ## Performance Metrics
 
@@ -93,6 +93,9 @@ Progress: [████░░░░░░] 25%
 - 23-03: Re-export shim pattern for migration: original files forward to @browserlet/core, preserving all existing import paths
 - 23-03: NodeNext module resolution for @browserlet/core enables Node.js standalone ESM imports
 - 23-03: PasswordStorage adapter wrapper in utils/passwords/substitution.ts preserves backward-compatible call signature
+- 26-01: Buffer.from().toString('base64') for Node.js base64 -- identical output to extension's btoa(String.fromCharCode(...bytes))
+- 26-01: globalThis.crypto.subtle over node:crypto legacy API for parameter-level compatibility with extension
+- 26-01: Extractable keys (exportable: true) to allow JWK comparison in tests and future caching
 
 ### Pending Todos
 
@@ -101,11 +104,11 @@ None.
 ### Blockers/Concerns
 
 - Research flags page.evaluate() serialization as high risk -- Phase 25 may need research-phase before planning
-- Cross-platform Web Crypto compatibility (Node.js vs browser) needs early validation in Phase 26
+- Cross-platform Web Crypto compatibility (Node.js vs browser) -- VALIDATED in 26-01: globalThis.crypto.subtle works in Node.js v15+, BufferSource cast needed for TypeScript strict mode
 
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 23-03-PLAN.md (import rewiring to @browserlet/core) -- Phase 23 complete
+Stopped at: Completed 26-01-PLAN.md (CLI encryption module with PBKDF2 + AES-GCM)
 Resume file: None
-Next action: Plan Phase 24 (CLI Runner & Actions)
+Next action: Execute Phase 26 Plan 02 (vault store)
