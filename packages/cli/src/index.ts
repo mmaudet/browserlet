@@ -5,6 +5,7 @@
  * lifecycle, and wires BSLRunner for end-to-end script execution.
  *
  * Usage: browserlet run <script> [--headed] [--timeout <ms>]
+ *        browserlet test <directory> [--headed] [--timeout <ms>]
  */
 
 import fs from 'node:fs';
@@ -12,6 +13,8 @@ import { Command } from 'commander';
 import { chromium } from 'playwright';
 import pc from 'picocolors';
 import { BSLRunner } from './runner.js';
+import { BatchRunner } from './batchRunner.js';
+import { TestReporter } from './testReporter.js';
 import { promptMasterPassword, verifyMasterPassword } from './vault/encryption.js';
 import { vaultExists, readVault } from './vault/storage.js';
 import { base64ToBuffer } from './vault/encryption.js';
@@ -24,6 +27,9 @@ export { SimpleResolver } from './resolver.js';
 export { BSLRunner } from './runner.js';
 export type { RunResult, BSLRunnerOptions } from './runner.js';
 export { CascadeCLIResolver } from './cascadeResolver.js';
+export { BatchRunner } from './batchRunner.js';
+export type { BatchResult, ScriptResult, BatchRunnerOptions } from './batchRunner.js';
+export { TestReporter } from './testReporter.js';
 
 const program = new Command();
 
@@ -139,6 +145,104 @@ program
       if (browser) {
         await browser.close().catch(() => {});
       }
+    }
+  });
+
+program
+  .command('test')
+  .description('Run all BSL scripts in a directory')
+  .argument('<directory>', 'Directory containing .bsl test scripts')
+  .option('--headed', 'Run browser in headed mode', false)
+  .option('--timeout <ms>', 'Global step timeout in milliseconds', '30000')
+  .option('--output-dir <dir>', 'Directory for failure screenshots', 'browserlet-output')
+  .option('--vault', 'Use encrypted credential vault', false)
+  .option('--micro-prompts', 'Enable LLM micro-prompts for cascade resolver', false)
+  .action(async (directory: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean; microPrompts: boolean }) => {
+    // Validate directory exists
+    if (!fs.existsSync(directory)) {
+      console.error(pc.red(`Error: Directory not found: ${directory}`));
+      process.exit(2);
+    }
+    if (!fs.statSync(directory).isDirectory()) {
+      console.error(pc.red(`Error: Not a directory: ${directory}`));
+      process.exit(2);
+    }
+
+    // Validate timeout
+    const timeout = parseInt(options.timeout, 10);
+    if (isNaN(timeout) || timeout <= 0) {
+      console.error(pc.red(`Error: Invalid timeout value: ${options.timeout}. Must be a positive integer.`));
+      process.exit(2);
+    }
+
+    // Handle vault flag
+    let derivedKey: CryptoKey | undefined;
+    if (options.vault) {
+      if (!(await vaultExists())) {
+        console.error(pc.red('Vault not found. Initialize with browserlet vault init'));
+        process.exit(2);
+      }
+
+      const password = await promptMasterPassword();
+      const vault = await readVault();
+      const saltBuffer = base64ToBuffer(vault.salt);
+      const verification = await verifyMasterPassword(password, new Uint8Array(saltBuffer), vault.validationData);
+      if (!verification.valid) {
+        console.error(pc.red('Invalid master password'));
+        process.exit(2);
+      }
+      derivedKey = verification.key!;
+    }
+
+    // Handle --micro-prompts flag: read LLM config from environment
+    let llmConfig: { provider: 'claude' | 'ollama'; claudeApiKey?: string; claudeModel?: string; ollamaHost?: string; ollamaModel?: string } | undefined;
+    if (options.microPrompts) {
+      const provider = (process.env.BROWSERLET_LLM_PROVIDER || 'claude') as 'claude' | 'ollama';
+
+      if (provider === 'claude') {
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) {
+          console.error(pc.red('--micro-prompts with provider=claude requires ANTHROPIC_API_KEY environment variable'));
+          process.exit(2);
+        }
+        llmConfig = {
+          provider: 'claude',
+          claudeApiKey: apiKey,
+          claudeModel: process.env.BROWSERLET_LLM_MODEL || 'claude-sonnet-4-5-20250929',
+        };
+      } else if (provider === 'ollama') {
+        llmConfig = {
+          provider: 'ollama',
+          ollamaHost: process.env.BROWSERLET_OLLAMA_HOST || 'http://localhost:11434',
+          ollamaModel: process.env.BROWSERLET_LLM_MODEL || 'llama3.1',
+        };
+      } else {
+        console.error(pc.red(`Unknown LLM provider: ${provider}. Use 'claude' or 'ollama'.`));
+        process.exit(2);
+      }
+    }
+
+    try {
+      const reporter = new TestReporter();
+      const batchRunner = new BatchRunner({
+        headed: options.headed,
+        globalTimeout: timeout,
+        outputDir: options.outputDir,
+        vault: options.vault,
+        derivedKey,
+        microPrompts: options.microPrompts,
+        llmConfig,
+      }, reporter);
+
+      const scripts = batchRunner.discover(directory);
+      reporter.suiteStart(directory, scripts.length);
+
+      const batchResult = await batchRunner.runAll(scripts);
+      process.exit(batchResult.exitCode);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(pc.red(`Error: ${message}`));
+      process.exit(2);
     }
   });
 
