@@ -56,12 +56,12 @@ Plans:
   3. Running `browserlet run script.bsl --timeout 5000` causes the script to fail with exit code 2 if any step exceeds 5 seconds
   4. BSL actions (click, fill, navigate, select, screenshot, extract) use Playwright native APIs (page.click, page.fill, page.goto) -- not manual event dispatch
   5. Exit code is 1 when a step fails to find its target, and 2 when an infrastructure error occurs (timeout, browser crash)
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 24-01: TBD
-- [ ] 24-02: TBD
-- [ ] 24-03: TBD
+- [ ] 24-01-PLAN.md — CLI package scaffolding, PlaywrightExecutor, and output module
+- [ ] 24-02-PLAN.md — SimpleResolver, BSLRunner orchestrator, and Commander.js entry point
+- [ ] 24-03-PLAN.md — BSL test fixtures, integration tests, and end-to-end verification
 
 ### Phase 25: Semantic Resolver & Reporting
 **Goal**: The cascade semantic resolver works in Playwright context via page.evaluate(), and the user sees clear pass/fail reporting with failure screenshots
@@ -106,7 +106,7 @@ Plans:
 | 14-16 | v1.4 Data Extraction & Screenshots | 12 | Complete | 2026-02-12 |
 | 17-22 | v1.5 Resolver Redesign & Firefox | 14 | Complete | 2026-02-13 |
 | 23 | v1.6 Monorepo & Shared Core | 0/3 | Planning complete | - |
-| 24 | v1.6 CLI Runner & Playwright Actions | 0/TBD | Not started | - |
+| 24 | v1.6 CLI Runner & Playwright Actions | 0/3 | Planning complete | - |
 | 25 | v1.6 Semantic Resolver & Reporting | 0/TBD | Not started | - |
 | 26 | v1.6 Credential Bridge & Security | 0/3 | Planning complete | - |
 
@@ -114,4 +114,4 @@ Plans:
 
 ---
 
-*Roadmap updated: 2026-02-14 -- Phase 26 planned (3 plans)*
+*Roadmap updated: 2026-02-14 -- Phase 24 planned (3 plans)*
