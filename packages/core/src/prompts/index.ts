@@ -4,6 +4,7 @@ export {
   validateHintSuggesterOutput,
   validateDisambiguatorOutput,
   validateConfidenceBoosterOutput,
+  validateHintRepairerOutput,
   MICRO_PROMPT_BUDGETS,
 } from './microPrompts.js';
 export type {
@@ -16,4 +17,6 @@ export type {
   DisambiguatorOutput,
   ConfidenceBoosterInput,
   ConfidenceBoosterOutput,
+  HintRepairerInput,
+  HintRepairerOutput,
 } from './microPrompts.js';
