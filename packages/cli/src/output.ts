@@ -67,10 +67,15 @@ export class StepReporter {
 
   /**
    * Mark the current step as failed with a red X and error message.
+   * Optionally displays the path to a failure screenshot.
    */
-  stepFail(error: string): void {
+  stepFail(error: string, screenshotPath?: string): void {
     if (this.spinner) {
-      this.spinner.fail(this.spinner.text + pc.red(` -- ${error}`));
+      let message = this.spinner.text + pc.red(` -- ${error}`);
+      if (screenshotPath) {
+        message += '\n' + pc.dim(`      Screenshot: ${screenshotPath}`);
+      }
+      this.spinner.fail(message);
       this.spinner = null;
     }
   }

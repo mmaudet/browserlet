@@ -20,6 +20,7 @@ export { StepReporter } from './output.js';
 export { SimpleResolver } from './resolver.js';
 export { BSLRunner } from './runner.js';
 export type { RunResult, BSLRunnerOptions } from './runner.js';
+export { CascadeCLIResolver } from './cascadeResolver.js';
 
 const program = new Command();
 
@@ -34,7 +35,8 @@ program
   .argument('<script>', 'Path to .bsl script file')
   .option('--headed', 'Run browser in headed mode', false)
   .option('--timeout <ms>', 'Global step timeout in milliseconds', '30000')
-  .action(async (scriptPath: string, options: { headed: boolean; timeout: string }) => {
+  .option('--output-dir <dir>', 'Directory for failure screenshots', 'browserlet-output')
+  .action(async (scriptPath: string, options: { headed: boolean; timeout: string; outputDir: string }) => {
     // Validate script path
     if (!fs.existsSync(scriptPath)) {
       console.error(pc.red(`Error: Script file not found: ${scriptPath}`));
@@ -59,6 +61,7 @@ program
 
       const runner = new BSLRunner(page, {
         globalTimeout: timeout,
+        outputDir: options.outputDir,
       });
 
       const result = await runner.run(scriptPath);

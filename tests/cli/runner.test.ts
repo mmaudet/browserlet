@@ -38,7 +38,7 @@ describe('BSLRunner', { timeout: 60000 }, () => {
 
   it('runs simple.bsl successfully with exit code 0', async () => {
     const scriptPath = path.resolve(__dirname, 'fixtures/simple.bsl');
-    const runner = new BSLRunner(page, { globalTimeout: 15000 });
+    const runner = new BSLRunner(page, { globalTimeout: 15000, outputDir: path.join(os.tmpdir(), 'browserlet-test-output') });
     const result = await runner.run(scriptPath);
     expect(result.exitCode).toBe(0);
   });
@@ -65,7 +65,7 @@ steps:
       // Navigate fresh for a clean page state
       await page.goto('about:blank');
 
-      const runner = new BSLRunner(page, { globalTimeout: 5000 });
+      const runner = new BSLRunner(page, { globalTimeout: 5000, outputDir: path.join(os.tmpdir(), 'browserlet-test-output') });
       const result = await runner.run(tempScript);
       // The click on a nonexistent element should timeout -> exit code 2 (TIMEOUT)
       // or fail to find -> exit code 1 (STEP_FAILURE)
@@ -80,7 +80,7 @@ steps:
     await page.goto('about:blank');
 
     const scriptPath = path.resolve(__dirname, 'fixtures/timeout.bsl');
-    const runner = new BSLRunner(page, { globalTimeout: 2000 });
+    const runner = new BSLRunner(page, { globalTimeout: 2000, outputDir: path.join(os.tmpdir(), 'browserlet-test-output') });
     const result = await runner.run(scriptPath);
     // The resolver fails to find #does-not-exist-xyz-12345 via locator.count()
     // and throws a STEP_FAILURE error (exit code 1), not a Playwright timeout
@@ -108,7 +108,7 @@ steps:
 
     try {
       await page.goto('about:blank');
-      const runner = new BSLRunner(page, { globalTimeout: 2000 });
+      const runner = new BSLRunner(page, { globalTimeout: 2000, outputDir: path.join(os.tmpdir(), 'browserlet-test-output') });
       const result = await runner.run(tempScript);
       // The element exists (resolver passes) but is hidden, so
       // page.waitForSelector({ state: 'visible' }) times out -> exit code 2
@@ -123,7 +123,7 @@ steps:
     await page.goto('about:blank');
 
     const scriptPath = path.resolve(__dirname, 'fixtures/multi-action.bsl');
-    const runner = new BSLRunner(page, { globalTimeout: 15000 });
+    const runner = new BSLRunner(page, { globalTimeout: 15000, outputDir: path.join(os.tmpdir(), 'browserlet-test-output') });
     const result = await runner.run(scriptPath);
     expect(result.exitCode).toBe(0);
 

@@ -9,6 +9,7 @@
  */
 
 import fs from 'node:fs';
+import path from 'node:path';
 import type { Page } from 'playwright';
 import { parseSteps } from '@browserlet/core/parser';
 import {
@@ -18,6 +19,7 @@ import {
 } from '@browserlet/core/substitution';
 import { PlaywrightExecutor } from './executor.js';
 import type { StepError } from './executor.js';
+import { CascadeCLIResolver } from './cascadeResolver.js';
 import { SimpleResolver } from './resolver.js';
 import { StepReporter } from './output.js';
 
@@ -30,6 +32,7 @@ export interface RunResult {
 
 export interface BSLRunnerOptions {
   globalTimeout: number;
+  outputDir: string; // Directory for failure screenshots
 }
 
 /**
@@ -62,15 +65,20 @@ export class BSLRunner {
     // 2. Parse with @browserlet/core parser
     const script = parseSteps(yamlContent);
 
-    // 3. Create executor, resolver, and reporter
+    // 3. Create output directory for failure screenshots
+    fs.mkdirSync(this.options.outputDir, { recursive: true });
+
+    // 4. Create executor, resolvers (cascade + fallback), and reporter
     const executor = new PlaywrightExecutor(this.page, this.options.globalTimeout);
-    const resolver = new SimpleResolver(this.page);
+    const cascadeResolver = new CascadeCLIResolver(this.page, this.options.globalTimeout);
+    await cascadeResolver.inject();
+    const simpleResolver = new SimpleResolver(this.page);
     const reporter = new StepReporter();
 
-    // 4. Runtime context for extracted variable substitution
+    // 5. Runtime context for extracted variable substitution
     const extractedData: Record<string, unknown> = {};
 
-    // 5. Begin script execution
+    // 6. Begin script execution
     reporter.scriptStart(script.name, script.steps.length);
     const scriptStartTime = performance.now();
 
@@ -103,10 +111,15 @@ export class BSLRunner {
         const needsSelector = !NO_SELECTOR_ACTIONS.has(step.action) ||
           (step.action === 'screenshot' && step.target != null);
 
-        // Resolve selector if needed
+        // Resolve selector: cascade resolver first, fallback to SimpleResolver
         let selector = '';
         if (needsSelector) {
-          selector = await resolver.resolve(step);
+          try {
+            selector = await cascadeResolver.resolve(step);
+          } catch {
+            // Cascade failed -- fall back to SimpleResolver (CSS/text selectors)
+            selector = await simpleResolver.resolve(step);
+          }
         }
 
         // Execute the step
@@ -124,7 +137,20 @@ export class BSLRunner {
         const stepError = error as StepError;
         const errorMessage = stepError.message || String(error);
 
-        reporter.stepFail(errorMessage);
+        // Screenshot on failure
+        const stepName = step.id || `step-${String(i + 1).padStart(3, '0')}-${step.action}`;
+        const safeName = stepName.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const screenshotPath = path.join(this.options.outputDir, `fail-${safeName}.png`);
+
+        let capturedScreenshotPath: string | undefined;
+        try {
+          await this.page.screenshot({ path: screenshotPath, fullPage: false, timeout: 5000 });
+          capturedScreenshotPath = screenshotPath;
+        } catch {
+          // Screenshot itself failed (browser crashed, page closed, etc.)
+        }
+
+        reporter.stepFail(errorMessage, capturedScreenshotPath);
 
         // Determine exit code based on error type
         const exitCode = stepError.code === 'TIMEOUT' ? 2 : 1;
