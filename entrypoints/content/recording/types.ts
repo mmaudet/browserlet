@@ -1,33 +1,18 @@
 /**
  * Recording types for capturing user interactions
+ *
+ * Shared types (SemanticHint, HintType) re-exported from @browserlet/core.
+ * Recording-specific types (RecordingState, CapturedAction, RecordingSession, ActionType) kept local.
  */
+
+// Re-export shared types from @browserlet/core
+export type { SemanticHint, HintType } from '@browserlet/core/types';
+import type { SemanticHint } from '@browserlet/core/types';
 
 // Recording state machine
 export type RecordingState = 'idle' | 'recording' | 'paused';
 
-// Semantic hint types (13 types: 10 from POC + 3 structural context)
-export type HintType =
-  | 'role'
-  | 'text_contains'
-  | 'type'
-  | 'name'
-  | 'placeholder_contains'
-  | 'aria_label'
-  | 'near_label'
-  | 'class_contains'
-  | 'data_attribute'
-  | 'id'
-  | 'fieldset_context'
-  | 'associated_label'
-  | 'section_context';
-
-// Captured semantic hint
-export interface SemanticHint {
-  type: HintType;
-  value: string | { name: string; value: string }; // data_attribute uses object
-}
-
-// Action types that can be recorded
+// Action types that can be recorded (DIFFERENT from BSL ActionType)
 export type ActionType = 'click' | 'input' | 'navigate' | 'submit';
 
 // A single captured user action

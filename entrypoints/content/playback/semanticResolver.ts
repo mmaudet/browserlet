@@ -3,31 +3,15 @@
  * Core of resilient automation - survives DOM restructuring unlike CSS/XPath
  */
 
-import type { SemanticHint, HintType } from '../recording/types';
+import type { SemanticHint, HintType } from '@browserlet/core/types';
 import type { ResolverResult } from './types';
 import { getElementRole, isElementVisible, findAssociatedLabel } from '../../../utils/hints/dom';
 import { normalizeText } from '../../../utils/hints/text';
 import { extractDOMContext } from './domContextExtractor';
 
-/**
- * Hint weights for scoring element matches
- * Higher weight = more reliable for identification
- */
-export const HINT_WEIGHTS: Record<HintType, number> = {
-  data_attribute: 1.0,  // Most reliable - stable across deployments
-  role: 1.0,            // ARIA role - semantic and stable
-  type: 1.0,            // Input type - fundamental to element
-  aria_label: 0.9,      // Accessibility label - usually stable
-  name: 0.9,            // Form name attribute - stable
-  id: 0.85,             // Filtered for auto-generated in recording
-  text_contains: 0.8,   // Text content - may change with i18n
-  placeholder_contains: 0.7, // Placeholder text - may change
-  fieldset_context: 0.7, // Fieldset legend - critical for form section disambiguation
-  associated_label: 0.7, // Explicit label association (for=/aria-labelledby)
-  section_context: 0.6,  // Section heading - page section disambiguation
-  near_label: 0.6,      // Less reliable in tables/complex layouts
-  class_contains: 0.5,  // Often minified/generated
-};
+// Re-export HINT_WEIGHTS from shared package
+export { HINT_WEIGHTS } from '@browserlet/core/types';
+import { HINT_WEIGHTS } from '@browserlet/core/types';
 
 /**
  * Get initial candidate elements based on first reliable hint
