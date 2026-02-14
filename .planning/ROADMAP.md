@@ -88,12 +88,12 @@ Plans:
   3. Encryption/decryption round-trips work between Node.js (CLI) and browser (extension) using the same globalThis.crypto primitives
   4. Running `browserlet run` with `--verbose` or any log level never shows credential values in plaintext -- only masked placeholders appear in output
   5. The HTTP bridge rejects connections from non-localhost origins and invalidates tokens after single use
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 26-01: TBD
-- [ ] 26-02: TBD
-- [ ] 26-03: TBD
+- [ ] 26-01-PLAN.md — CLI encryption module (TDD: PBKDF2 + AES-GCM matching extension params)
+- [ ] 26-02-PLAN.md — Vault file storage, CLIPasswordStorage adapter, and credential sanitizer
+- [ ] 26-03-PLAN.md — HTTP bridge server with one-time bearer token authentication
 
 ## Progress
 
@@ -108,10 +108,10 @@ Plans:
 | 23 | v1.6 Monorepo & Shared Core | 0/3 | Planning complete | - |
 | 24 | v1.6 CLI Runner & Playwright Actions | 0/TBD | Not started | - |
 | 25 | v1.6 Semantic Resolver & Reporting | 0/TBD | Not started | - |
-| 26 | v1.6 Credential Bridge & Security | 0/TBD | Not started | - |
+| 26 | v1.6 Credential Bridge & Security | 0/3 | Planning complete | - |
 
 **Total:** 22 phases shipped (84 plans) across 6 milestones | 4 phases planned for v1.6
 
 ---
 
-*Roadmap updated: 2026-02-14 -- Phase 23 planned (3 plans)*
+*Roadmap updated: 2026-02-14 -- Phase 26 planned (3 plans)*
