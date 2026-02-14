@@ -1,1 +1,1 @@
-export { parseSteps, parseTimeout, validateStep, updateStepHints } from './stepParser';
+export { parseSteps, parseTimeout, validateStep, updateStepHints } from './stepParser.js';

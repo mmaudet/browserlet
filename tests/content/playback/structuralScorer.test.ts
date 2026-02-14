@@ -5,7 +5,7 @@ import {
   STRUCTURAL_BOOST_VALUES,
 } from '../../../entrypoints/content/playback/structuralScorer';
 import type { DOMContext } from '../../../entrypoints/content/playback/domContextExtractor';
-import type { SemanticHint } from '../../../entrypoints/content/playback/types';
+import type { SemanticHint } from '@browserlet/core/types';
 
 /** Helper: create a DOMContext with all null/empty fields */
 function emptyContext(): DOMContext {

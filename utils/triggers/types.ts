@@ -2,7 +2,7 @@
  * Trigger types for contextual script execution
  */
 
-import type { SemanticHint } from '../../entrypoints/content/recording/types';
+import type { SemanticHint } from '@browserlet/core/types';
 
 // Trigger mode: suggest shows in sidepanel, auto_execute runs immediately
 export type TriggerMode = 'suggest' | 'auto_execute';

@@ -5,10 +5,10 @@
  */
 
 // Parser utilities
-import { parseSteps, parseTimeout } from '../../../utils/yaml/stepParser';
+import { parseSteps, parseTimeout } from '@browserlet/core/parser';
 
 // Password utilities for credential validation
-import { extractCredentialRefs } from '../../../utils/passwords/substitution';
+import { extractCredentialRefs } from '@browserlet/core/substitution';
 import type { VaultState } from '../../../utils/passwords/types';
 import type { StoredPassword } from '../../../utils/passwords/types';
 

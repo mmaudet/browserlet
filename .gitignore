@@ -2,6 +2,10 @@
 .output/
 .wxt/
 
+# Shared package build output
+packages/core/dist/
+packages/core/tsconfig.tsbuildinfo
+
 # Dependencies
 node_modules/
 

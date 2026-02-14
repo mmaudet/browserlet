@@ -3,9 +3,9 @@
  */
 
 import yaml from 'js-yaml';
-import type { BSLStep, ParsedScript, ActionType, SessionCheckConfig, TransformType } from '../types';
-import type { SemanticHint } from '../types';
-import { extractVariableRefs } from '../substitution/variables';
+import type { BSLStep, ParsedScript, ActionType, SessionCheckConfig, TransformType } from '../types/index.js';
+import type { SemanticHint } from '../types/index.js';
+import { extractVariableRefs } from '../substitution/variables.js';
 
 // Valid action types for BSL scripts
 const VALID_ACTIONS: ActionType[] = [

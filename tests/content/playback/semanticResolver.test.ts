@@ -7,7 +7,7 @@ import {
   isElementInteractable,
   HINT_WEIGHTS,
 } from '../../../entrypoints/content/playback/semanticResolver';
-import type { SemanticHint } from '../../../entrypoints/content/playback/types';
+import type { SemanticHint } from '@browserlet/core/types';
 
 // Set up a minimal DOM environment for each test
 let dom: JSDOM;

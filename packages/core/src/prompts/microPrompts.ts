@@ -8,7 +8,7 @@
  * Phase 20 - Plans 20-01
  */
 
-import type { SemanticHint, HintType } from '../types';
+import type { SemanticHint, HintType } from '../types/index.js';
 
 // ---------------------------------------------------------------------------
 // Token budget constants (documentation/logging constraints)

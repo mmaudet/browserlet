@@ -6,7 +6,7 @@ import {
   hintToKey,
 } from '../../../entrypoints/content/playback/hintStabilityTracker';
 import type { HintStabilityData } from '../../../entrypoints/content/playback/hintStabilityTracker';
-import type { SemanticHint } from '../../../entrypoints/content/playback/types';
+import type { SemanticHint } from '@browserlet/core/types';
 
 // Mock window.location for hostname
 beforeEach(() => {

@@ -10,7 +10,7 @@ import { waitForElement } from './semanticResolver';
 import { extractValue, extractTable } from './dataExtraction';
 
 // Password utilities for credential injection
-import { extractCredentialRefs } from '../../../utils/passwords/substitution';
+import { extractCredentialRefs } from '@browserlet/core/substitution';
 
 /**
  * Execute a click action on an element (ACT-01)

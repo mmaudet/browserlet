@@ -14,9 +14,10 @@
  * Returns CascadeResolverResult extending ResolverResult for backward compatibility (RSLV-09).
  */
 
-import type { SemanticHint, HintType } from '../recording/types';
+import type { SemanticHint, HintType } from '@browserlet/core/types';
+import { HINT_WEIGHTS } from '@browserlet/core/types';
 import type { ResolverResult } from './types';
-import { resolveElement, isElementInteractable, HINT_WEIGHTS } from './semanticResolver';
+import { resolveElement, isElementInteractable } from './semanticResolver';
 import { extractDOMContext } from './domContextExtractor';
 import type { DOMContext } from './domContextExtractor';
 import { computeStructuralBoost } from './structuralScorer';

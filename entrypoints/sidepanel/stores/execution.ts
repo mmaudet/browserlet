@@ -1,7 +1,7 @@
 import { signal, computed } from '@preact/signals';
 import type { Script, ExecutionRecord } from '../../../utils/types';
 import { addExecutionRecord, updateExecutionRecord } from '../../../utils/storage/history';
-import { parseSteps } from '../../../utils/yaml/stepParser';
+import { parseSteps } from '@browserlet/core/parser';
 
 // Execution state
 export const isExecuting = signal(false);

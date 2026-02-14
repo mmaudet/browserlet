@@ -7,13 +7,13 @@ import {
   validateMicroPromptOutput,
   buildMicroPrompt,
   MICRO_PROMPT_BUDGETS,
-} from '../../../entrypoints/background/llm/microPromptBuilder';
+} from '@browserlet/core/prompts';
 import type {
   MicroPromptInput,
   HintSuggesterInput,
   DisambiguatorInput,
   ConfidenceBoosterInput,
-} from '../../../entrypoints/background/llm/microPromptBuilder';
+} from '@browserlet/core/prompts';
 
 // ---------------------------------------------------------------------------
 // validateHintSuggesterOutput

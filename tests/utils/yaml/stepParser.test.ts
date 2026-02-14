@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseSteps, parseTimeout } from '../../../utils/yaml/stepParser';
+import { parseSteps, parseTimeout } from '@browserlet/core/parser';
 
 describe('parseTimeout', () => {
   it('should return 10000 for "10s"', () => {

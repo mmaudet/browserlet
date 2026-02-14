@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { applyTransform } from '@/entrypoints/content/playback/transforms';
-import type { TransformType } from '@/entrypoints/content/playback/types';
+import type { TransformType } from '@browserlet/core/types';
 
 describe('applyTransform', () => {
   describe('text transforms', () => {

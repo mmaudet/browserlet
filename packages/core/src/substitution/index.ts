@@ -3,14 +3,14 @@ export {
   extractVariableRefs,
   hasExtractedVariables,
   EXTRACTED_VAR_PATTERN,
-} from './variables';
+} from './variables.js';
 export {
   extractCredentialRefs,
   substituteCredentials,
   CREDENTIAL_PATTERN,
-} from './credentials';
+} from './credentials.js';
 export type {
   CredentialReference,
   PasswordStorage,
   StoredPasswordRef,
-} from './credentials';
+} from './credentials.js';

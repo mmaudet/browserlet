@@ -5,7 +5,7 @@ export {
   validateDisambiguatorOutput,
   validateConfidenceBoosterOutput,
   MICRO_PROMPT_BUDGETS,
-} from './microPrompts';
+} from './microPrompts.js';
 export type {
   MicroPromptType,
   MicroPromptInput,
@@ -16,4 +16,4 @@ export type {
   DisambiguatorOutput,
   ConfidenceBoosterInput,
   ConfidenceBoosterOutput,
-} from './microPrompts';
+} from './microPrompts.js';

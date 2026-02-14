@@ -5,7 +5,7 @@
  * parsed script structures, and hint weights.
  */
 
-export type { SemanticHint, HintType } from './hints';
+export type { SemanticHint, HintType } from './hints.js';
 export type {
   ActionType,
   TransformType,
@@ -14,5 +14,5 @@ export type {
   BSLStep,
   SessionCheckConfig,
   ParsedScript,
-} from './bsl';
-export { HINT_WEIGHTS } from './weights';
+} from './bsl.js';
+export { HINT_WEIGHTS } from './weights.js';

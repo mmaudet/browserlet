@@ -11,7 +11,7 @@
  */
 
 import { storage } from '../../../utils/storage/browserCompat';
-import type { SemanticHint } from '../recording/types';
+import type { SemanticHint } from '@browserlet/core/types';
 import { normalizeText } from '../../../utils/hints/text';
 
 /** Aggregated counter for a single hint key on a specific site (RSLV-11) */

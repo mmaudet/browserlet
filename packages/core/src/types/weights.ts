@@ -6,7 +6,7 @@
  * how well a DOM element matches recorded hints.
  */
 
-import type { HintType } from './hints';
+import type { HintType } from './hints.js';
 
 export const HINT_WEIGHTS: Record<HintType, number> = {
   data_attribute: 1.0,  // Most reliable - stable across deployments

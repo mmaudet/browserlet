@@ -4,7 +4,7 @@ import { fakeBrowser } from 'wxt/testing';
 
 import { resolveElementCascade } from '../../../entrypoints/content/playback/cascadeResolver';
 import type { CascadeResolverResult } from '../../../entrypoints/content/playback/cascadeResolver';
-import type { SemanticHint } from '../../../entrypoints/content/playback/types';
+import type { SemanticHint } from '@browserlet/core/types';
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -10,7 +10,7 @@
  */
 
 import type { DOMContext } from './domContextExtractor';
-import type { SemanticHint } from '../recording/types';
+import type { SemanticHint } from '@browserlet/core/types';
 import { normalizeText } from '../../../utils/hints/text';
 
 /** Structural boost values for each signal type */

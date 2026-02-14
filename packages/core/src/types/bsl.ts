@@ -6,7 +6,7 @@
  * the playback engine (which consumes them).
  */
 
-import type { SemanticHint } from './hints';
+import type { SemanticHint } from './hints.js';
 
 // BSL action types (10 actions for playback)
 export type ActionType =

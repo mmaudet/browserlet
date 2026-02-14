@@ -9,7 +9,7 @@ import {
   SessionDetector,
   DEFAULT_LOGIN_PATTERNS,
 } from '../../../entrypoints/content/playback/sessionDetector';
-import type { SemanticHint, SessionCheckConfig } from '../../../entrypoints/content/playback/types';
+import type { SemanticHint, SessionCheckConfig } from '@browserlet/core/types';
 
 // Mock the semanticResolver module
 vi.mock('../../../entrypoints/content/playback/semanticResolver', () => ({
