@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 Milestone: v1.6 CLI Runner & Automated Testing
 Phase: 25 of 26 (Semantic Resolver & Reporting)
-Plan: 1 of 2 (Phase 25)
-Status: Phase 23 complete, Phase 24 complete (3/3 plans), Phase 25 plan 01 complete, Phase 26 complete (3/3 plans)
-Last activity: 2026-02-14 -- Completed 25-01 (Resolver bundle creation)
+Plan: 2 of 2 (Phase 25)
+Status: Phase 23 complete, Phase 24 complete (3/3 plans), Phase 25 complete (2/2 plans), Phase 26 complete (3/3 plans)
+Last activity: 2026-02-14 -- Completed 25-02 (CascadeCLIResolver integration, screenshot-on-failure)
 
-Progress: [█████████░] 82%
+Progress: [██████████] 91%
 
 ## Performance Metrics
 
@@ -119,6 +119,10 @@ Progress: [█████████░] 82%
 - 25-01: Inlined types from @browserlet/core into resolver-bundle/types.ts to avoid esbuild needing workspace resolution
 - 25-01: esbuild IIFE format with globalName __browserletResolver for page.evaluate() injection
 - 25-01: Build pipeline chains build:resolver before tsc --build to ensure resolverBundleCode.ts exists
+- 25-02: Data-attribute marking pattern (data-browserlet-resolved) bridges page.evaluate element resolution to Playwright selectors
+- 25-02: Cascade-with-fallback: CascadeCLIResolver first, SimpleResolver on error for backward compatibility
+- 25-02: Dual injection: addInitScript for future navigations + page.evaluate for immediate availability
+- 25-02: outputDir required in BSLRunnerOptions; CLI provides default 'browserlet-output'
 
 ### Pending Todos
 
@@ -132,6 +136,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 25-01-PLAN.md (resolver bundle creation)
+Stopped at: Completed 25-02-PLAN.md (CascadeCLIResolver integration, screenshot-on-failure)
 Resume file: None
-Next action: Execute 25-02-PLAN.md (integrate resolver bundle into CLI executor)
+Next action: Phase 25 complete. All v1.6 phases (23-26) complete.
