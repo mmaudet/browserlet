@@ -1,9 +1,6 @@
-import { OVERLAY_STYLES, HEALING_OVERLAY_STYLES, RECORDING_INDICATOR_STYLES, CREDENTIAL_CAPTURE_STYLES, injectStyles } from './styles';
+import { OVERLAY_STYLES, RECORDING_INDICATOR_STYLES, CREDENTIAL_CAPTURE_STYLES, injectStyles } from './styles';
 
 export type OverlayState = 'hover' | 'captured' | 'error';
-
-/** Healing overlay states for self-healing selector workflow */
-export type HealingOverlayState = 'proposed' | 'testing' | 'success' | 'failed';
 
 /**
  * Non-intrusive overlay for highlighting DOM elements during recording.
@@ -14,8 +11,6 @@ export class HighlightOverlay {
   private currentElement: Element | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private scrollHandler: (() => void) | null = null;
-  private healingStyleElement: HTMLStyleElement | null = null;
-  private currentHealingState: HealingOverlayState | null = null;
 
   /**
    * Show highlight overlay on the given element.
@@ -27,7 +22,6 @@ export class HighlightOverlay {
     this.hide();
 
     this.currentElement = element;
-    this.currentHealingState = null;
 
     // Create overlay element
     this.overlay = document.createElement('div');
@@ -53,13 +47,7 @@ export class HighlightOverlay {
       this.overlay = null;
     }
 
-    if (this.healingStyleElement) {
-      this.healingStyleElement.remove();
-      this.healingStyleElement = null;
-    }
-
     this.currentElement = null;
-    this.currentHealingState = null;
     this.cleanupPositionTracking();
   }
 
@@ -68,67 +56,9 @@ export class HighlightOverlay {
    */
   setState(state: OverlayState): void {
     if (this.overlay) {
-      this.currentHealingState = null;
       this.overlay.style.cssText = OVERLAY_STYLES.base + OVERLAY_STYLES[state];
       this.updatePosition(); // Ensure position is correct
     }
-  }
-
-  /**
-   * Set healing state for self-healing selector workflow
-   * @param state - Healing visual state (proposed, testing, success, failed)
-   */
-  setHealingState(state: HealingOverlayState): void {
-    if (!this.overlay) return;
-
-    this.currentHealingState = state;
-
-    // Inject keyframes for testing animation if needed
-    if (state === 'testing' && !this.healingStyleElement) {
-      this.healingStyleElement = injectStyles(
-        HEALING_OVERLAY_STYLES.keyframes,
-        'browserlet-healing-keyframes'
-      );
-    }
-
-    this.overlay.style.cssText = OVERLAY_STYLES.base + HEALING_OVERLAY_STYLES[state];
-    this.updatePosition();
-  }
-
-  /**
-   * Show healing overlay on the given element.
-   * @param element - The DOM element to highlight
-   * @param state - Healing visual state (proposed, testing, success, failed)
-   */
-  showHealing(element: Element, state: HealingOverlayState = 'proposed'): void {
-    // Hide any existing overlay
-    this.hide();
-
-    this.currentElement = element;
-    this.currentHealingState = state;
-
-    // Inject keyframes for testing animation if needed
-    if (state === 'testing') {
-      this.healingStyleElement = injectStyles(
-        HEALING_OVERLAY_STYLES.keyframes,
-        'browserlet-healing-keyframes'
-      );
-    }
-
-    // Create overlay element
-    this.overlay = document.createElement('div');
-    this.overlay.setAttribute('data-browserlet-overlay', 'true');
-    this.overlay.setAttribute('data-browserlet-healing', state);
-    this.overlay.style.cssText = OVERLAY_STYLES.base + HEALING_OVERLAY_STYLES[state];
-
-    // Position over element
-    this.updatePosition();
-
-    // Append to body
-    document.body.appendChild(this.overlay);
-
-    // Set up position tracking
-    this.setupPositionTracking();
   }
 
   /**
@@ -136,13 +66,6 @@ export class HighlightOverlay {
    */
   isVisible(): boolean {
     return this.overlay !== null;
-  }
-
-  /**
-   * Get current healing state if in healing mode
-   */
-  getHealingState(): HealingOverlayState | null {
-    return this.currentHealingState;
   }
 
   /**

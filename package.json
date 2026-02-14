@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "wxt",
-    "dev:firefox": "wxt -b firefox",
+    "dev:firefox": "wxt -b firefox --mv3",
     "build": "wxt build",
-    "build:firefox": "wxt build -b firefox",
+    "build:firefox": "wxt build -b firefox --mv3",
     "zip": "wxt zip",
-    "zip:firefox": "wxt zip -b firefox",
+    "zip:firefox": "wxt zip -b firefox --mv3",
     "postinstall": "wxt prepare",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -47,6 +47,7 @@
     "monaco-yaml": "^5.4.0",
     "ollama": "^0.6.3",
     "preact": "^10.28.2",
-    "vite-plugin-monaco-editor": "^1.1.0"
+    "vite-plugin-monaco-editor": "^1.1.0",
+    "webextension-polyfill": "^0.12.0"
   }
 }

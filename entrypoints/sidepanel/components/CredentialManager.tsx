@@ -2,6 +2,7 @@ import { useSignal, type Signal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { Copy, Check, Pencil, Trash2, Lock, Key, Plus } from 'lucide-preact';
 import type { StoredPassword } from '../../../utils/passwords/types';
+import { isFirefox } from '../../../utils/browser-detect';
 
 // Helper to get i18n messages
 const msg = (key: string): string => chrome.i18n.getMessage(key) || key;
@@ -498,18 +499,24 @@ export function CredentialManager({ onVaultReady }: CredentialManagerProps) {
       captureMode.value = 'capturing';
     } catch (error) {
       console.error('[Browserlet] Failed to start credential capture:', error);
-      // Content script not available - try to inject it
-      try {
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ['content-scripts/content.js']
-        });
-        // Retry sending message after injection
-        await chrome.tabs.sendMessage(tab.id, { type: 'START_PASSWORD_CAPTURE' });
-        captureMode.value = 'capturing';
-      } catch (injectError) {
-        console.error('[Browserlet] Failed to inject content script:', injectError);
-        alert(msg('credentialCaptureError') || 'Cannot capture credentials on this page. Try refreshing the page.');
+      if (!isFirefox) {
+        // Chrome: content script not available - try to inject it via scripting API
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['content-scripts/content.js']
+          });
+          // Retry sending message after injection
+          await chrome.tabs.sendMessage(tab.id, { type: 'START_PASSWORD_CAPTURE' });
+          captureMode.value = 'capturing';
+        } catch (injectError) {
+          console.error('[Browserlet] Failed to inject content script:', injectError);
+          alert(msg('credentialCaptureError') || 'Cannot capture credentials on this page. Try refreshing the page.');
+        }
+      } else {
+        // Firefox: scripting API unavailable, content scripts are auto-injected via manifest
+        console.log('[Browserlet] Firefox: content script not responding for credential capture');
+        alert(msg('credentialCaptureError') || 'Content script not loaded. Please refresh the page and try again.');
       }
     }
   }

@@ -4,6 +4,7 @@
  */
 
 import { signal } from '@preact/signals';
+import { storage } from '../../../utils/storage/browserCompat';
 import {
   encryptApiKey,
   decryptApiKey,
@@ -14,7 +15,7 @@ import type { LLMConfig, ProviderName } from '../../background/llm/providers/typ
 const STORAGE_KEY = 'browserlet_llm_config';
 
 /**
- * Configuration as stored in chrome.storage.local
+ * Configuration as stored in storage.local
  * API key is encrypted, never stored in plaintext
  */
 interface StoredLLMConfig {
@@ -26,6 +27,7 @@ interface StoredLLMConfig {
   openaiEndpoint?: string;
   openaiModel?: string;
   encryptedOpenaiApiKey?: EncryptedData;
+  useFallbackGenerator?: boolean;
 }
 
 /**
@@ -57,6 +59,8 @@ export const llmConfigStore = {
   isSaving: signal<boolean>(false),
   /** Last save error */
   saveError: signal<string | null>(null),
+  /** Force use of fallback generator instead of LLM */
+  useFallbackGenerator: signal<boolean>(false),
 };
 
 /**
@@ -64,7 +68,7 @@ export const llmConfigStore = {
  * Attempts to decrypt API key if present
  */
 export async function loadLLMConfig(): Promise<void> {
-  const result = await chrome.storage.local.get(STORAGE_KEY);
+  const result = await storage.local.get(STORAGE_KEY);
   const stored = result[STORAGE_KEY] as StoredLLMConfig | undefined;
 
   if (!stored) {
@@ -80,6 +84,7 @@ export async function loadLLMConfig(): Promise<void> {
   llmConfigStore.ollamaModel.value = stored.ollamaModel ?? 'llama3.1';
   llmConfigStore.openaiEndpoint.value = stored.openaiEndpoint ?? 'https://api.openai.com/v1/chat/completions';
   llmConfigStore.openaiModel.value = stored.openaiModel ?? 'gpt-4o';
+  llmConfigStore.useFallbackGenerator.value = stored.useFallbackGenerator ?? false;
 
   // Handle API key decryption for Claude
   let configuredSuccessfully = false;
@@ -152,6 +157,7 @@ export async function saveLLMConfig(providerOverride?: ProviderName): Promise<vo
       ollamaModel: llmConfigStore.ollamaModel.value,
       openaiEndpoint: llmConfigStore.openaiEndpoint.value,
       openaiModel: llmConfigStore.openaiModel.value,
+      useFallbackGenerator: llmConfigStore.useFallbackGenerator.value,
     };
 
     // Encrypt API key if Claude provider and key is provided
@@ -165,7 +171,7 @@ export async function saveLLMConfig(providerOverride?: ProviderName): Promise<vo
     }
 
     // Save to storage
-    await chrome.storage.local.set({ [STORAGE_KEY]: storedConfig });
+    await storage.local.set({ [STORAGE_KEY]: storedConfig });
 
     // Configure the LLM service in the service worker
     const config = getLLMConfigForServiceWorker(provider);
@@ -205,6 +211,7 @@ export function getLLMConfigForServiceWorker(providerOverride?: ProviderName): L
     openaiEndpoint: llmConfigStore.openaiEndpoint.value,
     openaiApiKey: provider === 'openai' ? llmConfigStore.openaiApiKey.value : undefined,
     openaiModel: llmConfigStore.openaiModel.value,
+    useFallbackGenerator: llmConfigStore.useFallbackGenerator.value,
   };
 }
 
@@ -228,7 +235,7 @@ export function isConfigValid(): boolean {
  */
 export async function resetLLMConfig(): Promise<void> {
   // Remove from storage
-  await chrome.storage.local.remove(STORAGE_KEY);
+  await storage.local.remove(STORAGE_KEY);
 
   // Reset store to defaults
   llmConfigStore.provider.value = 'claude';
@@ -242,10 +249,11 @@ export async function resetLLMConfig(): Promise<void> {
   llmConfigStore.isConfigured.value = false;
   llmConfigStore.needsApiKey.value = false;
   llmConfigStore.saveError.value = null;
+  llmConfigStore.useFallbackGenerator.value = false;
 }
 
 // Listen for storage changes to sync LLM config across views
-chrome.storage.onChanged.addListener((changes, area) => {
+storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes[STORAGE_KEY]) {
     // Reload config when it changes in storage
     loadLLMConfig().catch(console.error);

@@ -652,6 +652,30 @@ export function LLMSettings() {
         </div>
       )}
 
+      {/* Fallback generator option */}
+      <div style={{ ...sectionStyle, marginTop: '20px', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', border: '1px solid #e9ecef' }}>
+        <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={llmConfigStore.useFallbackGenerator.value}
+            onChange={(e: Event) => {
+              llmConfigStore.useFallbackGenerator.value = (e.target as HTMLInputElement).checked;
+              showSaveButton.value = true;
+            }}
+            style={{ marginRight: '10px', marginTop: '2px' }}
+          />
+          <div>
+            <span style={{ fontWeight: 500, fontSize: '13px' }}>
+              {chrome.i18n.getMessage('useFallbackGenerator') || 'Use Fallback Generator (more reliable)'}
+            </span>
+            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#666' }}>
+              {chrome.i18n.getMessage('fallbackGeneratorHint') ||
+              'Skip LLM and generate BSL directly from recorded actions. More deterministic and reliable, but less optimized.'}
+            </p>
+          </div>
+        </label>
+      </div>
+
       {/* Save button (only show when configuration is complete) */}
       {showSaveButton.value && (
         <div>
@@ -671,8 +695,8 @@ export function LLMSettings() {
             <span style={{ fontWeight: 500 }}>
               {formatLabelWithColon(chrome.i18n.getMessage('statusLabel') || 'Status') + ' '}
             </span>
-            <span style={{ color: llmConfigStore.isConfigured.value ? '#28a745' : '#dc3545' }}>
-              {llmConfigStore.isConfigured.value
+            <span style={{ color: (llmConfigStore.isConfigured.value || llmConfigStore.useFallbackGenerator.value) ? '#28a745' : '#dc3545' }}>
+              {(llmConfigStore.isConfigured.value || llmConfigStore.useFallbackGenerator.value)
                 ? (chrome.i18n.getMessage('statusConfigured') || 'Configured')
                 : (chrome.i18n.getMessage('statusNotConfigured') || 'Not configured')
               }
@@ -684,6 +708,9 @@ export function LLMSettings() {
             </span>
             <span>
               {(() => {
+                if (llmConfigStore.useFallbackGenerator.value) {
+                  return chrome.i18n.getMessage('fallbackGeneratorActive') || 'Fallback Generator (no LLM)';
+                }
                 const provider = llmConfigStore.provider.value;
                 const providerName = provider === 'openai' ? 'OpenAI Compatible' :
                                      provider === 'claude' ? 'Anthropic (Claude)' : 'Ollama';

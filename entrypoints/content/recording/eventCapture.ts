@@ -36,11 +36,19 @@ export class EventCapture {
     document.addEventListener('input', inputHandler, { capture: true, passive: true });
     document.addEventListener('submit', submitHandler, { capture: true });
 
+    // Flush pending inputs on page unload to avoid losing debounced input
+    // (e.g., user types password then page navigates before 1500ms debounce fires)
+    const beforeUnloadHandler = () => {
+      this.flushPendingInputs();
+    };
+    window.addEventListener('beforeunload', beforeUnloadHandler);
+
     // Store cleanup functions
     this.cleanupFns.push(
       () => document.removeEventListener('click', clickHandler, { capture: true }),
       () => document.removeEventListener('input', inputHandler, { capture: true }),
-      () => document.removeEventListener('submit', submitHandler, { capture: true })
+      () => document.removeEventListener('submit', submitHandler, { capture: true }),
+      () => window.removeEventListener('beforeunload', beforeUnloadHandler)
     );
   }
 
@@ -83,6 +91,10 @@ export class EventCapture {
 
     // Skip our own overlay elements
     if (target.hasAttribute('data-browserlet-overlay')) return;
+
+    // Flush pending inputs to ensure correct ordering
+    // (e.g., if user types in a field then clicks a button)
+    this.flushPendingInputs();
 
     const action = this.createAction('click', target);
     this.callback(action);
@@ -129,8 +141,91 @@ export class EventCapture {
     const form = event.target as HTMLFormElement;
     if (!form) return;
 
-    const action = this.createAction('submit', form);
-    this.callback(action);
+    // IMPORTANT: Flush any pending input captures BEFORE capturing the submit
+    // This ensures inputs typed just before submit are captured in the correct order
+    this.flushPendingInputs();
+
+    // Find the submit button that triggered this event
+    // This is more useful than capturing the form itself
+    const submitButton = this.findSubmitButton(form);
+
+    if (submitButton) {
+      // Capture the submit button, not the form
+      const action = this.createAction('submit', submitButton);
+      this.callback(action);
+    } else {
+      // Fallback to form if no submit button found
+      const action = this.createAction('submit', form);
+      this.callback(action);
+    }
+  }
+
+  /**
+   * Flush all pending debounced input captures immediately.
+   * Used before submit to ensure correct action ordering.
+   */
+  private flushPendingInputs(): void {
+    // Clear all debounce timers
+    this.inputDebounceMap.forEach(timer => clearTimeout(timer));
+    this.inputDebounceMap.clear();
+
+    // Execute all pending input captures
+    this.pendingInputs.forEach(captureInput => captureInput());
+    this.pendingInputs.clear();
+  }
+
+  /**
+   * Scan the DOM for pre-filled password fields and emit input actions for them.
+   * Only emits for elements not already tracked by the debounce map (avoids duplicates).
+   * Called after recording resumes to catch passwords typed during content script reinjection.
+   */
+  capturePreFilledPasswords(): void {
+    if (!this.isActive || !this.callback) return;
+
+    const passwordInputs = document.querySelectorAll('input[type="password"]');
+    for (const el of passwordInputs) {
+      const input = el as HTMLInputElement;
+      if (!input.value) continue;
+
+      // Skip if we're already tracking this element (user is actively typing)
+      if (this.pendingInputs.has(input) || this.inputDebounceMap.has(input)) continue;
+
+      const action = this.createAction('input', input, {
+        value: this.getSanitizedValue(input)
+      });
+      this.callback(action);
+    }
+  }
+
+  /**
+   * Find the submit button that likely triggered a form submission.
+   * Checks for focused element first, then looks for submit buttons in the form.
+   */
+  private findSubmitButton(form: HTMLFormElement): Element | null {
+    // Check if the currently focused element is a submit button in this form
+    const activeElement = document.activeElement;
+    if (activeElement && form.contains(activeElement)) {
+      if (activeElement instanceof HTMLButtonElement && activeElement.type === 'submit') {
+        return activeElement;
+      }
+      if (activeElement instanceof HTMLInputElement && activeElement.type === 'submit') {
+        return activeElement;
+      }
+    }
+
+    // Find the first submit button in the form
+    const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+    if (submitButton) {
+      return submitButton;
+    }
+
+    // Look for buttons without explicit type (default is submit)
+    const defaultButton = form.querySelector('button:not([type])');
+    if (defaultButton) {
+      return defaultButton;
+    }
+
+    return null;
   }
 
   private createAction(
@@ -168,15 +263,22 @@ export class EventCapture {
 
   /**
    * Check if an element is worth capturing (interactive elements).
+   * Excludes form elements (handled separately by submit event).
    */
   private isInteractiveElement(element: Element): boolean {
     const tagName = element.tagName.toLowerCase();
+
+    // Explicitly exclude form elements - clicks on forms are meaningless
+    // Form submission is handled by the submit event handler
+    if (tagName === 'form') return false;
+
     const interactiveTags = ['a', 'button', 'input', 'select', 'textarea', 'label'];
 
     if (interactiveTags.includes(tagName)) return true;
 
-    // Check for role attribute
+    // Check for role attribute (exclude 'form' role as well)
     const role = element.getAttribute('role');
+    if (role === 'form') return false;
     if (role && ['button', 'link', 'checkbox', 'radio', 'menuitem', 'tab'].includes(role)) {
       return true;
     }

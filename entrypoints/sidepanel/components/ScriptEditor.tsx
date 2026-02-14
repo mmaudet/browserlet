@@ -2,7 +2,6 @@ import { useRef, useEffect } from 'preact/hooks';
 import { monaco, setupMonaco } from '../monaco-setup';
 import type { Script } from '../../../utils/types';
 import { saveScript } from '../../../utils/storage/scripts';
-import { HealingHistory } from './HealingHistory';
 
 // Debounce helper
 function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
@@ -136,8 +135,6 @@ export function ScriptEditor({ script, onSave, onClose }: ScriptEditorProps) {
         id="monaco-editor-container"
         style={{ flex: 1, minHeight: '300px' }}
       />
-      {/* Healing History section - only shows if script has healing history */}
-      <HealingHistory scriptId={script.id} />
     </div>
   );
 }

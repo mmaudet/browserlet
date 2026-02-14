@@ -1,3 +1,4 @@
+import '../../utils/firefoxPolyfill';
 import { render } from 'preact';
 import { signal } from '@preact/signals';
 import { List, Circle, KeyRound, Settings, ArrowLeft, Loader2, CheckCircle } from 'lucide-preact';
@@ -17,17 +18,13 @@ import { SuggestedScripts } from './components/SuggestedScripts';
 import { suggestedScriptIds, loadTriggers } from './stores/triggers';
 import { CredentialManager } from './components/CredentialManager';
 import { startExecution, isExecuting, showCompletionModal, completedScriptName } from './stores/execution';
-import { initializeHealingListeners, hasPendingRepairs } from './stores/healing';
-import { RepairPanel } from './components/RepairPanel';
 
 // App initialization state
 const appState = signal<'loading' | 'needs_setup' | 'needs_unlock' | 'ready'>('loading');
 
 // Execution completion modal
 function CompletionModal() {
-  // Don't show completion modal if there are pending repairs
-  // The script didn't really complete successfully - it's waiting for healing
-  if (!showCompletionModal.value || hasPendingRepairs.value) return null;
+  if (!showCompletionModal.value) return null;
 
   const handleClose = () => {
     showCompletionModal.value = false;
@@ -443,13 +440,6 @@ function App() {
         <ContentRouter />
       </div>
 
-      {/* Repair panel - shown when there are pending repairs or during execution */}
-      {(hasPendingRepairs.value || isExecuting.value) && (
-        <div style={{ padding: '0 16px 12px', flexShrink: 0 }}>
-          <RepairPanel />
-        </div>
-      )}
-
       {/* Bottom action bar - toujours visible pour navigation rapide */}
       <BottomActionBar />
 
@@ -462,9 +452,6 @@ function App() {
 // Initialize
 async function init() {
   console.log('[Browserlet Sidepanel] init() started');
-
-  // Initialize healing message listeners
-  initializeHealingListeners();
 
   // Check service worker
   try {

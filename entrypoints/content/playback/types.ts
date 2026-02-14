@@ -72,41 +72,7 @@ export interface ParsedScript {
 }
 
 // Playback state machine
-export type PlaybackState = 'idle' | 'running' | 'paused' | 'waiting_auth' | 'waiting_healing' | 'stopped';
-
-// Context for healing when element resolution fails
-export interface HealingContext {
-  /** Step index in the script (0-based) */
-  stepIndex: number;
-  /** Script ID for saving repairs */
-  scriptId: string;
-  /** Script name for display */
-  scriptName: string;
-  /** Original hints that failed to resolve */
-  originalHints: SemanticHint[];
-  /** Confidence achieved (< threshold) */
-  confidence: number;
-  /** Hints that matched */
-  matchedHints: string[];
-  /** Hints that failed */
-  failedHints: string[];
-  /** Current page URL */
-  pageUrl: string;
-  /** Current page title */
-  pageTitle: string;
-  /** DOM excerpt around expected element location */
-  domExcerpt: string;
-}
-
-// LLM-suggested repair for failed element resolution
-export interface RepairSuggestion {
-  /** Proposed semantic hints to try */
-  proposedHints: SemanticHint[];
-  /** Confidence in this suggestion (0-1) */
-  confidence: number;
-  /** Explanation of why these hints should work */
-  reason: string;
-}
+export type PlaybackState = 'idle' | 'running' | 'paused' | 'waiting_auth' | 'stopped';
 
 // Result of script execution
 export interface ExecutionResult {

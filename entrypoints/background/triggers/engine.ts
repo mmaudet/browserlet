@@ -6,6 +6,7 @@
 import type { TriggerConfig, ContextState } from '../../../utils/triggers/types';
 import type { Script } from '../../../utils/types';
 import { getAllTriggers, getSiteOverride } from '../../../utils/storage/triggers';
+import { storage } from '../../../utils/storage/browserCompat';
 import { getScripts } from '../../../utils/storage/scripts';
 // Note: Chrome notifications with buttons don't work on macOS
 // We use in-page notifications in content script instead
@@ -37,7 +38,7 @@ export class TriggerEngine {
     this.initialized = true;
 
     // Listen for storage changes to refresh triggers
-    chrome.storage.onChanged.addListener((changes, area) => {
+    storage.onChanged.addListener((changes, area) => {
       if (area === 'local') {
         if (changes.browserlet_triggers || changes.browserlet_scripts) {
           this.refresh();
@@ -141,7 +142,7 @@ export class TriggerEngine {
     }
 
     // Store suggested scripts for sidepanel
-    await chrome.storage.session.set({
+    await storage.session.set({
       [`${SUGGESTED_KEY_PREFIX}${tabId}`]: scriptIds
     });
     console.log('[Browserlet] Stored suggestions for tab', tabId);
@@ -152,7 +153,7 @@ export class TriggerEngine {
    */
   private async clearSuggestions(tabId: number): Promise<void> {
     await chrome.action.setBadgeText({ text: '', tabId });
-    await chrome.storage.session.remove(`${SUGGESTED_KEY_PREFIX}${tabId}`);
+    await storage.session.remove(`${SUGGESTED_KEY_PREFIX}${tabId}`);
   }
 
   /**
@@ -230,7 +231,7 @@ export class TriggerEngine {
    */
   async getSuggestedScripts(tabId: number): Promise<string[]> {
     const key = `${SUGGESTED_KEY_PREFIX}${tabId}`;
-    const data = await chrome.storage.session.get(key);
+    const data = await storage.session.get(key);
     return (data[key] as string[] | undefined) ?? [];
   }
 

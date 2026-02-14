@@ -66,6 +66,12 @@ export interface LLMConfig {
 
   /** OpenAI-compatible model name (default: gpt-4) */
   openaiModel?: string;
+
+  /** Force use of fallback generator instead of LLM (more reliable, no API calls) */
+  useFallbackGenerator?: boolean;
+
+  /** Enable micro-prompt cascade stages 3-5 for playback resolution (default: true) */
+  useMicroPrompts?: boolean;
 }
 
 /**

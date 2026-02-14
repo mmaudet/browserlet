@@ -12,8 +12,11 @@ Thank you for your interest in contributing to Browserlet!
 ## Development
 
 ```bash
-# Start development server with HMR
+# Start development server with HMR (Chrome)
 npm run dev
+
+# Start development server for Firefox
+npm run dev:firefox
 
 # Run tests
 npm run test
@@ -21,9 +24,35 @@ npm run test
 # Type check
 npm run typecheck
 
-# Build for production
+# Build for production (Chrome)
 npm run build
+
+# Build for production (Firefox)
+npm run build:firefox
 ```
+
+### Browser-Specific Development
+
+Browserlet supports both Chrome and Firefox. The build output is located in:
+- Chrome: `.output/chrome-mv3`
+- Firefox: `.output/firefox-mv2`
+
+When working on browser-specific code, use the `isFirefox` and `isChrome` utilities from `utils/browser-detect.ts`.
+
+### Loading the Extension
+
+**Chrome:**
+1. Run `npm run build` (production) or `npm run dev` (with HMR)
+2. Open `chrome://extensions`, enable Developer Mode
+3. Click "Load unpacked", select `.output/chrome-mv3`
+
+**Firefox:**
+1. Run `npm run build:firefox` (production) or `npm run dev:firefox` (with HMR)
+2. Open `about:debugging#/runtime/this-firefox`
+3. Click "Load Temporary Add-on", select any file in `.output/firefox-mv2`
+4. Note: Temporary add-ons are removed when Firefox closes
+
+For detailed browser compatibility information, see [docs/BROWSER_COMPATIBILITY.md](docs/BROWSER_COMPATIBILITY.md).
 
 ## Pull Request Process
 

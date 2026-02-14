@@ -1,4 +1,5 @@
 import { signal } from '@preact/signals';
+import { storage } from '../../../utils/storage/browserCompat';
 import { useEffect } from 'preact/hooks';
 import { Sparkles, Camera } from 'lucide-preact';
 import { llmConfigStore, getLLMConfigForServiceWorker, loadLLMConfig, isConfigValid } from '../stores/llmConfig';
@@ -9,6 +10,7 @@ import { PasswordPrompt, promptForPasswords } from './PasswordPrompt';
 import { AIExtractionSuggestions } from './AIExtractionSuggestions';
 import type { DetectedPassword } from '../../../utils/passwords/types';
 import type { ExtractionSuggestion } from '../../background/llm/prompts/extractionPrompt';
+import { isFirefox } from '../../../utils/browser-detect';
 
 // Recording state (synced with storage)
 export const isRecording = signal(false);
@@ -71,13 +73,20 @@ function generateBasicBSL(actions: typeof recordedActions.value, startUrl?: stri
     });
   }
 
-  const actionSteps = actions.map(action => {
-    const step: Record<string, unknown> = { action: action.type };
+  const targetRequiredActions = ['click', 'type', 'select', 'extract', 'table_extract', 'wait_for', 'scroll', 'hover'];
+
+  const actionSteps = actions.reduce<Record<string, unknown>[]>((result, action) => {
+    // Map internal action types to valid BSL actions
+    const bslAction = action.type === 'input' ? 'type'
+                    : action.type === 'submit' ? 'click'
+                    : action.type;
+    const step: Record<string, unknown> = { action: bslAction };
 
     // Add URL for navigate actions
     if (action.type === 'navigate' && action.url) {
       step.url = action.url;
-      return step;
+      result.push(step);
+      return result;
     }
 
     // Add target with hints array (BSL format)
@@ -88,6 +97,9 @@ function generateBasicBSL(actions: typeof recordedActions.value, startUrl?: stri
           value: hint.value
         }))
       };
+    } else if (targetRequiredActions.includes(bslAction)) {
+      // Skip actions that require a target but have no hints — they can't be replayed
+      return result;
     }
 
     // Add value for input actions
@@ -101,8 +113,9 @@ function generateBasicBSL(actions: typeof recordedActions.value, startUrl?: stri
       step.output = actionWithOutput.output;
     }
 
-    return step;
-  });
+    result.push(step);
+    return result;
+  }, []);
 
   steps.push(...actionSteps);
 
@@ -321,23 +334,35 @@ export async function toggleRecording(): Promise<void> {
             await chrome.tabs.sendMessage(activeTab.id, { type: 'PING' });
           } catch {
             // Content script not loaded - try to inject it
-            console.log('[Browserlet] Content script not found, attempting to inject...');
-            try {
-              await chrome.scripting.executeScript({
-                target: { tabId: activeTab.id },
-                files: ['content-scripts/content.js']
-              });
-              // Wait a bit for the script to initialize
-              await new Promise(resolve => setTimeout(resolve, 500));
-              // Try PING again
-              await chrome.tabs.sendMessage(activeTab.id, { type: 'PING' });
-              console.log('[Browserlet] Content script injected successfully');
-            } catch (injectError) {
-              console.error('[Browserlet] Failed to inject content script:', injectError);
+            if (!isFirefox) {
+              // Chrome: use scripting API to inject content script
+              console.log('[Browserlet] Content script not found, attempting to inject...');
+              try {
+                await chrome.scripting.executeScript({
+                  target: { tabId: activeTab.id },
+                  files: ['content-scripts/content.js']
+                });
+                // Wait a bit for the script to initialize
+                await new Promise(resolve => setTimeout(resolve, 500));
+                // Try PING again
+                await chrome.tabs.sendMessage(activeTab.id, { type: 'PING' });
+                console.log('[Browserlet] Content script injected successfully');
+              } catch (injectError) {
+                console.error('[Browserlet] Failed to inject content script:', injectError);
+                generationStatus.value = {
+                  type: 'error',
+                  message: chrome.i18n.getMessage('recordingNotAvailable') ||
+                    'Recording not available on this page (browser pages, PDFs, or extensions are not supported)'
+                };
+                return;
+              }
+            } else {
+              // Firefox: scripting API unavailable, content scripts are auto-injected via manifest
+              console.log('[Browserlet] Firefox: content script not responding, asking user to refresh');
               generationStatus.value = {
                 type: 'error',
-                message: chrome.i18n.getMessage('recordingNotAvailable') ||
-                  'Recording not available on this page (browser pages, PDFs, or extensions are not supported)'
+                message: chrome.i18n.getMessage('contentScriptNotLoaded') ||
+                  'Content script not loaded. Please refresh the page and try again.'
               };
               return;
             }
@@ -662,10 +687,10 @@ export function RecordingView() {
       }
     };
 
-    chrome.storage.onChanged.addListener(handleStorageChange);
+    storage.onChanged.addListener(handleStorageChange);
 
     return () => {
-      chrome.storage.onChanged.removeListener(handleStorageChange);
+      storage.onChanged.removeListener(handleStorageChange);
     };
   }, []);
 

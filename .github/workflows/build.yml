@@ -1,0 +1,41 @@
+name: Build & Verify
+
+on:
+  push:
+    branches: [main, firefox]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chrome, firefox]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Build for ${{ matrix.browser }}
+        run: |
+          if [ "${{ matrix.browser }}" = "firefox" ]; then
+            npm run build:firefox
+          else
+            npm run build
+          fi
+      - name: Verify output exists
+        run: |
+          if [ "${{ matrix.browser }}" = "firefox" ]; then
+            test -d .output/firefox-mv2
+          else
+            test -d .output/chrome-mv3
+          fi
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: browserlet-${{ matrix.browser }}
+          path: .output/${{ matrix.browser == 'firefox' && 'firefox-mv2' || 'chrome-mv3' }}/
+          retention-days: 7

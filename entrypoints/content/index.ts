@@ -1,3 +1,4 @@
+import '../../utils/firefoxPolyfill';
 import { sendMessageSafe } from './messaging';
 import { isContextValid } from '../../utils/context-check';
 import { RecordingManager } from './recording';
@@ -5,17 +6,14 @@ import { PlaybackManager } from './playback';
 import { initializeTriggers, handleTriggerMessage } from './triggers';
 import { showAutoExecuteNotification, showCompletionNotification } from './triggers/inPageNotification';
 import { PasswordCapture } from './recording/passwordCapture';
-import { CredentialCaptureIndicator, HighlightOverlay } from './recording/visualFeedback';
-import type { HealingOverlayState } from './recording/visualFeedback';
-import { resolveElement } from './playback/semanticResolver';
-import type { SemanticHint } from './playback/types';
+import { CredentialCaptureIndicator } from './recording/visualFeedback';
+import { storage } from '../../utils/storage/browserCompat';
 
 // Singleton instances
 let recordingManager: RecordingManager | null = null;
 let playbackManager: PlaybackManager | null = null;
 let standaloneCapturer: PasswordCapture | null = null;
 let credentialCaptureIndicator: CredentialCaptureIndicator | null = null;
-let healingOverlay: HighlightOverlay | null = null;
 
 /**
  * Get or create the PlaybackManager singleton
@@ -81,6 +79,25 @@ export default defineContentScript({
 });
 
 async function verifyConnection(): Promise<void> {
+  // Fast path: read recording state directly from storage to minimize delay.
+  // After a page navigation, the content script reinjects and the PING + GET_STATE
+  // round-trips can take 200-800ms. By reading storage directly (~10-50ms), we start
+  // capturing events before the user finishes typing (e.g., password after username step).
+  // RecordingManager.start() is idempotent (guards with `if (state === 'recording') return`),
+  // so calling it twice (fast path + verified path) is safe.
+  try {
+    const result = await storage.local.get('appState');
+    const appState = result.appState as { recordingState?: string } | undefined;
+    if (appState?.recordingState === 'recording' && recordingManager) {
+      console.log('[Browserlet] Fast-resuming recording from storage');
+      recordingManager.start();
+      schedulePreFilledPasswordScan();
+    }
+  } catch (error) {
+    console.warn('[Browserlet] Fast storage read failed, falling back to messaging:', error);
+  }
+
+  // Verified path: confirm connection and state via service worker messaging
   try {
     const response = await sendMessageSafe({ type: 'PING' });
     if (response.success) {
@@ -92,7 +109,8 @@ async function verifyConnection(): Promise<void> {
         const state = stateResponse.data as { recordingState?: string };
         if (state.recordingState === 'recording' && recordingManager) {
           console.log('[Browserlet] Resuming recording after page load');
-          recordingManager.start();
+          recordingManager.start(); // No-op if already started by fast path
+          schedulePreFilledPasswordScan();
         }
       }
 
@@ -104,6 +122,21 @@ async function verifyConnection(): Promise<void> {
   } catch (error) {
     console.error('[Browserlet] Failed to connect to service worker:', error);
   }
+}
+
+/**
+ * Schedule a scan for pre-filled password fields after a short delay.
+ * The delay lets the DOM and browser autofill settle before scanning.
+ */
+let preFilledScanScheduled = false;
+function schedulePreFilledPasswordScan(): void {
+  if (preFilledScanScheduled) return; // Only schedule once per page load
+  preFilledScanScheduled = true;
+  setTimeout(() => {
+    if (recordingManager) {
+      recordingManager.capturePreFilledPasswords();
+    }
+  }, 500);
 }
 
 /**
@@ -293,130 +326,6 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
           textNodes
         }
       };
-    }
-
-    case 'HIGHLIGHT_HEALING_ELEMENT': {
-      const { hints, state } = message.payload as {
-        hints: SemanticHint[];
-        state: HealingOverlayState;
-      };
-
-      // Initialize healing overlay if needed
-      if (!healingOverlay) {
-        healingOverlay = new HighlightOverlay();
-      }
-
-      try {
-        // Resolve element using semantic hints (ignore confidence threshold for preview)
-        const result = resolveElement(hints);
-
-        if (result.element) {
-          // Show healing overlay on the element
-          healingOverlay.showHealing(result.element, state);
-          console.log('[Browserlet] Healing overlay shown:', state, 'confidence:', result.confidence);
-          return {
-            success: true,
-            data: {
-              found: true,
-              confidence: result.confidence,
-              matchedHints: result.matchedHints,
-              failedHints: result.failedHints
-            }
-          };
-        } else {
-          // No element found - hide any existing overlay
-          healingOverlay.hide();
-          console.log('[Browserlet] Healing element not found, confidence:', result.confidence);
-          return {
-            success: true,
-            data: {
-              found: false,
-              confidence: result.confidence,
-              matchedHints: result.matchedHints,
-              failedHints: result.failedHints
-            }
-          };
-        }
-      } catch (error) {
-        console.error('[Browserlet] Error highlighting healing element:', error);
-        healingOverlay.hide();
-        return { success: false, error: String(error) };
-      }
-    }
-
-    case 'TEST_REPAIR': {
-      const { repairId, hints } = message.payload as {
-        repairId: string;
-        hints: SemanticHint[];
-      };
-
-      // Initialize healing overlay if needed
-      if (!healingOverlay) {
-        healingOverlay = new HighlightOverlay();
-      }
-
-      try {
-        // Show testing state
-        const result = resolveElement(hints);
-
-        if (result.element && result.confidence >= 0.7) {
-          // Show success state
-          healingOverlay.showHealing(result.element, 'success');
-          console.log('[Browserlet] Test repair succeeded:', repairId);
-
-          // Send result back to sidepanel
-          chrome.runtime.sendMessage({
-            type: 'TEST_REPAIR_RESULT',
-            payload: { repairId, success: true, confidence: result.confidence }
-          }).catch(() => {});
-
-          return { success: true, data: { found: true, confidence: result.confidence } };
-        } else {
-          // Show failed state
-          if (result.element) {
-            healingOverlay.showHealing(result.element, 'failed');
-          } else {
-            healingOverlay.hide();
-          }
-          console.log('[Browserlet] Test repair failed:', repairId, 'confidence:', result.confidence);
-
-          // Send result back to sidepanel
-          chrome.runtime.sendMessage({
-            type: 'TEST_REPAIR_RESULT',
-            payload: { repairId, success: false, confidence: result.confidence }
-          }).catch(() => {});
-
-          return { success: true, data: { found: false, confidence: result.confidence } };
-        }
-      } catch (error) {
-        console.error('[Browserlet] Error testing repair:', error);
-        healingOverlay.hide();
-
-        chrome.runtime.sendMessage({
-          type: 'TEST_REPAIR_RESULT',
-          payload: { repairId, success: false, error: String(error) }
-        }).catch(() => {});
-
-        return { success: false, error: String(error) };
-      }
-    }
-
-    case 'HEALING_APPROVED': {
-      // Hide healing overlay when repair is approved
-      if (healingOverlay) {
-        healingOverlay.hide();
-      }
-      console.log('[Browserlet] Healing approved, overlay hidden');
-      return { success: true };
-    }
-
-    case 'HEALING_REJECTED': {
-      // Hide healing overlay when repair is rejected
-      if (healingOverlay) {
-        healingOverlay.hide();
-      }
-      console.log('[Browserlet] Healing rejected, overlay hidden');
-      return { success: true };
     }
 
     default:

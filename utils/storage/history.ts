@@ -1,3 +1,4 @@
+import { storage } from './browserCompat';
 import type { ExecutionRecord } from '../types';
 
 const HISTORY_PREFIX = 'browserlet_history_';
@@ -11,7 +12,7 @@ function historyKey(scriptId: string): string {
 // Get execution history for a script (most recent first)
 export async function getExecutionHistory(scriptId: string): Promise<ExecutionRecord[]> {
   const key = historyKey(scriptId);
-  const result = await chrome.storage.local.get(key);
+  const result = await storage.local.get(key);
   return (result[key] as ExecutionRecord[] | undefined) ?? [];
 }
 
@@ -27,7 +28,7 @@ export async function addExecutionRecord(record: Omit<ExecutionRecord, 'id'>): P
 
   // Prepend new record, cap at MAX_HISTORY
   const updated = [newRecord, ...history].slice(0, MAX_HISTORY_PER_SCRIPT);
-  await chrome.storage.local.set({ [key]: updated });
+  await storage.local.set({ [key]: updated });
 
   return newRecord;
 }
@@ -46,7 +47,7 @@ export async function updateExecutionRecord(
     const existing = history[index];
     if (existing) {
       history[index] = { ...existing, ...updates };
-      await chrome.storage.local.set({ [key]: history });
+      await storage.local.set({ [key]: history });
     }
   }
 }
@@ -54,5 +55,5 @@ export async function updateExecutionRecord(
 // Clear history for a script
 export async function clearExecutionHistory(scriptId: string): Promise<void> {
   const key = historyKey(scriptId);
-  await chrome.storage.local.remove(key);
+  await storage.local.remove(key);
 }

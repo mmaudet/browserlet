@@ -1,8 +1,11 @@
+import '../../utils/firefoxPolyfill';
 import { handleMessage } from './messaging';
 import { initializeState } from './storage';
 import { initializeTriggerEngine } from './triggers';
 import { initializePasswordInfrastructure } from './passwords';
 import { initializeLLMFromStorage } from './llm';
+import { isFirefox } from '../../utils/browser-detect';
+import { storage } from '../../utils/storage/browserCompat';
 
 export default defineBackground(() => {
   console.log('[Browserlet] Service worker started');
@@ -12,7 +15,7 @@ export default defineBackground(() => {
   chrome.runtime.onMessage.addListener(handleMessage);
 
   // Listen for storage changes and broadcast to extension pages
-  chrome.storage.onChanged.addListener((changes, namespace) => {
+  storage.onChanged.addListener((changes, namespace) => {
     if (namespace !== 'local') return;
 
     // Broadcast to all extension pages (side panel, popup if any)
@@ -26,7 +29,11 @@ export default defineBackground(() => {
 
   // Open side panel when extension action is clicked
   chrome.action.onClicked.addListener(async (tab) => {
-    if (tab.id) {
+    if (isFirefox) {
+      // Firefox: use sidebarAction API (opens globally, not per-tab)
+      await browser.sidebarAction.toggle();
+    } else if (tab.id) {
+      // Chrome: use sidePanel API (per-tab)
       await chrome.sidePanel.open({ tabId: tab.id });
     }
   });
@@ -39,6 +46,18 @@ export default defineBackground(() => {
     }
     if (details.reason === 'update') {
       console.log('[Browserlet] Extension updated from', details.previousVersion);
+
+      // v1.5 migration: clear orphaned healing storage keys (self-healing removed)
+      try {
+        const allKeys = await storage.local.get(null);
+        const healingKeys = Object.keys(allKeys).filter(key => key.startsWith('browserlet_healing_'));
+        if (healingKeys.length > 0) {
+          await storage.local.remove(healingKeys);
+          console.log(`[Browserlet] Cleared ${healingKeys.length} orphaned healing storage keys`);
+        }
+      } catch (error) {
+        console.error('[Browserlet] Failed to clear healing storage keys:', error);
+      }
     }
   });
 
@@ -50,7 +69,7 @@ export default defineBackground(() => {
   // Initialize password infrastructure (auto-lock timer, idle detection)
   initializePasswordInfrastructure();
 
-  // Initialize LLM service from stored config (for self-healing, etc.)
+  // Initialize LLM service from stored config (for BSL generation, etc.)
   initializeLLMFromStorage().catch(error => {
     console.error('[Browserlet] Failed to initialize LLM from storage:', error);
   });

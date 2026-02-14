@@ -1,20 +1,14 @@
 import type { AppState, Message, MessageResponse, PingResponse, CapturedAction } from '../../utils/types';
+import { storage } from '../../utils/storage/browserCompat';
 import { getState, setState, setRecordingState, addRecordedAction, clearRecordedActions } from './storage';
 import { getLLMService } from './llm';
 import type { LLMConfig } from './llm/providers/types';
 import { buildExtractionPrompt, parseExtractionResponse } from './llm/prompts/extractionPrompt';
 import type { PageContext } from './llm/prompts/extractionPrompt';
-import { buildHealingPrompt, parseHealingResponse } from './llm/prompts/healingPrompt';
-import type { HealingPromptContext } from './llm/prompts/healingPrompt';
-import type { SemanticHint } from '../content/playback/types';
 import { getTriggerEngine, initializeTriggerEngine, broadcastTriggerUpdate } from './triggers';
 import type { ContextState, TriggerConfig } from '../../utils/triggers/types';
 import { getAllTriggers, saveTrigger, deleteTrigger, setSiteOverride } from '../../utils/storage/triggers';
 import { handlePasswordMessage } from './passwords';
-import { getScript, saveScript } from '../../utils/storage/scripts';
-import { updateStepHints } from '../../utils/yaml/stepParser';
-import { getHealingHistory, addHealingRecord, markHealingUndone } from '../../utils/storage/healing';
-import type { HealingRecord } from '../../utils/storage/healing';
 import { saveScreenshot, getScreenshots, deleteScreenshot } from '../../utils/storage/screenshots';
 
 // Storage key for persisted execution state
@@ -109,13 +103,13 @@ async function processMessage(
 
     case 'SAVE_EXECUTION_STATE': {
       const state = message.payload as PersistedExecutionState;
-      await chrome.storage.local.set({ [EXECUTION_STATE_KEY]: state });
+      await storage.local.set({ [EXECUTION_STATE_KEY]: state });
       console.log('[Browserlet] Saved execution state, resuming at step', state.currentStep);
       return { success: true };
     }
 
     case 'GET_EXECUTION_STATE': {
-      const data = await chrome.storage.local.get(EXECUTION_STATE_KEY);
+      const data = await storage.local.get(EXECUTION_STATE_KEY);
       const state = data[EXECUTION_STATE_KEY] as PersistedExecutionState | undefined;
 
       if (!state) {
@@ -124,7 +118,7 @@ async function processMessage(
 
       // Check if state is stale (more than 30 seconds old)
       if (Date.now() - state.timestamp > 30000) {
-        await chrome.storage.local.remove(EXECUTION_STATE_KEY);
+        await storage.local.remove(EXECUTION_STATE_KEY);
         return { success: true, data: null };
       }
 
@@ -132,7 +126,7 @@ async function processMessage(
     }
 
     case 'CLEAR_EXECUTION_STATE': {
-      await chrome.storage.local.remove(EXECUTION_STATE_KEY);
+      await storage.local.remove(EXECUTION_STATE_KEY);
       return { success: true };
     }
 
@@ -164,6 +158,22 @@ async function processMessage(
       const llmService = getLLMService();
       const status = llmService.getStatus();
       return { success: true, data: status };
+    }
+
+    case 'MICRO_PROMPT_REQUEST': {
+      const { routeMicroPrompt } = await import('./llm/microPromptRouter');
+      const request = message.payload as { promptType: string; input: unknown };
+      try {
+        const result = await routeMicroPrompt(request as import('./llm/microPromptRouter').MicroPromptRequest);
+        if (result.success) {
+          return { success: true, data: result };
+        } else {
+          return { success: false, error: result.error };
+        }
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown micro-prompt error';
+        return { success: false, error: errorMessage };
+      }
     }
 
     case 'SUGGEST_EXTRACTIONS': {
@@ -275,214 +285,6 @@ async function processMessage(
     case 'SUBSTITUTE_CREDENTIALS': {
       const result = await handlePasswordMessage(message.type, message.payload);
       return result;
-    }
-
-    // Self-healing selector messages
-    case 'HEALING_REQUESTED': {
-      const healingContext = message.payload as HealingPromptContext;
-      const llmService = getLLMService();
-
-      // Notify sidepanel that healing is starting
-      chrome.runtime.sendMessage({
-        type: 'HEALING_STARTED',
-        payload: { stepIndex: healingContext.stepIndex }
-      }).catch(() => {});
-
-      // Check if LLM is configured
-      if (!llmService.isConfigured()) {
-        console.warn('[Browserlet BG] HEALING_REQUESTED but LLM not configured');
-        // Send error to sidepanel
-        chrome.runtime.sendMessage({
-          type: 'HEALING_ERROR',
-          payload: { error: 'LLM not configured. Please configure an LLM provider in Settings.' }
-        }).catch(() => {});
-        return { success: false, error: 'LLM not configured' };
-      }
-
-      try {
-        console.log('[Browserlet BG] Building healing prompt for step', healingContext.stepIndex);
-        const prompt = buildHealingPrompt(healingContext);
-        const response = await llmService.generate(prompt);
-        const suggestions = parseHealingResponse(response);
-
-        if (suggestions.length === 0) {
-          console.warn('[Browserlet BG] No valid healing suggestions from LLM');
-          chrome.runtime.sendMessage({
-            type: 'HEALING_ERROR',
-            payload: { error: 'LLM could not suggest alternative hints for this element.' }
-          }).catch(() => {});
-          return { success: false, error: 'No valid suggestions' };
-        }
-
-        // Send first suggestion to sidepanel
-        // (Plan 03 will add UI to browse multiple suggestions)
-        const bestSuggestion = suggestions[0];
-        console.log('[Browserlet BG] Sending HEALING_SUGGESTION to sidepanel:', bestSuggestion);
-
-        chrome.runtime.sendMessage({
-          type: 'HEALING_SUGGESTION',
-          payload: {
-            stepIndex: healingContext.stepIndex,
-            scriptId: (message.payload as { scriptId?: string }).scriptId || '',
-            scriptName: (message.payload as { scriptName?: string }).scriptName || '',
-            originalHints: healingContext.originalHints,
-            proposedHints: bestSuggestion.proposedHints,
-            confidence: bestSuggestion.confidence,
-            reason: bestSuggestion.reason,
-            domExcerpt: healingContext.domExcerpt,
-            pageUrl: healingContext.pageUrl,
-            pageTitle: healingContext.pageTitle,
-          }
-        }).catch(() => {});
-
-        return { success: true, data: suggestions };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to generate healing suggestions';
-        console.error('[Browserlet BG] HEALING_REQUESTED error:', errorMessage);
-        chrome.runtime.sendMessage({
-          type: 'HEALING_ERROR',
-          payload: { error: errorMessage }
-        }).catch(() => {});
-        return { success: false, error: errorMessage };
-      }
-    }
-
-    case 'APPLY_REPAIR': {
-      const {
-        repairId,
-        stepIndex,
-        newHints,
-        scriptId,
-        scriptName,
-        originalHints,
-        confidence,
-        reason,
-        pageUrl
-      } = message.payload as {
-        repairId: string;
-        stepIndex: number;
-        newHints: SemanticHint[];
-        scriptId: string;
-        scriptName: string;
-        originalHints: SemanticHint[];
-        confidence: number;
-        reason: string;
-        pageUrl: string;
-      };
-
-      console.log('[Browserlet BG] APPLY_REPAIR for step', stepIndex, 'repairId:', repairId);
-
-      try {
-        // Get the script
-        const script = await getScript(scriptId);
-        if (!script) {
-          return { success: false, error: `Script not found: ${scriptId}` };
-        }
-
-        // Update the hints in the script content
-        const updatedContent = updateStepHints(script.content, stepIndex, newHints);
-
-        // Save the updated script
-        await saveScript({
-          ...script,
-          content: updatedContent
-        });
-
-        console.log('[Browserlet BG] Script updated with healed hints');
-
-        // Create healing record in audit trail
-        await addHealingRecord({
-          scriptId,
-          scriptName,
-          stepIndex,
-          originalHints,
-          newHints,
-          confidence,
-          reason,
-          approvedBy: 'user',
-          approvedAt: Date.now(),
-          pageUrl
-        });
-
-        // Send HEALING_APPROVED to content script to hide overlay
-        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (activeTab?.id) {
-          await chrome.tabs.sendMessage(activeTab.id, {
-            type: 'HEALING_APPROVED',
-            payload: { repairId, stepIndex, newHints, scriptId }
-          }).catch(() => {}); // Ignore if tab doesn't exist
-        }
-
-        return { success: true };
-      } catch (error) {
-        console.error('[Browserlet BG] Failed to apply repair:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        return { success: false, error: `Failed to apply repair: ${errorMessage}` };
-      }
-    }
-
-    case 'HEALING_REJECTED': {
-      const { repairId } = message.payload as { repairId: string };
-      console.log('[Browserlet BG] HEALING_REJECTED for repairId:', repairId);
-
-      // TODO: Plan 04 may log rejection to healing history
-      // For now, just acknowledge - the sidepanel handles queue removal
-      return { success: true };
-    }
-
-    case 'GET_HEALING_HISTORY': {
-      const { scriptId } = message.payload as { scriptId: string };
-      console.log('[Browserlet BG] GET_HEALING_HISTORY for script:', scriptId);
-      const history = await getHealingHistory(scriptId);
-      return { success: true, data: history };
-    }
-
-    case 'UNDO_HEALING': {
-      const { scriptId, recordId } = message.payload as {
-        scriptId: string;
-        recordId: string;
-      };
-
-      console.log('[Browserlet BG] UNDO_HEALING for record:', recordId);
-
-      try {
-        // Get the healing record
-        const history = await getHealingHistory(scriptId);
-        const record = history.find(r => r.id === recordId) as HealingRecord | undefined;
-
-        if (!record) {
-          return { success: false, error: `Healing record not found: ${recordId}` };
-        }
-
-        if (record.undoneAt) {
-          return { success: false, error: 'This healing has already been undone' };
-        }
-
-        // Get the script
-        const script = await getScript(scriptId);
-        if (!script) {
-          return { success: false, error: `Script not found: ${scriptId}` };
-        }
-
-        // Revert to original hints
-        const updatedContent = updateStepHints(script.content, record.stepIndex, record.originalHints);
-
-        // Save the updated script
-        await saveScript({
-          ...script,
-          content: updatedContent
-        });
-
-        // Mark the healing as undone
-        await markHealingUndone(scriptId, recordId);
-
-        console.log('[Browserlet BG] Healing undone, script reverted');
-        return { success: true };
-      } catch (error) {
-        console.error('[Browserlet BG] Failed to undo healing:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        return { success: false, error: `Failed to undo healing: ${errorMessage}` };
-      }
     }
 
     // Screenshot messages

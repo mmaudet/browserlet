@@ -41,24 +41,59 @@ function extractMonacoInlineScript(outputDir: string): void {
 }
 
 export default defineConfig({
-  manifest: {
-    name: '__MSG_appName__',
-    description: '__MSG_appDescription__',
-    default_locale: 'en',
-    version: '0.1.0',
-    permissions: ['storage', 'unlimitedStorage', 'sidePanel', 'tabs', 'activeTab', 'notifications', 'alarms', 'idle', 'scripting'],
-    host_permissions: [
-      '<all_urls>',  // Required for content script injection on any page
-      'https://api.anthropic.com/*',
-      'http://localhost:11434/*',
-      'http://127.0.0.1:11434/*',
-    ],
-    side_panel: {
-      default_path: 'sidepanel.html',
-    },
-    action: {
-      default_title: 'Open Browserlet',
-    },
+  manifest: ({ browser }) => {
+    const isFirefox = browser === 'firefox';
+
+    // Base permissions (common to all browsers)
+    const basePermissions = ['storage', 'unlimitedStorage', 'tabs', 'activeTab', 'notifications', 'alarms', 'idle'];
+
+    // Chrome-specific permissions
+    const chromePermissions = [...basePermissions, 'scripting', 'sidePanel'];
+
+    // Firefox MV3 permissions (scripting now available)
+    const firefoxPermissions = [...basePermissions, 'scripting'];
+
+    return {
+      name: '__MSG_appName__',
+      description: '__MSG_appDescription__',
+      default_locale: 'en',
+      version: '0.1.0',
+      ...(isFirefox ? {
+        browser_specific_settings: {
+          gecko: {
+            id: 'browserlet@browserlet.dev',
+            strict_min_version: '109.0',
+          },
+        },
+      } : {}),
+      permissions: isFirefox ? firefoxPermissions : chromePermissions,
+      host_permissions: [
+        '<all_urls>',  // Required for content script injection on any page
+        'https://api.anthropic.com/*',
+        'http://localhost:11434/*',
+        'http://127.0.0.1:11434/*',
+      ],
+      // Browser-specific sidebar API
+      ...(isFirefox ? {
+        sidebar_action: {
+          default_panel: 'sidepanel.html',
+          default_title: 'Browserlet',
+          default_icon: {
+            16: 'icon/16.png',
+            32: 'icon/32.png',
+            48: 'icon/48.png',
+            128: 'icon/128.png',
+          },
+        },
+      } : {
+        side_panel: {
+          default_path: 'sidepanel.html',
+        },
+      }),
+      action: {
+        default_title: 'Open Browserlet',
+      },
+    };
   },
   hooks: {
     'build:done': (wxt) => {

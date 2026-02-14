@@ -2,7 +2,7 @@
 
 **Resilient web automation for legacy applications — no recurring AI costs**
 
-Browserlet is a Chrome extension that automates interactions with legacy web applications (without APIs) in a deterministic, resilient, and maintainable way. Unlike full-AI solutions that consume tokens on every execution, Browserlet uses AI only during script creation to generate automation scripts in a semantic meta-language (BSL). Execution is then 100% deterministic, fast, and cost-free.
+Browserlet is a browser extension for Chrome and Firefox that automates interactions with legacy web applications (without APIs) in a deterministic, resilient, and maintainable way. Unlike full-AI solutions that consume tokens on every execution, Browserlet uses AI only during script creation to generate automation scripts in a semantic meta-language (BSL). Execution is then 100% deterministic, fast, and cost-free.
 
 ## Key Features
 
@@ -17,14 +17,6 @@ Browserlet is a Chrome extension that automates interactions with legacy web app
 - **8 BSL Actions** — click, type, select, extract, wait_for, navigate, scroll, hover
 - **Humanization Layer** — Gaussian-distributed delays to avoid bot detection
 - **Session Detection** — Automatic pause for manual authentication when logged out
-
-### Self-Healing Selectors
-- **Automatic Failure Detection** — Detects when element resolution fails (confidence < 70%)
-- **LLM-Powered Repair** — Uses Claude to suggest 2-3 alternative hint combinations with confidence scores
-- **DOM Context Extraction** — Extracts ~2000 character DOM excerpt around expected element location
-- **Interactive Repair Panel** — Review, edit, and test proposed fixes before applying
-- **Audit Trail** — Full history of applied repairs with undo capability
-- **Visual Highlighting** — Highlights matched elements during test phase
 
 ### Screenshot Capture & Visual Debugging
 - **Automatic Capture** — Screenshots taken at each step and on failures
@@ -54,7 +46,7 @@ Browserlet is a Chrome extension that automates interactions with legacy web app
 - **Cooldown System** — Prevent trigger spam with configurable delays
 
 ### Professional UI
-- **Side Panel Interface** — Full-featured UI in Chrome's side panel
+- **Side Panel Interface** — Full-featured UI in Chrome's side panel or Firefox's sidebar
 - **Monaco Editor** — YAML syntax highlighting and validation
 - **Script Management** — Create, edit, rename, delete, import/export
 - **Execution History** — Per-script history with status, duration, screenshots, and extracted data
@@ -85,6 +77,16 @@ npm run build
 2. Enable "Developer mode"
 3. Click "Load unpacked"
 4. Select the `.output/chrome-mv3` directory
+
+### Load in Firefox
+
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click "Load Temporary Add-on..."
+3. Select the `manifest.json` file in the `.output/firefox-mv3` directory
+
+> **Note:** Firefox uses a global sidebar instead of Chrome's per-tab side panel. Some features differ:
+> - Notification action buttons (Stop/Disable) are not supported in Firefox
+> - The sidebar is shared across all tabs
 
 ## Usage
 
@@ -133,15 +135,6 @@ npm run build
 2. When execution completes, click "View Data" in the result
 3. Choose export format: JSON or CSV
 4. CSV uses locale-aware delimiters (semicolon for French, comma for English)
-
-### Repairing Failed Scripts
-
-1. When a step fails to find an element, a repair suggestion appears
-2. Review the proposed hints in the Repair Panel
-3. Click "Test" to verify the element is found
-4. Edit hints manually if needed (dropdown for hint types)
-5. Click "Apply Fix" to update the script
-6. View repair history and undo if needed
 
 ## BSL (Browserlet Scripting Language)
 
@@ -290,13 +283,12 @@ browserlet/
 │   ├── content/          # Content scripts (recording, playback, triggers)
 │   │   └── playback/     # Playback engine (resolver, screenshotCapture)
 │   └── sidepanel/        # Side Panel UI (Preact components)
-│       ├── components/   # UI components (RepairPanel, ScreenshotGallery, etc.)
-│       └── stores/       # State management (execution, healing, etc.)
+│       ├── components/   # UI components (ScreenshotGallery, etc.)
+│       └── stores/       # State management (execution, etc.)
 ├── utils/
-│   ├── storage/          # Chrome storage (scripts, history, screenshots, healing)
+│   ├── storage/          # Chrome storage (scripts, history, screenshots)
 │   ├── playback/         # Playback engine (resolver, executor)
 │   ├── recording/        # Recording system (hints, capture)
-│   ├── healing/          # Self-healing (detector, prompt builder)
 │   ├── export/           # Data export (JSON, CSV, screenshots)
 │   ├── llm/              # LLM providers (Claude, Ollama)
 │   ├── triggers/         # Trigger system
@@ -315,7 +307,7 @@ browserlet/
 | v1.1 | Preact migration, Password infrastructure | ✅ Shipped |
 | v1.2 | Master password, Credential migration | ✅ Shipped |
 | v1.3 | UX refactoring, Bottom bar, History | ✅ Shipped |
-| v1.4 | Data Extraction, Self-Healing, Screenshots | ✅ Shipped |
+| v1.4 | Data Extraction, Screenshots | ✅ Shipped |
 
 ### Planned (v1.5)
 

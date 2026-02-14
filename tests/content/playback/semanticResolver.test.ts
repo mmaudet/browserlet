@@ -70,8 +70,8 @@ describe('HINT_WEIGHTS', () => {
     expect(HINT_WEIGHTS.class_contains).toBe(0.5);
   });
 
-  it('should have exactly 10 hint types', () => {
-    expect(Object.keys(HINT_WEIGHTS)).toHaveLength(10);
+  it('should have exactly 13 hint types', () => {
+    expect(Object.keys(HINT_WEIGHTS)).toHaveLength(13);
   });
 });
 

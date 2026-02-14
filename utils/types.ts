@@ -25,6 +25,7 @@ export type MessageType =
   | 'GENERATE_BSL'
   | 'CONFIGURE_LLM'
   | 'GET_LLM_STATUS'
+  | 'MICRO_PROMPT_REQUEST'      // Micro-prompt for element resolution (Phase 20)
   // Trigger messages
   | 'CONTEXT_MATCH'
   | 'GET_TRIGGERS'
@@ -54,17 +55,6 @@ export type MessageType =
   // AI extraction suggestions
   | 'SUGGEST_EXTRACTIONS'
   | 'GET_PAGE_CONTEXT'
-  // Self-healing selector messages
-  | 'HEALING_REQUESTED'           // Content -> Background: trigger healing analysis
-  | 'HEALING_SUGGESTION'          // Background -> Sidepanel: LLM response ready
-  | 'TEST_REPAIR'                 // Sidepanel -> Content: test proposed hints (resolve only)
-  | 'TEST_REPAIR_RESULT'          // Content -> Sidepanel: test succeeded/failed
-  | 'APPLY_REPAIR'                // Sidepanel -> Background: persist approved repair
-  | 'HEALING_APPROVED'            // Background -> Content: resume with new hints
-  | 'HEALING_REJECTED'            // Background -> Content: stop healing, fail step
-  | 'HIGHLIGHT_HEALING_ELEMENT'   // Sidepanel -> Content: show healing overlay
-  | 'GET_HEALING_HISTORY'         // Sidepanel -> Background: fetch audit trail
-  | 'UNDO_HEALING'                // Sidepanel -> Background: revert a healing repair
   // Screenshot messages
   | 'CAPTURE_SCREENSHOT'          // Content -> Background: request viewport capture
   | 'GET_SCREENSHOTS'             // Sidepanel -> Background: fetch screenshots for script

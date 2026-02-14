@@ -1,9 +1,10 @@
 /**
  * Screenshot storage module for Browserlet
  * Stores screenshots with FIFO eviction (20 per script) and 7-day expiry
- * Follows patterns from history.ts and healing.ts
+ * Follows patterns from history.ts
  */
 
+import { storage } from './browserCompat';
 import type { ScreenshotRecord } from '../types';
 
 const SCREENSHOTS_PREFIX = 'browserlet_screenshots_';
@@ -24,7 +25,7 @@ function screenshotsKey(scriptId: string): string {
  */
 export async function getScreenshots(scriptId: string): Promise<ScreenshotRecord[]> {
   const key = screenshotsKey(scriptId);
-  const result = await chrome.storage.local.get(key);
+  const result = await storage.local.get(key);
   const screenshots = (result[key] as ScreenshotRecord[] | undefined) ?? [];
   // Ensure sorted by timestamp descending (most recent first)
   return screenshots.sort((a, b) => b.timestamp - a.timestamp);
@@ -48,7 +49,7 @@ export async function saveScreenshot(
 
   // Prepend new screenshot, apply FIFO (keep last MAX_SCREENSHOTS_PER_SCRIPT)
   const updated = [newRecord, ...screenshots].slice(0, MAX_SCREENSHOTS_PER_SCRIPT);
-  await chrome.storage.local.set({ [key]: updated });
+  await storage.local.set({ [key]: updated });
 
   console.log('[Browserlet] Saved screenshot:', newRecord.id, 'for script:', record.scriptId);
   return newRecord;
@@ -68,9 +69,9 @@ export async function deleteScreenshot(
   const filtered = screenshots.filter(s => s.id !== screenshotId);
 
   if (filtered.length > 0) {
-    await chrome.storage.local.set({ [key]: filtered });
+    await storage.local.set({ [key]: filtered });
   } else {
-    await chrome.storage.local.remove(key);
+    await storage.local.remove(key);
   }
 
   console.log('[Browserlet] Deleted screenshot:', screenshotId);
@@ -82,7 +83,7 @@ export async function deleteScreenshot(
  */
 export async function clearScreenshots(scriptId: string): Promise<void> {
   const key = screenshotsKey(scriptId);
-  await chrome.storage.local.remove(key);
+  await storage.local.remove(key);
   console.log('[Browserlet] Cleared screenshots for script:', scriptId);
 }
 
@@ -96,7 +97,7 @@ export async function cleanupOldScreenshots(): Promise<number> {
   let deletedCount = 0;
 
   // Get all screenshot keys
-  const allData = await chrome.storage.local.get(null);
+  const allData = await storage.local.get(null);
   const screenshotKeys = Object.keys(allData).filter(k => k.startsWith(SCREENSHOTS_PREFIX));
 
   for (const key of screenshotKeys) {
@@ -109,9 +110,9 @@ export async function cleanupOldScreenshots(): Promise<number> {
     if (removed > 0) {
       deletedCount += removed;
       if (fresh.length > 0) {
-        await chrome.storage.local.set({ [key]: fresh });
+        await storage.local.set({ [key]: fresh });
       } else {
-        await chrome.storage.local.remove(key);
+        await storage.local.remove(key);
       }
     }
   }
@@ -128,7 +129,7 @@ export async function cleanupOldScreenshots(): Promise<number> {
  * @returns Total number of screenshots stored
  */
 export async function getTotalScreenshotCount(): Promise<number> {
-  const allData = await chrome.storage.local.get(null);
+  const allData = await storage.local.get(null);
   const screenshotKeys = Object.keys(allData).filter(k => k.startsWith(SCREENSHOTS_PREFIX));
 
   let total = 0;

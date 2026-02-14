@@ -165,6 +165,15 @@ export class RecordingManager {
   }
 
   /**
+   * Scan for pre-filled password fields and emit input actions.
+   * Delegates to EventCapture.capturePreFilledPasswords().
+   */
+  capturePreFilledPasswords(): void {
+    if (this.state !== 'recording') return;
+    this.eventCapture.capturePreFilledPasswords();
+  }
+
+  /**
    * Destroy the manager and clean up all resources.
    */
   destroy(): void {

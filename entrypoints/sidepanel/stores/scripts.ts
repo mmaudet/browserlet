@@ -1,4 +1,5 @@
 import { signal, computed } from '@preact/signals';
+import { storage } from '../../../utils/storage/browserCompat';
 import type { Script } from '../../../utils/types';
 import { getScripts } from '../../../utils/storage/scripts';
 
@@ -39,7 +40,7 @@ export async function loadScripts(): Promise<void> {
 }
 
 // Listen for storage changes (sync across contexts)
-chrome.storage.onChanged.addListener((changes, area) => {
+storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.browserlet_scripts) {
     scriptsState.value = (changes.browserlet_scripts.newValue as Script[] | undefined) ?? [];
   }

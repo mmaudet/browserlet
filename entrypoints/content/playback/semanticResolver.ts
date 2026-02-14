@@ -7,6 +7,7 @@ import type { SemanticHint, HintType } from '../recording/types';
 import type { ResolverResult } from './types';
 import { getElementRole, isElementVisible, findAssociatedLabel } from '../../../utils/hints/dom';
 import { normalizeText } from '../../../utils/hints/text';
+import { extractDOMContext } from './domContextExtractor';
 
 /**
  * Hint weights for scoring element matches
@@ -21,6 +22,9 @@ export const HINT_WEIGHTS: Record<HintType, number> = {
   id: 0.85,             // Filtered for auto-generated in recording
   text_contains: 0.8,   // Text content - may change with i18n
   placeholder_contains: 0.7, // Placeholder text - may change
+  fieldset_context: 0.7, // Fieldset legend - critical for form section disambiguation
+  associated_label: 0.7, // Explicit label association (for=/aria-labelledby)
+  section_context: 0.6,  // Section heading - page section disambiguation
   near_label: 0.6,      // Less reliable in tables/complex layouts
   class_contains: 0.5,  // Often minified/generated
 };
@@ -226,6 +230,27 @@ function matchHint(element: Element, hint: SemanticHint): boolean {
       if (typeof hint.value === 'string') return false;
       const { name, value } = hint.value;
       return element.getAttribute(name) === value;
+    }
+
+    case 'fieldset_context': {
+      if (typeof hint.value !== 'string') return false;
+      const context = extractDOMContext(element);
+      return context.fieldset_legend !== null &&
+        normalizeText(context.fieldset_legend).includes(normalizeText(hint.value));
+    }
+
+    case 'associated_label': {
+      if (typeof hint.value !== 'string') return false;
+      const ctx = extractDOMContext(element);
+      return ctx.associated_label !== null &&
+        normalizeText(ctx.associated_label).includes(normalizeText(hint.value));
+    }
+
+    case 'section_context': {
+      if (typeof hint.value !== 'string') return false;
+      const sctx = extractDOMContext(element);
+      return sctx.section_heading !== null &&
+        normalizeText(sctx.section_heading).includes(normalizeText(hint.value));
     }
 
     default:

@@ -3,11 +3,13 @@
  *
  * Security model:
  * - Master password derives encryption key via PBKDF2 (600k iterations, SHA-256)
- * - Salt stored in chrome.storage.local (unique per installation)
- * - Derived key cached in chrome.storage.session while vault is unlocked
+ * - Salt stored in storage.local (unique per installation)
+ * - Derived key cached in storage.session while vault is unlocked
  * - Master password never stored (only used to derive key)
  * - Validation via decryption (not hash comparison)
  */
+
+import { storage } from '../storage/browserCompat';
 
 // Storage keys
 const SALT_STORAGE_KEY = 'browserlet_pbkdf2_salt';
@@ -25,7 +27,7 @@ const IV_LENGTH = 12; // 96 bits for AES-GCM
 const VALIDATION_PLAINTEXT = 'browserlet_vault_v1';
 
 /**
- * Validation data structure stored in chrome.storage.local
+ * Validation data structure stored in storage.local
  */
 interface ValidationData {
   /** Base64-encoded ciphertext */
@@ -59,7 +61,7 @@ function base64ToBuffer(base64: string): ArrayBuffer {
 }
 
 /**
- * Get existing salt from chrome.storage.local or generate new 16-byte random salt.
+ * Get existing salt from storage.local or generate new 16-byte random salt.
  *
  * The salt is unique per installation and stored as base64 in local storage.
  * Once created, the same salt is used for all future key derivations.
@@ -79,7 +81,7 @@ export async function getOrCreateSalt(): Promise<Uint8Array> {
   const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
 
   // Store as base64 for serialization
-  await chrome.storage.local.set({ [SALT_STORAGE_KEY]: bufferToBase64(salt.buffer) });
+  await storage.local.set({ [SALT_STORAGE_KEY]: bufferToBase64(salt.buffer) });
 
   return salt;
 }
@@ -128,7 +130,7 @@ export async function deriveKeyFromPassword(password: string, salt: Uint8Array):
 }
 
 /**
- * Cache the derived key in chrome.storage.session.
+ * Cache the derived key in storage.session.
  *
  * The key is exported to JWK format for storage. Session storage is:
  * - Memory-only (not persisted to disk)
@@ -139,16 +141,16 @@ export async function deriveKeyFromPassword(password: string, salt: Uint8Array):
  */
 export async function cacheDerivedKey(key: CryptoKey): Promise<void> {
   const jwk = await crypto.subtle.exportKey('jwk', key);
-  await chrome.storage.session.set({ [DERIVED_KEY_STORAGE_KEY]: jwk });
+  await storage.session.set({ [DERIVED_KEY_STORAGE_KEY]: jwk });
 }
 
 /**
- * Get the cached derived key from chrome.storage.session.
+ * Get the cached derived key from storage.session.
  *
  * @returns CryptoKey if cached, null if not found (vault locked or browser restarted)
  */
 export async function getCachedDerivedKey(): Promise<CryptoKey | null> {
-  const result = await chrome.storage.session.get(DERIVED_KEY_STORAGE_KEY);
+  const result = await storage.session.get(DERIVED_KEY_STORAGE_KEY);
   const jwk = result[DERIVED_KEY_STORAGE_KEY];
 
   if (!jwk) {
@@ -168,12 +170,12 @@ export async function getCachedDerivedKey(): Promise<CryptoKey | null> {
 }
 
 /**
- * Clear the cached derived key from chrome.storage.session.
+ * Clear the cached derived key from storage.session.
  *
  * Call this when locking the vault or on user logout.
  */
 export async function clearCachedKey(): Promise<void> {
-  await chrome.storage.session.remove(DERIVED_KEY_STORAGE_KEY);
+  await storage.session.remove(DERIVED_KEY_STORAGE_KEY);
 }
 
 /**
@@ -206,7 +208,7 @@ export async function createValidationData(derivedKey: CryptoKey): Promise<void>
     iv: bufferToBase64(iv.buffer),
   };
 
-  await chrome.storage.local.set({ [VALIDATION_STORAGE_KEY]: validationData });
+  await storage.local.set({ [VALIDATION_STORAGE_KEY]: validationData });
 }
 
 /**
@@ -226,7 +228,7 @@ export async function validateMasterPassword(
   // Get salt and validation data
   const [salt, validationResult] = await Promise.all([
     getOrCreateSalt(),
-    chrome.storage.local.get(VALIDATION_STORAGE_KEY),
+    storage.local.get(VALIDATION_STORAGE_KEY),
   ]);
 
   const validationData: ValidationData | undefined = validationResult[VALIDATION_STORAGE_KEY];
@@ -275,6 +277,6 @@ export async function validateMasterPassword(
  * @returns true if master password was previously configured
  */
 export async function hasMasterPasswordSetup(): Promise<boolean> {
-  const result = await chrome.storage.local.get(VALIDATION_STORAGE_KEY);
+  const result = await storage.local.get(VALIDATION_STORAGE_KEY);
   return result[VALIDATION_STORAGE_KEY] !== undefined;
 }

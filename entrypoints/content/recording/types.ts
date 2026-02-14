@@ -5,7 +5,7 @@
 // Recording state machine
 export type RecordingState = 'idle' | 'recording' | 'paused';
 
-// Semantic hint types (10 types from POC)
+// Semantic hint types (13 types: 10 from POC + 3 structural context)
 export type HintType =
   | 'role'
   | 'text_contains'
@@ -16,7 +16,10 @@ export type HintType =
   | 'near_label'
   | 'class_contains'
   | 'data_attribute'
-  | 'id';
+  | 'id'
+  | 'fieldset_context'
+  | 'associated_label'
+  | 'section_context';
 
 // Captured semantic hint
 export interface SemanticHint {
