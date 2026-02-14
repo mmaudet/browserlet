@@ -8,7 +8,8 @@
     "browserlet": "./bin/browserlet.js"
   },
   "scripts": {
-    "build": "tsc --build",
+    "build": "npx tsx scripts/build-resolver.ts && tsc --build",
+    "build:resolver": "npx tsx scripts/build-resolver.ts",
     "clean": "rm -rf dist",
     "dev": "tsc --build --watch"
   },
@@ -22,6 +23,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "esbuild": "^0.27.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }
