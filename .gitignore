@@ -5,6 +5,8 @@
 # Shared package build output
 packages/core/dist/
 packages/core/tsconfig.tsbuildinfo
+packages/cli/dist/
+packages/cli/tsconfig.tsbuildinfo
 
 # Dependencies
 node_modules/
