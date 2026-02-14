@@ -5,14 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Automatisation web resiliente pour applications legacy, sans cout recurrent d'IA
-**Current focus:** v1.6 CLI Runner & Automated Testing -- Defining requirements
+**Current focus:** v1.6 CLI Runner & Automated Testing -- Phase 23: Monorepo & Shared Core
 
 ## Current Position
 
 Milestone: v1.6 CLI Runner & Automated Testing
-Phase: Not started (defining requirements)
-Status: Defining requirements
-Last activity: 2026-02-13 -- Milestone v1.6 started
+Phase: 23 of 26 (Monorepo & Shared Core)
+Plan: 1 of 3 complete
+Status: Executing
+Last activity: 2026-02-14 -- Completed 23-01 (monorepo scaffolding & type extraction)
+
+Progress: [███░░░░░░░] 8%
 
 ## Performance Metrics
 
@@ -80,7 +83,11 @@ Last activity: 2026-02-13 -- Milestone v1.6 started
 
 ### Decisions
 
-None (fresh milestone). See PROJECT.md Key Decisions for full history.
+- Phase 23-26: Split EXEC requirements into two phases (24: runner+actions, 25: resolver+reporting) because page.evaluate() serialization for the cascade resolver is the riskiest technical decision and warrants its own phase boundary
+- v1.6: AI auto-repair deferred to v1.7 per research recommendation -- core execution validation first
+- 23-01: npm workspaces over pnpm/yarn for zero-config workspace protocol support
+- 23-01: TypeScript project references with composite: true for independent compilation
+- 23-01: Vite resolve alias alongside TS paths for dual bundler+IDE @browserlet/core resolution
 
 ### Pending Todos
 
@@ -88,11 +95,12 @@ None.
 
 ### Blockers/Concerns
 
-None.
+- Research flags page.evaluate() serialization as high risk -- Phase 25 may need research-phase before planning
+- Cross-platform Web Crypto compatibility (Node.js vs browser) needs early validation in Phase 26
 
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: v1.5 milestone archived, proceeding to v1.6 definition
+Stopped at: Completed 23-01-PLAN.md (monorepo scaffolding & type extraction)
 Resume file: None
-Next action: Define requirements and create roadmap for v1.6
+Next action: Execute 23-02-PLAN.md (logic extraction to @browserlet/core)
