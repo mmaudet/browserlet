@@ -1,46 +1,39 @@
-# Roadmap: Browserlet
+# Browserlet Development Roadmap
 
-## Milestones
+**Milestone:** v1.7 CLI Completion & Batch Testing
+**Status:** In progress
+**Phases:** 27-31
+**Last updated:** 2026-02-14
 
-- [v1.0 MVP](milestones/v1.0-ROADMAP.md) - Phases 1-6 (shipped 2026-01-31)
-- [v1.1 Security & Stability](milestones/v1.1-ROADMAP.md) - Phases 7-10 (shipped 2026-01-31)
-- [v1.2 Persistent Credentials](milestones/v1.2-ROADMAP.md) - Phases 11-12 (shipped 2026-02-01)
-- [v1.3 UX Sidepanel Refactoring](milestones/v1.3-ROADMAP.md) - Phase 13 (shipped 2026-02-01)
-- [v1.4 Self-Healing & Data Extraction](milestones/v1.4-ROADMAP.md) - Phases 14-16 (shipped 2026-02-12)
-- [v1.5 Resolver Redesign & Firefox](milestones/v1.5-ROADMAP.md) - Phases 17-22 (shipped 2026-02-13)
-- [v1.6 CLI Runner & Automated Testing](milestones/v1.6-ROADMAP.md) - Phases 23-26 (shipped 2026-02-14)
-- **v1.7 CLI Completion & Batch Testing** - Phases 27-31 (in progress)
+---
 
 ## v1.7 CLI Completion & Batch Testing
 
-**Goal:** Complete CLI runner with credential substitution, LLM micro-prompt bridge, batch test runner, and AI auto-repair for production-ready CI/CD automation tool.
+**Goal:** Complete CLI feature parity with extension (credentials, LLM micro-prompts) and add batch testing infrastructure.
 
-**Execution order:**
-1. Phase 27 + Phase 28 (parallel — independent)
-2. Phase 29 (after Phase 27)
-3. Phase 30 (after Phase 28)
-4. Phase 31 (after Phase 29)
+**Why now:** v1.6 shipped CLI with cascade resolver (deterministic-only). v1.7 adds credential wiring and LLM micro-prompts for full resolver capability, plus batch testing for QA workflows.
 
-- [ ] **Phase 27: Credential Wiring** — Wire existing vault to CLI runner
-- [ ] **Phase 28: LLM Micro-Prompt Bridge** — Cascade stages 3-5 via page.exposeFunction ‖ Phase 27
-- [ ] **Phase 29: Batch Test Runner** — `browserlet test dossier/` with isolation
-- [ ] **Phase 30: AI Auto-Repair** — `--repair` flag with circuit breaker
-- [ ] **Phase 31: HTML Report** — Visual timeline with embedded screenshots
+**Success criteria:**
+- CLI resolves all credential references from vault
+- CLI cascade resolver stages 3-5 work via LLM bridge
+- Batch test runner aggregates results from multiple BSL files
+- Auto-repair suggests updated hints after page changes
 
-## Phase Details
+**Dependencies:** Phase 26 (credential security) provides vault infrastructure.
+
+---
 
 ### Phase 27: Credential Wiring
-**Goal**: CLI runner substitutes credentials in BSL scripts using encrypted vault with master password protection
-**Depends on**: Nothing (closes v1.6 tech debt)
-**Requirements**: CRED-09, CRED-10, CRED-11
+**Goal**: CLI resolves credential references ({{credential:name}}) from vault, enabling automated login scripts
+**Depends on**: Phase 26 (vault infrastructure)
+**Requirements**: CRED-01, CRED-02, CRED-03, CRED-04, CRED-05
 **Success Criteria** (what must be TRUE):
-  1. User can run CLI scripts containing {{credential:alias}} syntax with --vault flag
-  2. User is prompted once per session for master password to unlock vault
-  3. Credentials are substituted into scripts before execution with zero plaintext in logs
-**Plans:** 1 plan
-
-Plans:
-- [ ] 27-01-PLAN.md — Wire --vault flag, master password prompt, and credential substitution into BSLRunner
+  1. CLI resolves {{credential:name}} references from vault before execution
+  2. Vault must be unlocked via master password before credential-using scripts run
+  3. Credential references in type actions inject decrypted values at execution time
+  4. Missing credentials fail fast with clear error before script starts
+  5. Credential values never appear in logs or error messages
+**Plans:** TBD
 
 ### Phase 28: LLM Micro-Prompt Bridge
 **Goal**: Cascade resolver stages 3-5 work in CLI via LLM call bridge from page context to Node.js
@@ -52,7 +45,12 @@ Plans:
   3. LLM provider abstraction supports Claude API, Ollama, and OpenAI Compatible endpoints
   4. DOM context extraction around failure points respects token budgets
   5. Structured LLM responses are validated before use to prevent malformed output errors
-**Plans:** TBD
+**Plans:** 3 plans in 3 waves
+
+Plans:
+- [ ] 28-01-PLAN.md — LLM provider infrastructure (Claude, Ollama, micro-prompt router)
+- [ ] 28-02-PLAN.md — page.exposeFunction bridge and --micro-prompts flag
+- [ ] 28-03-PLAN.md — Validation tests and human verification
 
 ### Phase 29: Batch Test Runner
 **Goal**: Users can run entire directories of BSL test scripts with aggregated reporting
@@ -63,47 +61,68 @@ Plans:
   2. Exit code aggregates results (0=all pass, 1=any fail, 2=any error)
   3. Tests continue on failure by default, --bail flag stops on first failure
   4. Each script runs in fresh browser context for isolation
-  5. Terminal displays batch summary with pass/fail/total counts and duration
-  6. Progress indicator shows current script and overall completion percentage
+  5. Parallel execution supported via --workers flag (default: 1)
+  6. Summary report shows passed/failed/skipped counts with detailed failure logs
 **Plans:** TBD
 
-### Phase 30: AI Auto-Repair
-**Goal**: Failed steps can automatically retry with LLM-regenerated hints when --repair flag enabled
-**Depends on**: Phase 28 (LLM bridge for hint regeneration)
-**Requirements**: REPR-01, REPR-02, REPR-03, REPR-04, REPR-05
+### Phase 30: AI-Powered Auto-Repair
+**Goal**: CLI detects page structure changes and suggests updated hints via LLM analysis
+**Depends on**: Phase 28 (LLM bridge for micro-prompts)
+**Requirements**: ARPR-01, ARPR-02, ARPR-03, ARPR-04, ARPR-05
 **Success Criteria** (what must be TRUE):
-  1. User can enable auto-repair with --repair flag (opt-in, default disabled)
-  2. Circuit breaker limits repair to max 3 retries per step and aborts script after 3 consecutive failures
-  3. SELECTOR_NOT_FOUND errors trigger repair attempts, TIMEOUT/NETWORK errors abort immediately
-  4. Repair attempts are logged with before/after context showing what changed
-  5. Token cost is tracked and displayed in summary report
+  1. When cascade resolver fails, CLI captures DOM context and suggests alternative hints
+  2. Repair suggestions include confidence scores (>0.70 recommended)
+  3. Users can apply repairs interactively or via --auto-repair flag
+  4. Applied repairs update BSL script file on disk
+  5. Repair history logged for audit trail
 **Plans:** TBD
 
-### Phase 31: HTML Report
-**Goal**: Batch test runs produce visual HTML reports with step-by-step timeline and embedded screenshots
-**Depends on**: Phase 29 (batch runner to aggregate results)
-**Requirements**: REPT-01, REPT-02
+### Phase 31: Documentation & Examples
+**Goal**: Complete CLI documentation with examples and migration guide from extension
+**Depends on**: Phases 27-30 (all CLI features complete)
+**Requirements**: DOCS-01, DOCS-02, DOCS-03, DOCS-04
 **Success Criteria** (what must be TRUE):
-  1. HTML report shows step-by-step timeline with duration and status for each script
-  2. Report is generated to --output-dir after batch execution completes
-  3. Failure screenshots are embedded inline at the relevant step
+  1. README.md documents all CLI commands and flags
+  2. Examples directory contains 10+ real-world BSL scripts
+  3. Migration guide explains extension → CLI workflow differences
+  4. Troubleshooting section covers common errors and solutions
 **Plans:** TBD
-
-## Progress
-
-| Phase | Milestone | Plans | Status | Shipped |
-|-------|-----------|-------|--------|---------|
-| 1-6 | v1.0 MVP | 34 | Complete | 2026-01-31 |
-| 7-10 | v1.1 Security | 16 | Complete | 2026-01-31 |
-| 11-12 | v1.2 Credentials | 5 | Complete | 2026-02-01 |
-| 13 | v1.3 UX Refactoring | 3 | Complete | 2026-02-01 |
-| 14-16 | v1.4 Data Extraction & Screenshots | 12 | Complete | 2026-02-12 |
-| 17-22 | v1.5 Resolver Redesign & Firefox | 14 | Complete | 2026-02-13 |
-| 23-26 | v1.6 CLI Runner & Automated Testing | 11 | Complete | 2026-02-14 |
-| 27-31 | v1.7 CLI Completion & Batch Testing | 1/TBD | In progress | - |
-
-**Total:** 26 phases shipped (95 plans) across 7 milestones, 5 phases planned for v1.7
 
 ---
 
-*Roadmap updated: 2026-02-14 -- Phase 27 plan created (1 plan)*
+## Requirements Coverage
+
+### Credential Wiring (CRED)
+- [ ] **CRED-01**: Credential vault integration in CLI (master password unlock)
+- [ ] **CRED-02**: {{credential:name}} reference resolution before execution
+- [ ] **CRED-03**: Fail-fast validation (missing credentials detected pre-run)
+- [ ] **CRED-04**: Credential value redaction in all logs and error messages
+- [ ] **CRED-05**: Bridge server shutdown after script completion
+
+### LLM Micro-Prompt Bridge (LLMB)
+- [ ] **LLMB-01**: Cascade resolver stages 3-5 work in CLI via `page.exposeFunction` bridge
+- [ ] **LLMB-02**: LLM provider abstraction supports Claude API, Ollama, and OpenAI Compatible
+- [ ] **LLMB-03**: `--micro-prompts` flag enables LLM stages (default: deterministic-only)
+- [ ] **LLMB-04**: DOM context extracted around failure point (token-budget aware)
+- [ ] **LLMB-05**: Structured output parsing validates LLM responses before use
+
+### Batch Testing (BTST)
+- [ ] **BTST-01**: `browserlet test <directory>` runs all .bsl files
+- [ ] **BTST-02**: Exit codes: 0=all pass, 1=any fail, 2=any error
+- [ ] **BTST-03**: `--bail` flag stops on first failure
+- [ ] **BTST-04**: Fresh browser context per script for isolation
+- [ ] **BTST-05**: `--workers N` for parallel execution (default: 1)
+- [ ] **BTST-06**: Summary report with passed/failed/skipped counts
+
+### Auto-Repair (ARPR)
+- [ ] **ARPR-01**: Detect failures and capture DOM context for repair
+- [ ] **ARPR-02**: LLM suggests alternative hints with confidence scores
+- [ ] **ARPR-03**: Interactive repair approval (`--interactive` mode)
+- [ ] **ARPR-04**: `--auto-repair` applies repairs automatically (>0.70 confidence)
+- [ ] **ARPR-05**: Update BSL file on disk with repaired hints
+
+### Documentation (DOCS)
+- [ ] **DOCS-01**: CLI command reference in README.md
+- [ ] **DOCS-02**: 10+ example BSL scripts in examples/
+- [ ] **DOCS-03**: Extension-to-CLI migration guide
+- [ ] **DOCS-04**: Troubleshooting section for common errors
