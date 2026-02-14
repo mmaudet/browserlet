@@ -40,7 +40,8 @@ program
   .option('--timeout <ms>', 'Global step timeout in milliseconds', '30000')
   .option('--output-dir <dir>', 'Directory for failure screenshots', 'browserlet-output')
   .option('--vault', 'Use encrypted credential vault for {{credential:name}} substitution', false)
-  .action(async (scriptPath: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean }) => {
+  .option('--micro-prompts', 'Enable LLM micro-prompts for cascade resolver stages 3-5 (requires ANTHROPIC_API_KEY or Ollama)', false)
+  .action(async (scriptPath: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean; microPrompts: boolean }) => {
     // Validate script path
     if (!fs.existsSync(scriptPath)) {
       console.error(pc.red(`Error: Script file not found: ${scriptPath}`));
@@ -75,6 +76,34 @@ program
       // If wrong password, decryption will fail with clear error
     }
 
+    // Handle --micro-prompts flag: read LLM config from environment
+    let llmConfig: { provider: 'claude' | 'ollama'; claudeApiKey?: string; claudeModel?: string; ollamaHost?: string; ollamaModel?: string } | undefined;
+    if (options.microPrompts) {
+      const provider = (process.env.BROWSERLET_LLM_PROVIDER || 'claude') as 'claude' | 'ollama';
+
+      if (provider === 'claude') {
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) {
+          console.error(pc.red('--micro-prompts with provider=claude requires ANTHROPIC_API_KEY environment variable'));
+          process.exit(2);
+        }
+        llmConfig = {
+          provider: 'claude',
+          claudeApiKey: apiKey,
+          claudeModel: process.env.BROWSERLET_LLM_MODEL || 'claude-sonnet-4-5-20250929',
+        };
+      } else if (provider === 'ollama') {
+        llmConfig = {
+          provider: 'ollama',
+          ollamaHost: process.env.BROWSERLET_OLLAMA_HOST || 'http://localhost:11434',
+          ollamaModel: process.env.BROWSERLET_LLM_MODEL || 'llama3.1',
+        };
+      } else {
+        console.error(pc.red(`Unknown LLM provider: ${provider}. Use 'claude' or 'ollama'.`));
+        process.exit(2);
+      }
+    }
+
     let browser = null;
     try {
       browser = await chromium.launch({
@@ -88,6 +117,8 @@ program
         globalTimeout: timeout,
         outputDir: options.outputDir,
         derivedKey,
+        microPrompts: options.microPrompts,
+        llmConfig,
       });
 
       const result = await runner.run(scriptPath);

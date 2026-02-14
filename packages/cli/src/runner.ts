@@ -24,6 +24,9 @@ import { CascadeCLIResolver } from './cascadeResolver.js';
 import { SimpleResolver } from './resolver.js';
 import { StepReporter } from './output.js';
 import { CLIPasswordStorage } from './credentials/resolver.js';
+import { ClaudeProvider } from './llm/providers/claude.js';
+import { OllamaProvider } from './llm/providers/ollama.js';
+import { installMicroPromptBridge } from './llm/bridge.js';
 
 /** Actions that do not require selector resolution */
 const NO_SELECTOR_ACTIONS = new Set(['navigate', 'screenshot']);
@@ -36,6 +39,14 @@ export interface BSLRunnerOptions {
   globalTimeout: number;
   outputDir: string; // Directory for failure screenshots
   derivedKey?: CryptoKey; // Optional: if provided, enables credential substitution
+  microPrompts?: boolean; // Enable LLM stages (default: false)
+  llmConfig?: {
+    provider: 'claude' | 'ollama';
+    claudeApiKey?: string;
+    claudeModel?: string;
+    ollamaHost?: string;
+    ollamaModel?: string;
+  };
 }
 
 /**
@@ -71,22 +82,49 @@ export class BSLRunner {
     // 3. Create output directory for failure screenshots
     fs.mkdirSync(this.options.outputDir, { recursive: true });
 
-    // 4. Create executor, resolvers (cascade + fallback), and reporter
+    // 4. Install LLM bridge if micro-prompts enabled
+    if (this.options.microPrompts) {
+      if (!this.options.llmConfig) {
+        throw new Error('--micro-prompts requires LLM configuration');
+      }
+
+      const { provider: providerName, claudeApiKey, claudeModel, ollamaHost, ollamaModel } = this.options.llmConfig;
+
+      // Create provider based on config
+      if (providerName === 'claude') {
+        if (!claudeApiKey) {
+          throw new Error('--micro-prompts with provider=claude requires ANTHROPIC_API_KEY');
+        }
+        const provider = new ClaudeProvider(claudeApiKey, claudeModel);
+        await installMicroPromptBridge(this.page, provider);
+        console.log(`[BSLRunner] Micro-prompts enabled via ${providerName}`);
+      } else if (providerName === 'ollama') {
+        const provider = new OllamaProvider(ollamaHost, ollamaModel);
+        await installMicroPromptBridge(this.page, provider);
+        console.log(`[BSLRunner] Micro-prompts enabled via ${providerName}`);
+      } else {
+        throw new Error(`Unknown LLM provider: ${providerName}`);
+      }
+    } else {
+      console.log('[BSLRunner] Running deterministic-only (stages 1-2)');
+    }
+
+    // 5. Create executor, resolvers (cascade + fallback), and reporter
     const executor = new PlaywrightExecutor(this.page, this.options.globalTimeout);
     const cascadeResolver = new CascadeCLIResolver(this.page, this.options.globalTimeout);
     await cascadeResolver.inject();
     const simpleResolver = new SimpleResolver(this.page);
     const reporter = new StepReporter();
 
-    // 5. Runtime context for extracted variable substitution
+    // 6. Runtime context for extracted variable substitution
     const extractedData: Record<string, unknown> = {};
 
-    // 6. Create password storage if vault is unlocked
+    // 7. Create password storage if vault is unlocked
     const passwordStorage = this.options.derivedKey
       ? new CLIPasswordStorage(this.options.derivedKey)
       : null;
 
-    // 7. Begin script execution
+    // 8. Begin script execution
     reporter.scriptStart(script.name, script.steps.length);
     const scriptStartTime = performance.now();
 
