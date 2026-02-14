@@ -63,7 +63,11 @@ Plans:
   4. Each script runs in fresh browser context for isolation
   5. Parallel execution supported via --workers flag (default: 1)
   6. Summary report shows passed/failed/skipped counts with detailed failure logs
-**Plans:** TBD
+**Plans:** 2 plans in 2 waves
+
+Plans:
+- [ ] 29-01-PLAN.md — Core batch runner (test command, script discovery, sequential execution, exit code aggregation, summary report)
+- [ ] 29-02-PLAN.md — Parallel workers (--workers N) and bail-on-failure (--bail)
 
 ### Phase 30: AI-Powered Auto-Repair
 **Goal**: CLI detects page structure changes and suggests updated hints via LLM analysis
