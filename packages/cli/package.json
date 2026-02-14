@@ -1,0 +1,27 @@
+{
+  "name": "@browserlet/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "browserlet": "./bin/browserlet.js"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist",
+    "dev": "tsc --build --watch"
+  },
+  "dependencies": {
+    "@browserlet/core": "*",
+    "commander": "^14.0.0",
+    "env-paths": "^3.0.0",
+    "ora": "^9.0.0",
+    "picocolors": "^1.1.1",
+    "playwright": "^1.58.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.9.3"
+  }
+}
