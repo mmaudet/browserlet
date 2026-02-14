@@ -27,12 +27,14 @@ Progress: [███████████████████████
 - Phases: 5 planned (27-31)
 - Phases complete: 4 (27, 28, 29, 30)
 - Phases remaining: 1 (31)
-- Plans completed: 6 (27-01, 28-01, 28-02, 28-03, 30-01, 30-02)
+- Plans completed: 8 (27-01, 28-01, 28-02, 28-03, 29-01, 29-02, 30-01, 30-02)
 - Requirements: 21 total
 
 **Recent Plans:**
 - 30-02: CLI integration with --auto-repair/--interactive flags (5 min, 2 tasks, 4 files) - 2026-02-15
 - 30-01: Repair engine with hint_repairer micro-prompt (4 min, 2 tasks, 6 files) - 2026-02-15
+- 29-02: Parallel workers + bail (3 min, 2 tasks, 2 files) - 2026-02-15
+- 29-01: Core batch test runner (2 min, 2 tasks, 3 files) - 2026-02-15
 - 28-03: Integration tests + human verification (5 min, 2 tasks) - 2026-02-14
 - 28-02: Bridge integration (3 min, 2 tasks, 3 files) - 2026-02-14
 - 28-01: LLM provider abstraction (2 min, 2 tasks, 4 files) - 2026-02-14
@@ -49,6 +51,10 @@ Progress: [███████████████████████
 - **30-01**: hint_repairer budget higher than hint_suggester (750 vs 600 roundtrip) for more DOM context
 - **30-01**: RepairEngine never throws -- returns empty suggestions for graceful degradation
 - **30-02**: Auto-repair threshold: 0.70 confidence (matches cascade resolver threshold)
+- **29-01**: Fresh chromium.launch() per script (not shared browser) for full test isolation
+- **29-01**: TestReporter uses console.log (no spinners) for CI-friendly batch output
+- **29-02**: bail/workers optional with defaults (false/1) for backward compatibility
+- **29-02**: Worker pool uses nextIndex++ shared counter (safe in single-threaded Node.js)
 - **30-02**: --auto-repair and --interactive are mutually exclusive flags
 
 ### Pending Todos
@@ -57,9 +63,9 @@ None.
 
 ### Blockers/Concerns
 
-**Phase 29 (Batch Runner):**
-- Worker pool sizing formula needs RAM-based calculation
-- Resource monitoring (how to detect overload?)
+**Phase 29 (Batch Runner):** COMPLETE
+- Worker pool implemented with configurable --workers count
+- RAM-based calculation deferred: user controls concurrency via --workers flag
 
 **Phase 30 (AI Auto-Repair):** COMPLETE
 - Repair quality threshold set at 0.70 (implemented, empirical validation pending)
@@ -68,9 +74,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed Phase 30 (AI Auto-Repair) - both plans 30-01 and 30-02
+Stopped at: Completed Phase 29 (Batch Test Runner) - both plans 29-01 and 29-02
 Resume with: Plan and execute Phase 31 (final phase of v1.7)
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-15 after completing phase 30*
+*Last updated: 2026-02-15 after completing phases 29+30*
