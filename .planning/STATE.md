@@ -5,15 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Automatisation web resiliente pour applications legacy, sans cout recurrent d'IA
-**Current focus:** Planning next milestone (v1.7)
+**Current focus:** v1.7 CLI Completion & Batch Testing — Defining requirements
 
 ## Current Position
 
-Milestone: v1.6 CLI Runner & Automated Testing (SHIPPED)
-Status: All 4 phases complete, milestone archived
-Last activity: 2026-02-14 -- Milestone v1.6 archived
+Milestone: v1.7 CLI Completion & Batch Testing
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-14 — Milestone v1.7 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
