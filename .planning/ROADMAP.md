@@ -72,11 +72,11 @@ Plans:
   2. Console output shows each step name with pass/fail status and duration (e.g., "PASS click 'Submit' (120ms)")
   3. When a step fails, a PNG screenshot is automatically saved to the output directory with the step name in the filename
   4. During execution, a live spinner shows the current step name, replaced by the result line when the step completes
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 25-01: TBD
-- [ ] 25-02: TBD
+- [ ] 25-01-PLAN.md — Resolver bundle creation (esbuild bundle of cascade resolver + deps for page injection)
+- [ ] 25-02-PLAN.md — CascadeCLIResolver integration, screenshot-on-failure, and output-dir flag
 
 ### Phase 26: Credential Bridge & Security
 **Goal**: CLI users can securely access credentials from a local vault or from the running extension, with zero plaintext exposure
@@ -107,11 +107,11 @@ Plans:
 | 17-22 | v1.5 Resolver Redesign & Firefox | 14 | Complete | 2026-02-13 |
 | 23 | v1.6 Monorepo & Shared Core | 0/3 | Planning complete | - |
 | 24 | v1.6 CLI Runner & Playwright Actions | 0/3 | Planning complete | - |
-| 25 | v1.6 Semantic Resolver & Reporting | 0/TBD | Not started | - |
+| 25 | v1.6 Semantic Resolver & Reporting | 0/2 | Planning complete | - |
 | 26 | v1.6 Credential Bridge & Security | 0/3 | Planning complete | - |
 
 **Total:** 22 phases shipped (84 plans) across 6 milestones | 4 phases planned for v1.6
 
 ---
 
-*Roadmap updated: 2026-02-14 -- Phase 24 planned (3 plans)*
+*Roadmap updated: 2026-02-14 -- Phase 25 planned (2 plans)*
