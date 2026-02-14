@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Automatisation web resiliente pour applications legacy, sans cout recurrent d'IA
-**Current focus:** v1.6 CLI Runner & Automated Testing -- Phases 24 & 26 (parallel)
+**Current focus:** v1.6 CLI Runner & Automated Testing -- Phase 25 (Semantic Resolver & Reporting)
 
 ## Current Position
 
 Milestone: v1.6 CLI Runner & Automated Testing
-Phase: 24+26 of 26 (parallel: CLI Runner & Credential Bridge Security)
-Plan: 24-02 of 3 complete (Phase 24), 26-03 of 3 complete (Phase 26)
-Status: Phase 24 Plan 02 + Phase 26 Complete (all 3 plans)
-Last activity: 2026-02-14 -- Completed 26-02 (vault storage, credential adapter, sanitizer)
+Phase: 25 of 26 (Semantic Resolver & Reporting)
+Plan: 1 of 2 (Phase 25)
+Status: Phase 23 complete, Phase 24 complete (3/3 plans), Phase 25 plan 01 complete, Phase 26 complete (3/3 plans)
+Last activity: 2026-02-14 -- Completed 25-01 (Resolver bundle creation)
 
-Progress: [████████░░] 67%
+Progress: [█████████░] 82%
 
 ## Performance Metrics
 
@@ -114,6 +114,11 @@ Progress: [████████░░] 67%
 - 26-03: Map.get() + immediate delete for one-time tokens -- 256-bit entropy makes timing attacks irrelevant
 - 26-03: 127.0.0.1 string literal over 'localhost' to prevent IPv6 ::1 resolution on dual-stack systems
 - 26-03: Callback injection (getDecryptedCredential) decouples bridge from vault storage for standalone and extension modes
+- 25-01: window.__browserlet_microPrompt bridge replaces chrome.runtime.sendMessage for LLM micro-prompt stages in CLI
+- 25-01: HintStabilityTracker replaced with no-op stubs (returns 0 boost) -- CLI has no chrome.storage.local
+- 25-01: Inlined types from @browserlet/core into resolver-bundle/types.ts to avoid esbuild needing workspace resolution
+- 25-01: esbuild IIFE format with globalName __browserletResolver for page.evaluate() injection
+- 25-01: Build pipeline chains build:resolver before tsc --build to ensure resolverBundleCode.ts exists
 
 ### Pending Todos
 
@@ -121,12 +126,12 @@ None.
 
 ### Blockers/Concerns
 
-- Research flags page.evaluate() serialization as high risk -- Phase 25 may need research-phase before planning
+- Research flags page.evaluate() serialization as high risk -- RESOLVED in 25-01: esbuild IIFE bundle eliminates serialization concern
 - Cross-platform Web Crypto compatibility (Node.js vs browser) -- VALIDATED in 26-01: globalThis.crypto.subtle works in Node.js v15+, BufferSource cast needed for TypeScript strict mode
 
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 26-02-PLAN.md (vault storage, credential adapter, sanitizer)
+Stopped at: Completed 25-01-PLAN.md (resolver bundle creation)
 Resume file: None
-Next action: Execute Phase 24 Plan 03 (BSL runner integration with credentials)
+Next action: Execute 25-02-PLAN.md (integrate resolver bundle into CLI executor)
