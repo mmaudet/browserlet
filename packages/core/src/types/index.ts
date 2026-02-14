@@ -2,7 +2,7 @@
  * @browserlet/core type exports
  *
  * Shared type definitions for BSL scripts, semantic hints,
- * and parsed script structures.
+ * parsed script structures, and hint weights.
  */
 
 export type { SemanticHint, HintType } from './hints';
@@ -15,3 +15,4 @@ export type {
   SessionCheckConfig,
   ParsedScript,
 } from './bsl';
+export { HINT_WEIGHTS } from './weights';

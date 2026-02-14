@@ -1,2 +1,7 @@
-// Substitution exports - populated in Plan 02
-export {};
+// Substitution exports - credentials added in Task 2
+export {
+  substituteVariables,
+  extractVariableRefs,
+  hasExtractedVariables,
+  EXTRACTED_VAR_PATTERN,
+} from './variables';
