@@ -1,0 +1,26 @@
+{
+  "name": "@browserlet/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./types": { "types": "./dist/types/index.d.ts", "import": "./dist/types/index.js" },
+    "./parser": { "types": "./dist/parser/index.d.ts", "import": "./dist/parser/index.js" },
+    "./prompts": { "types": "./dist/prompts/index.d.ts", "import": "./dist/prompts/index.js" },
+    "./substitution": { "types": "./dist/substitution/index.d.ts", "import": "./dist/substitution/index.js" }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.1"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "typescript": "^5.9.3"
+  }
+}

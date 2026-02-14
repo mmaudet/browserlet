@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Web automation for legacy applications",
   "type": "module",
+  "workspaces": ["packages/*"],
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox --mv3",
@@ -34,6 +35,7 @@
     "wxt": "^0.20.13"
   },
   "dependencies": {
+    "@browserlet/core": "workspace:*",
     "@anthropic-ai/sdk": "^0.71.2",
     "@json2csv/plainjs": "^7.0.6",
     "@preact/preset-vite": "^2.10.3",

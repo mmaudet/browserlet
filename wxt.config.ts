@@ -2,7 +2,7 @@ import { defineConfig } from 'wxt';
 import monacoEditorPluginModule from 'vite-plugin-monaco-editor';
 import preact from '@preact/preset-vite';
 import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 
 // Handle ESM/CJS interop - the package exports differently based on module system
 const monacoEditorPlugin =
@@ -107,5 +107,10 @@ export default defineConfig({
         languageWorkers: ['editorWorkerService'],
       }),
     ],
+    resolve: {
+      alias: {
+        '@browserlet/core': resolve(__dirname, 'packages/core/src'),
+      },
+    },
   }),
 });

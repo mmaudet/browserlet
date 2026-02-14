@@ -5,6 +5,18 @@
     "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "preact"
-  }
+    "jsxImportSource": "preact",
+    "paths": {
+      "@browserlet/core": ["./packages/core/src"],
+      "@browserlet/core/*": ["./packages/core/src/*"]
+    }
+  },
+  "include": [
+    "entrypoints/**/*",
+    "utils/**/*",
+    "packages/core/src/**/*"
+  ],
+  "references": [
+    { "path": "./packages/core" }
+  ]
 }
