@@ -79,7 +79,11 @@ Plans:
   3. Users can apply repairs interactively or via --auto-repair flag
   4. Applied repairs update BSL script file on disk
   5. Repair history logged for audit trail
-**Plans:** TBD
+**Plans:** 2 plans in 2 waves
+
+Plans:
+- [ ] 30-01-PLAN.md — Repair engine (hint_repairer micro-prompt, DOM context capture, RepairEngine class)
+- [ ] 30-02-PLAN.md — CLI integration (--auto-repair, --interactive flags, BSL file updater, repair history)
 
 ### Phase 31: Documentation & Examples
 **Goal**: Complete CLI documentation with examples and migration guide from extension
