@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 Milestone: v1.7 CLI Completion & Batch Testing
 Phase: 28 of 31 (LLM Micro-Prompt Bridge)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-14 — Completed plan 28-01 (LLM provider abstraction)
+Last activity: 2026-02-14 — Completed plan 28-02 (Bridge integration)
 
 Progress: [████████████████████░░░░░░░░░░] 84% (phases 1-26 complete, phase 28 in progress)
 
@@ -31,10 +31,11 @@ Progress: [████████████████████░░░
 
 **v1.7 Status:**
 - Phases: 5 planned (27-31), Phase 28 in progress
-- Plans completed: 1 (28-01)
+- Plans completed: 2 (28-01, 28-02)
 - Requirements: 21 total, 100% mapped to phases
 
 **Recent Plans:**
+- 28-02: Bridge integration (3 min, 2 tasks, 3 files) - 2026-02-14
 - 28-01: LLM provider abstraction (2 min, 2 tasks, 4 files) - 2026-02-14
 
 ## Accumulated Context
@@ -44,6 +45,9 @@ Progress: [████████████████████░░░
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting v1.7 work:
 
+- **28-02**: Bridge installed after page creation, before resolver injection — follows Phase 26 credential bridge pattern
+- **28-02**: Default behavior is deterministic-only (stages 1-2) — LLM stages require explicit --micro-prompts flag
+- **28-02**: Environment variable configuration — ANTHROPIC_API_KEY for Claude, BROWSERLET_LLM_PROVIDER for provider selection
 - **28-01**: Provider passed as parameter (not singleton) — CLI creates provider per run, no service worker pattern
 - **28-01**: Simple availability checks (no network calls) — avoid latency, fail fast on generate()
 - **28-01**: No dangerouslyAllowBrowser flag — server-side Node.js execution
@@ -80,9 +84,9 @@ These are flagged in research/SUMMARY.md and will be addressed during phase plan
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed plan 28-01 (LLM provider abstraction for CLI)
-Resume with: Execute plan 28-02 (Bridge integration)
+Stopped at: Completed plan 28-02 (Bridge integration)
+Resume with: Execute plan 28-03 (Integration testing)
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-14 after completing plan 28-01*
+*Last updated: 2026-02-14 after completing plan 28-02*
