@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 Milestone: v1.6 CLI Runner & Automated Testing
 Phase: 23 of 26 (Monorepo & Shared Core)
-Plan: 1 of 3 complete
+Plan: 2 of 3 complete
 Status: Executing
-Last activity: 2026-02-14 -- Completed 23-01 (monorepo scaffolding & type extraction)
+Last activity: 2026-02-14 -- Completed 23-02 (logic extraction to @browserlet/core)
 
-Progress: [███░░░░░░░] 8%
+Progress: [████░░░░░░] 17%
 
 ## Performance Metrics
 
@@ -88,6 +88,8 @@ Progress: [███░░░░░░░] 8%
 - 23-01: npm workspaces over pnpm/yarn for zero-config workspace protocol support
 - 23-01: TypeScript project references with composite: true for independent compilation
 - 23-01: Vite resolve alias alongside TS paths for dual bundler+IDE @browserlet/core resolution
+- 23-02: PasswordStorage adapter interface decouples credential resolution from chrome.storage for extension+CLI backends
+- 23-02: Logic extraction is copy-with-import-changes only, preserving identical behavior
 
 ### Pending Todos
 
@@ -101,6 +103,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 23-01-PLAN.md (monorepo scaffolding & type extraction)
+Stopped at: Completed 23-02-PLAN.md (logic extraction to @browserlet/core)
 Resume file: None
-Next action: Execute 23-02-PLAN.md (logic extraction to @browserlet/core)
+Next action: Execute 23-03-PLAN.md (rewire extension imports to @browserlet/core)
