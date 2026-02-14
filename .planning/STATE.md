@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 Milestone: v1.6 CLI Runner & Automated Testing
 Phase: 23 of 26 (Monorepo & Shared Core)
-Plan: 2 of 3 complete
-Status: Executing
-Last activity: 2026-02-14 -- Completed 23-02 (logic extraction to @browserlet/core)
+Plan: 3 of 3 complete
+Status: Phase 23 Complete
+Last activity: 2026-02-14 -- Completed 23-03 (import rewiring to @browserlet/core)
 
-Progress: [████░░░░░░] 17%
+Progress: [████░░░░░░] 25%
 
 ## Performance Metrics
 
@@ -90,6 +90,9 @@ Progress: [████░░░░░░] 17%
 - 23-01: Vite resolve alias alongside TS paths for dual bundler+IDE @browserlet/core resolution
 - 23-02: PasswordStorage adapter interface decouples credential resolution from chrome.storage for extension+CLI backends
 - 23-02: Logic extraction is copy-with-import-changes only, preserving identical behavior
+- 23-03: Re-export shim pattern for migration: original files forward to @browserlet/core, preserving all existing import paths
+- 23-03: NodeNext module resolution for @browserlet/core enables Node.js standalone ESM imports
+- 23-03: PasswordStorage adapter wrapper in utils/passwords/substitution.ts preserves backward-compatible call signature
 
 ### Pending Todos
 
@@ -103,6 +106,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 23-02-PLAN.md (logic extraction to @browserlet/core)
+Stopped at: Completed 23-03-PLAN.md (import rewiring to @browserlet/core) -- Phase 23 complete
 Resume file: None
-Next action: Execute 23-03-PLAN.md (rewire extension imports to @browserlet/core)
+Next action: Plan Phase 24 (CLI Runner & Actions)
