@@ -1,0 +1,193 @@
+/**
+ * BatchRunner - Discovers and executes .bsl test scripts in batch
+ *
+ * Runs each script in an isolated browser instance, aggregates results,
+ * and reports pass/fail/error counts via TestReporter.
+ *
+ * Exit codes: 0 = all passed, 1 = any failed, 2 = any errored
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { chromium } from 'playwright';
+import { BSLRunner } from './runner.js';
+import type { TestReporter } from './testReporter.js';
+
+export interface ScriptResult {
+  scriptPath: string;       // Absolute path to .bsl file
+  scriptName: string;       // Basename for display
+  exitCode: number;         // 0=pass, 1=fail, 2=error, -1=skipped
+  durationMs: number;       // Execution time
+  error?: string;           // Error message if exitCode > 0
+}
+
+export interface BatchResult {
+  passed: number;
+  failed: number;
+  errored: number;
+  skipped: number;          // For --bail support (plan 29-02)
+  totalDurationMs: number;
+  results: ScriptResult[];
+  exitCode: number;         // Aggregated: 0 if all pass, 2 if any error, 1 if any fail
+}
+
+export interface BatchRunnerOptions {
+  headed: boolean;
+  globalTimeout: number;
+  outputDir: string;
+  vault: boolean;
+  derivedKey?: CryptoKey;
+  microPrompts: boolean;
+  llmConfig?: {
+    provider: 'claude' | 'ollama';
+    claudeApiKey?: string;
+    claudeModel?: string;
+    ollamaHost?: string;
+    ollamaModel?: string;
+  };
+}
+
+/**
+ * BatchRunner discovers .bsl files in a directory and executes each
+ * in a fresh, isolated browser instance. Results are aggregated
+ * and reported via a TestReporter.
+ */
+export class BatchRunner {
+  private options: BatchRunnerOptions;
+  private reporter: TestReporter;
+
+  constructor(options: BatchRunnerOptions, reporter: TestReporter) {
+    this.options = options;
+    this.reporter = reporter;
+  }
+
+  /**
+   * Discover all .bsl files in a directory (non-recursive, sorted alphabetically).
+   *
+   * @param directory - Path to directory containing .bsl files
+   * @returns Array of absolute paths to .bsl files
+   * @throws If directory doesn't exist or contains no .bsl files
+   */
+  discover(directory: string): string[] {
+    const absDir = path.resolve(directory);
+
+    if (!fs.existsSync(absDir)) {
+      throw new Error(`Directory not found: ${absDir}`);
+    }
+
+    if (!fs.statSync(absDir).isDirectory()) {
+      throw new Error(`Not a directory: ${absDir}`);
+    }
+
+    const entries = fs.readdirSync(absDir)
+      .filter((f) => f.endsWith('.bsl'))
+      .sort();
+
+    if (entries.length === 0) {
+      throw new Error(`No .bsl files found in: ${absDir}`);
+    }
+
+    return entries.map((f) => path.join(absDir, f));
+  }
+
+  /**
+   * Run all scripts sequentially, each in a fresh browser instance.
+   *
+   * @param scriptPaths - Array of absolute paths to .bsl files
+   * @returns Aggregated batch result with per-script details
+   */
+  async runAll(scriptPaths: string[]): Promise<BatchResult> {
+    const results: ScriptResult[] = [];
+    const startTime = performance.now();
+
+    for (let i = 0; i < scriptPaths.length; i++) {
+      const scriptPath = scriptPaths[i]!;
+      const scriptName = path.basename(scriptPath);
+
+      this.reporter.scriptStart(scriptName, i + 1, scriptPaths.length);
+
+      const scriptStart = performance.now();
+      let browser = null;
+
+      try {
+        browser = await chromium.launch({
+          headless: !this.options.headed,
+          timeout: 30000,
+        });
+        const context = await browser.newContext();
+        const page = await context.newPage();
+
+        const runner = new BSLRunner(page, {
+          globalTimeout: this.options.globalTimeout,
+          outputDir: this.options.outputDir,
+          derivedKey: this.options.derivedKey,
+          microPrompts: this.options.microPrompts,
+          llmConfig: this.options.llmConfig,
+        });
+
+        const runResult = await runner.run(scriptPath);
+        const durationMs = performance.now() - scriptStart;
+
+        await context.close();
+        await browser.close();
+        browser = null;
+
+        const result: ScriptResult = {
+          scriptPath,
+          scriptName,
+          exitCode: runResult.exitCode,
+          durationMs,
+          error: runResult.exitCode > 0 ? `Script ${runResult.exitCode === 2 ? 'errored' : 'failed'} with exit code ${runResult.exitCode}` : undefined,
+        };
+
+        results.push(result);
+        this.reporter.scriptResult(result);
+      } catch (error: unknown) {
+        // Infrastructure error (browser launch failure, etc.)
+        const durationMs = performance.now() - scriptStart;
+        const message = error instanceof Error ? error.message : String(error);
+
+        const result: ScriptResult = {
+          scriptPath,
+          scriptName,
+          exitCode: 2,
+          durationMs,
+          error: message,
+        };
+
+        results.push(result);
+        this.reporter.scriptResult(result);
+      } finally {
+        if (browser) {
+          await browser.close().catch(() => {});
+        }
+      }
+    }
+
+    const totalDurationMs = performance.now() - startTime;
+
+    const passed = results.filter((r) => r.exitCode === 0).length;
+    const failed = results.filter((r) => r.exitCode === 1).length;
+    const errored = results.filter((r) => r.exitCode === 2).length;
+    const skipped = results.filter((r) => r.exitCode === -1).length;
+
+    // Aggregated exit code: 2 if any errored, 1 if any failed, 0 if all passed
+    let exitCode = 0;
+    if (errored > 0) exitCode = 2;
+    else if (failed > 0) exitCode = 1;
+
+    const batchResult: BatchResult = {
+      passed,
+      failed,
+      errored,
+      skipped,
+      totalDurationMs,
+      results,
+      exitCode,
+    };
+
+    this.reporter.summary(batchResult);
+
+    return batchResult;
+  }
+}
