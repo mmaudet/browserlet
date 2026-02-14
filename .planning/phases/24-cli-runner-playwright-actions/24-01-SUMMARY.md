@@ -73,7 +73,7 @@ Each task was committed atomically:
 1. **Task 1: Create packages/cli/ workspace package scaffolding** - `bc34d41` (chore)
 2. **Task 2: Implement PlaywrightExecutor and StepReporter modules** - `af89d70` (feat)
 
-**Plan metadata:** [pending] (docs: complete plan)
+**Plan metadata:** `8da1404` (docs: complete plan)
 
 ## Files Created/Modified
 - `packages/cli/bin/browserlet.js` - Executable shebang entry point (imports dist/index.js)
