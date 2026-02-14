@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 Milestone: v1.6 CLI Runner & Automated Testing
 Phase: 24+26 of 26 (parallel: CLI Runner & Credential Bridge Security)
-Plan: 24-02 of 3 complete (Phase 24), 26-01 of 3 complete (Phase 26)
-Status: Phase 24 Plan 02 + Phase 26 Plan 01 Complete
-Last activity: 2026-02-14 -- Completed 24-02 (BSL runner & CLI entry point)
+Plan: 24-02 of 3 complete (Phase 24), 26-03 of 3 complete (Phase 26)
+Status: Phase 24 Plan 02 + Phase 26 Complete
+Last activity: 2026-02-14 -- Completed 26-03 (HTTP bridge server with one-time token auth)
 
-Progress: [███████░░░] 50%
+Progress: [████████░░] 67%
 
 ## Performance Metrics
 
@@ -105,6 +105,9 @@ Progress: [███████░░░] 50%
 - 26-01: Buffer.from().toString('base64') for Node.js base64 -- identical output to extension's btoa(String.fromCharCode(...bytes))
 - 26-01: globalThis.crypto.subtle over node:crypto legacy API for parameter-level compatibility with extension
 - 26-01: Extractable keys (exportable: true) to allow JWK comparison in tests and future caching
+- 26-03: Map.get() + immediate delete for one-time tokens -- 256-bit entropy makes timing attacks irrelevant
+- 26-03: 127.0.0.1 string literal over 'localhost' to prevent IPv6 ::1 resolution on dual-stack systems
+- 26-03: Callback injection (getDecryptedCredential) decouples bridge from vault storage for standalone and extension modes
 
 ### Pending Todos
 
@@ -118,6 +121,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 24-02-PLAN.md (BSL runner & CLI entry point)
+Stopped at: Completed 26-03-PLAN.md (HTTP bridge server with one-time token auth)
 Resume file: None
-Next action: Execute Phase 24 Plan 03 (integration testing / end-to-end validation)
+Next action: Execute Phase 24 Plan 03 or Phase 26 Plan 02 (remaining parallel plans)
