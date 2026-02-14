@@ -4,96 +4,50 @@
 
 See: .planning/PROJECT.md (updated 2026-02-14)
 
-**Core value:** Automatisation web resiliente pour applications legacy, sans cout recurrent d'IA
-**Current focus:** v1.7 CLI Completion & Batch Testing — Defining requirements
+**Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
+**Current focus:** Phase 27 - Credential Wiring
 
 ## Current Position
 
 Milestone: v1.7 CLI Completion & Batch Testing
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-14 — Milestone v1.7 started
+Phase: 27 of 31 (Credential Wiring)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-14 — v1.7 roadmap created with 5 phases (27-31)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [████████████████████░░░░░░░░░░] 84% (phases 1-26 complete, 5 phases remaining)
 
 ## Performance Metrics
 
-**v1.0 Velocity:**
-- Total plans completed: 33
-- Phases: 6 | Timeline: 3 days (2026-01-29 -> 2026-01-31)
+**Overall Velocity (v1.0-v1.6):**
+- Total plans completed: 95
+- Total phases completed: 26
+- 7 milestones shipped
 
-**v1.1 Velocity:**
-- Total plans completed: 16
-- Phases: 4 | Timeline: 1 day (2026-01-31)
+**Recent Milestones:**
+- v1.6: 4 phases, 11 plans, 1 day (2026-02-14)
+- v1.5: 6 phases, 14 plans, 2 days (2026-02-12 → 2026-02-13)
+- v1.4: 3 phases, 12 plans, 2 days (2026-02-01 → 2026-02-02)
 
-**v1.2 Velocity:**
-- Total plans completed: 5
-- Phases: 2 | Timeline: 2 days (2026-01-31 -> 2026-02-01)
+**v1.7 Status:**
+- Phases: 5 planned (27-31)
+- Plans: TBD (will be defined during phase planning)
+- Requirements: 21 total, 100% mapped to phases
 
-**v1.3 Velocity:**
-- Total plans completed: 3
-- Phases: 1 | Timeline: 1 day (2026-02-01)
-
-**v1.4 Velocity:**
-- Total plans completed: 12
-- Phases: 3 | Timeline: 2 days (2026-02-01 -> 2026-02-02)
-
-**v1.5 Velocity:**
-- Total plans completed: 14
-- Phases: 6 (17-22) | Timeline: 2 days (2026-02-12 -> 2026-02-13)
-- 57 files changed, +6,012 / -3,331 lines
-
-**v1.6 Velocity:**
-- Total plans completed: 11
-- Phases: 4 (23-26) | Timeline: 1 day (2026-02-14)
-- 76 files changed, +7,002 / -1,135 lines
-- 428 tests (326 extension + 102 CLI)
-
-## Completed Milestones
-
-### v1.6 CLI Runner & Automated Testing
-- **Shipped:** 2026-02-14
-- **Archive:** [milestones/v1.6-ROADMAP.md](milestones/v1.6-ROADMAP.md)
-
-### v1.5 Resolver Redesign & Firefox
-- **Shipped:** 2026-02-13
-- **Archive:** [milestones/v1.5-ROADMAP.md](milestones/v1.5-ROADMAP.md)
-
-### v1.4 Self-Healing & Data Extraction
-- **Shipped:** 2026-02-12
-- **Archive:** [milestones/v1.4-ROADMAP.md](milestones/v1.4-ROADMAP.md)
-
-### v1.3 UX Sidepanel Refactoring
-- **Shipped:** 2026-02-01
-- **Archive:** [milestones/v1.3-ROADMAP.md](milestones/v1.3-ROADMAP.md)
-
-### v1.2 Persistent Credentials
-- **Shipped:** 2026-02-01
-- **Archive:** [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
-
-### v1.1 Security & Stability
-- **Shipped:** 2026-01-31
-- **Archive:** [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
-
-### v1.0 MVP
-- **Shipped:** 2026-01-31
-- **Archive:** [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
-
-## Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 006 | Modernize UI with Lucide icons and macOS-style buttons | 2026-02-01 | 22cd310 | [006-modernize-ui](./quick/006-modernize-ui-with-lucide-icons-and-macos/) |
-| 007 | Refactor script list UX with icon-based actions | 2026-02-01 | 679c8ff | [007-refactor-script-list](./quick/007-refactor-script-list-ux-with-inline-rena/) |
-| 008 | Add navigate action at script start with startUrl | 2026-02-04 | 037d651 | [008-add-navigate-action](./quick/008-add-navigate-action-at-script-start-with/) |
-| 009 | Add screenshot button during recording | 2026-02-04 | 9e3fe1e | [009-add-screenshot-button](./quick/009-add-screenshot-button-during-recording-t/) |
+*Metrics will be updated after each plan completion*
 
 ## Accumulated Context
 
 ### Decisions
 
-None (cleared for next milestone).
+Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting v1.7 work:
+
+- **v1.6**: esbuild IIFE for resolver bundle — 43KB self-contained bundle for page.evaluate() injection
+- **v1.6**: globalThis.crypto.subtle for CLI — parameter-level compatibility with extension's Web Crypto API
+- **v1.6**: One-time bearer tokens — Map.get()+delete for bridge auth, 256-bit entropy
+- **v1.5**: Cascade resolver architecture — deterministic-first (80%+ without LLM), micro-prompts for edge cases
+- **v1.5**: Micro-prompts (<600 tokens) — replace monolithic 5000-token prompt, -88% LLM cost
 
 ### Pending Todos
 
@@ -101,11 +55,30 @@ None.
 
 ### Blockers/Concerns
 
-None.
+**Research flags identified for phase planning:**
+
+**Phase 28 (LLM Bridge):**
+- page.exposeFunction timing in headed vs headless mode needs empirical testing
+- Error recovery strategy when LLM unavailable needs validation
+- Function namespace collision prevention (session ID sufficient?)
+
+**Phase 29 (Batch Runner):**
+- Worker pool sizing formula needs RAM-based calculation
+- Resource monitoring (how to detect overload and suggest reducing workers?)
+
+**Phase 30 (AI Auto-Repair):**
+- Repair quality threshold (>0.70 confidence) needs empirical validation with controlled page changes
+- Circuit breaker tuning (3 retries optimal or vary by failure type?)
+- Hint caching strategy (DOM context hash collision rate?)
+
+These are flagged in research/SUMMARY.md and will be addressed during phase planning.
 
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: v1.6 milestone archived, ready for v1.7 planning
-Resume file: None
-Next action: /gsd:new-milestone to start v1.7
+Stopped at: v1.7 roadmap created, 5 phases defined (27-31), 21 requirements mapped (100% coverage)
+Resume with: /gsd:plan-phase 27
+
+---
+*Created: 2026-02-14*
+*Last updated: 2026-02-14 after roadmap creation*

@@ -76,33 +76,40 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CRED-09 | Pending | Pending |
-| CRED-10 | Pending | Pending |
-| CRED-11 | Pending | Pending |
-| LLMB-01 | Pending | Pending |
-| LLMB-02 | Pending | Pending |
-| LLMB-03 | Pending | Pending |
-| LLMB-04 | Pending | Pending |
-| LLMB-05 | Pending | Pending |
-| BTST-01 | Pending | Pending |
-| BTST-02 | Pending | Pending |
-| BTST-03 | Pending | Pending |
-| BTST-04 | Pending | Pending |
-| BTST-05 | Pending | Pending |
-| BTST-06 | Pending | Pending |
-| REPR-01 | Pending | Pending |
-| REPR-02 | Pending | Pending |
-| REPR-03 | Pending | Pending |
-| REPR-04 | Pending | Pending |
-| REPR-05 | Pending | Pending |
-| REPT-01 | Pending | Pending |
-| REPT-02 | Pending | Pending |
+| CRED-09 | Phase 27 | Pending |
+| CRED-10 | Phase 27 | Pending |
+| CRED-11 | Phase 27 | Pending |
+| LLMB-01 | Phase 28 | Pending |
+| LLMB-02 | Phase 28 | Pending |
+| LLMB-03 | Phase 28 | Pending |
+| LLMB-04 | Phase 28 | Pending |
+| LLMB-05 | Phase 28 | Pending |
+| BTST-01 | Phase 29 | Pending |
+| BTST-02 | Phase 29 | Pending |
+| BTST-03 | Phase 29 | Pending |
+| BTST-04 | Phase 29 | Pending |
+| BTST-05 | Phase 29 | Pending |
+| BTST-06 | Phase 29 | Pending |
+| REPR-01 | Phase 30 | Pending |
+| REPR-02 | Phase 30 | Pending |
+| REPR-03 | Phase 30 | Pending |
+| REPR-04 | Phase 30 | Pending |
+| REPR-05 | Phase 30 | Pending |
+| REPT-01 | Phase 31 | Pending |
+| REPT-02 | Phase 31 | Pending |
 
 **Coverage:**
 - v1.7 requirements: 21 total
-- Mapped to phases: 0
-- Unmapped: 21 (pending roadmap creation)
+- Mapped to phases: 21 (100% coverage)
+- Unmapped: 0
+
+**Phase breakdown:**
+- Phase 27 (Credential Wiring): 3 requirements
+- Phase 28 (LLM Micro-Prompt Bridge): 5 requirements
+- Phase 29 (Batch Test Runner): 6 requirements
+- Phase 30 (AI Auto-Repair): 5 requirements
+- Phase 31 (HTML Report): 2 requirements
 
 ---
 *Requirements defined: 2026-02-14*
-*Last updated: 2026-02-14 after initial definition*
+*Last updated: 2026-02-14 after roadmap creation with 100% coverage validation*

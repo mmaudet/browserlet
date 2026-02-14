@@ -9,6 +9,7 @@
 - [v1.4 Self-Healing & Data Extraction](milestones/v1.4-ROADMAP.md) - Phases 14-16 (shipped 2026-02-12)
 - [v1.5 Resolver Redesign & Firefox](milestones/v1.5-ROADMAP.md) - Phases 17-22 (shipped 2026-02-13)
 - [v1.6 CLI Runner & Automated Testing](milestones/v1.6-ROADMAP.md) - Phases 23-26 (shipped 2026-02-14)
+- [v1.7 CLI Completion & Batch Testing](milestones/v1.7-ROADMAP.md) - Phases 27-31 (in progress)
 
 ## Progress
 
@@ -21,9 +22,10 @@
 | 14-16 | v1.4 Data Extraction & Screenshots | 12 | Complete | 2026-02-12 |
 | 17-22 | v1.5 Resolver Redesign & Firefox | 14 | Complete | 2026-02-13 |
 | 23-26 | v1.6 CLI Runner & Automated Testing | 11 | Complete | 2026-02-14 |
+| 27-31 | v1.7 CLI Completion & Batch Testing | 0/TBD | In progress | - |
 
-**Total:** 26 phases shipped (95 plans) across 7 milestones
+**Total:** 26 phases shipped (95 plans) across 7 milestones, 5 phases planned for v1.7
 
 ---
 
-*Roadmap updated: 2026-02-14 -- v1.6 milestone archived*
+*Roadmap updated: 2026-02-14 -- v1.7 milestone roadmap created*
