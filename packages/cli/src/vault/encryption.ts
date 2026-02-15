@@ -11,7 +11,7 @@
  * @see utils/crypto/encryption.ts (extension implementation)
  */
 
-import readline from 'node:readline/promises';
+
 
 // Cryptographic constants - MUST match extension exactly
 const SALT_LENGTH = 16; // 128 bits (NIST recommendation)
@@ -202,24 +202,47 @@ export async function verifyMasterPassword(
 }
 
 /**
- * Prompt the user to enter the vault master password.
+ * Prompt the user to enter the vault master password with masked input.
  *
- * Uses readline interface to prompt for password input.
- * Note: Input is visible by default (readline does not mask input).
- * For production-grade masking, would need external dependency like `read` package.
+ * Uses raw mode stdin to capture keystrokes without echoing them.
+ * Handles Enter, Backspace, and Ctrl+C.
  *
  * @returns The password string entered by the user
  */
 export async function promptMasterPassword(): Promise<string> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
+  process.stdout.write('Enter vault master password: ');
 
-  try {
-    const password = await rl.question('Enter vault master password: ');
-    return password;
-  } finally {
-    rl.close();
-  }
+  return new Promise((resolve) => {
+    const chars: string[] = [];
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+
+    const onData = (ch: string) => {
+      if (ch === '\r' || ch === '\n' || ch === '\u0004') {
+        // Enter or Ctrl+D — submit
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+        process.stdin.removeListener('data', onData);
+        process.stdout.write('\n');
+        resolve(chars.join(''));
+      } else if (ch === '\u0003') {
+        // Ctrl+C — abort
+        process.stdin.setRawMode(false);
+        process.stdout.write('\n');
+        process.exit(130);
+      } else if (ch === '\u007F' || ch === '\b') {
+        // Backspace — erase last star
+        if (chars.length > 0) {
+          chars.pop();
+          process.stdout.write('\b \b');
+        }
+      } else {
+        chars.push(ch);
+        process.stdout.write('*');
+      }
+    };
+
+    process.stdin.on('data', onData);
+  });
 }
