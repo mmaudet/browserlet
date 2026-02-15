@@ -173,8 +173,8 @@ function hasHighWeightMatch(matchedHints: string[], hints: SemanticHint[]): bool
 
 /**
  * Gather competing candidates for Stage 2 by querying for elements matching
- * at least one high-weight hint. Returns elements with their base confidence
- * from the semantic resolver scoring.
+ * at least one high-weight hint. When no high-weight hints exist, falls back
+ * to text_contains and class_contains hints to find candidates via DOM scan.
  */
 function gatherCompetitors(
   hints: SemanticHint[],
@@ -185,8 +185,6 @@ function gatherCompetitors(
     const weight = HINT_WEIGHTS[h.type];
     return weight !== undefined && weight >= HIGH_WEIGHT_THRESHOLD;
   });
-
-  if (highWeightHints.length === 0) return [];
 
   // Query candidates using high-weight hints (bounded queries)
   const candidateSet = new Set<Element>();
@@ -222,6 +220,37 @@ function gatherCompetitors(
       const rect = el.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
         candidateSet.add(el);
+      }
+    }
+  }
+
+  // Fallback: when no high-weight hints produced candidates, use text_contains
+  // and class_contains to scan the DOM (handles non-semantic clickable elements)
+  if (candidateSet.size === 0) {
+    const textHint = hints.find(h => h.type === 'text_contains' && typeof h.value === 'string');
+    const classHint = hints.find(h => h.type === 'class_contains' && typeof h.value === 'string');
+
+    if (textHint && typeof textHint.value === 'string') {
+      const needle = normalizeText(textHint.value);
+      // Scan clickable containers and text elements
+      const potentials = document.querySelectorAll(
+        'a, button, div, span, li, td, article, section, [tabindex], [onclick], [role]'
+      );
+      for (const el of potentials) {
+        const text = normalizeText(el.textContent);
+        if (text.includes(needle)) {
+          const rect = el.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            // If class_contains hint also present, filter by it
+            if (classHint && typeof classHint.value === 'string') {
+              if (el.classList.contains(classHint.value)) {
+                candidateSet.add(el);
+              }
+            } else {
+              candidateSet.add(el);
+            }
+          }
+        }
       }
     }
   }
