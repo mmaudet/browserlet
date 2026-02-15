@@ -51,6 +51,8 @@ export interface BatchRunnerOptions {
   };
   bail?: boolean;            // Stop on first failure (default: false)
   workers?: number;          // Concurrent worker count (default: 1)
+  autoRepair?: boolean;      // Auto-apply LLM repairs (>= 0.70 confidence)
+  interactive?: boolean;     // Interactively approve repairs
 }
 
 /**
@@ -125,6 +127,8 @@ export class BatchRunner {
         derivedKey: this.options.derivedKey,
         microPrompts: this.options.microPrompts,
         llmConfig: this.options.llmConfig,
+        autoRepair: this.options.autoRepair,
+        interactive: this.options.interactive,
       });
 
       const runResult = await runner.run(scriptPath);

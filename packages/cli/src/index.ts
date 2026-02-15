@@ -192,7 +192,9 @@ program
   .option('--micro-prompts', 'Enable LLM micro-prompts for cascade resolver', false)
   .option('--bail', 'Stop on first failure', false)
   .option('--workers <count>', 'Number of parallel workers', '1')
-  .action(async (directory: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean; microPrompts: boolean; bail: boolean; workers: string }) => {
+  .option('--auto-repair', 'Automatically apply LLM-suggested repairs for failed selectors (confidence >= 0.70)', false)
+  .option('--interactive', 'Interactively approve repair suggestions for failed selectors', false)
+  .action(async (directory: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean; microPrompts: boolean; bail: boolean; workers: string; autoRepair: boolean; interactive: boolean }) => {
     // Validate directory exists
     if (!fs.existsSync(directory)) {
       console.error(pc.red(`Error: Directory not found: ${directory}`));
@@ -264,6 +266,35 @@ program
       }
     }
 
+    // Validate mutually exclusive flags
+    if (options.autoRepair && options.interactive) {
+      console.error(pc.red('--auto-repair and --interactive are mutually exclusive. Use one or the other.'));
+      process.exit(2);
+    }
+
+    // Auto-repair and interactive modes require LLM config
+    if ((options.autoRepair || options.interactive) && !llmConfig) {
+      const provider = (process.env.BROWSERLET_LLM_PROVIDER || 'claude') as 'claude' | 'ollama';
+      if (provider === 'claude') {
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) {
+          console.error(pc.red('--auto-repair / --interactive requires ANTHROPIC_API_KEY environment variable'));
+          process.exit(2);
+        }
+        llmConfig = {
+          provider: 'claude',
+          claudeApiKey: apiKey,
+          claudeModel: process.env.BROWSERLET_LLM_MODEL || 'claude-sonnet-4-5-20250929',
+        };
+      } else if (provider === 'ollama') {
+        llmConfig = {
+          provider: 'ollama',
+          ollamaHost: process.env.BROWSERLET_OLLAMA_HOST || 'http://localhost:11434',
+          ollamaModel: process.env.BROWSERLET_LLM_MODEL || 'llama3.1',
+        };
+      }
+    }
+
     try {
       const reporter = new TestReporter();
       const batchRunner = new BatchRunner({
@@ -276,6 +307,8 @@ program
         llmConfig,
         bail: options.bail,
         workers,
+        autoRepair: options.autoRepair,
+        interactive: options.interactive,
       }, reporter);
 
       const scripts = batchRunner.discover(directory);
