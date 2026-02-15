@@ -91,8 +91,13 @@ export class BSLRunner {
     // 2. Parse with @browserlet/core parser
     const script = parseSteps(yamlContent);
 
-    // 3. Create output directory for failure screenshots
+    // 3. Create output directory for screenshots
     fs.mkdirSync(this.options.outputDir, { recursive: true });
+
+    // Extract script base name for screenshot filenames (e.g. "Twake_Drive")
+    const scriptBaseName = path.basename(scriptPath, path.extname(scriptPath))
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .replace(/_+/g, '_');
 
     // 4. Install LLM bridge if micro-prompts enabled
     if (this.options.microPrompts) {
@@ -308,6 +313,16 @@ export class BSLRunner {
           }
         }
 
+        // For screenshot actions without an explicit path, generate a named path
+        if (step.action === 'screenshot' && !step.value) {
+          const stepLabel = step.id || `step-${String(i + 1).padStart(3, '0')}`;
+          const safeLabel = stepLabel.replace(/[^a-zA-Z0-9_-]/g, '_');
+          step.value = path.join(
+            this.options.outputDir,
+            `${scriptBaseName}_${safeLabel}_${formatTimestamp()}.png`,
+          );
+        }
+
         // Execute the step
         const result = await executor.execute(step, selector);
 
@@ -326,7 +341,10 @@ export class BSLRunner {
         // Screenshot on failure
         const stepName = step.id || `step-${String(i + 1).padStart(3, '0')}-${step.action}`;
         const safeName = stepName.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const screenshotPath = path.join(this.options.outputDir, `fail-${safeName}.png`);
+        const screenshotPath = path.join(
+          this.options.outputDir,
+          `${scriptBaseName}_fail-${safeName}_${formatTimestamp()}.png`,
+        );
 
         let capturedScreenshotPath: string | undefined;
         try {
@@ -375,4 +393,14 @@ async function promptRepairApproval(suggestion: RepairSuggestion): Promise<boole
       resolve(answer.trim().toLowerCase() === 'y');
     });
   });
+}
+
+/**
+ * Format current date/time as a filesystem-safe timestamp.
+ * Example: "2025-02-14_15-30-45"
+ */
+function formatTimestamp(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
 }

@@ -225,10 +225,12 @@ function gatherCompetitors(
   }
 
   // Fallback: when no high-weight hints produced candidates, use text_contains
-  // and class_contains to scan the DOM (handles non-semantic clickable elements)
+  // to scan the DOM (handles non-semantic clickable elements like file browser rows).
+  // class_contains is NOT used as a hard filter here — it's a scoring signal only.
+  // Filtering by class would reject valid elements when CSS classes change between
+  // recording and playback (e.g. "u-flex" recorded but actual class is "u-flex-col").
   if (candidateSet.size === 0) {
     const textHint = hints.find(h => h.type === 'text_contains' && typeof h.value === 'string');
-    const classHint = hints.find(h => h.type === 'class_contains' && typeof h.value === 'string');
 
     if (textHint && typeof textHint.value === 'string') {
       const needle = normalizeText(textHint.value);
@@ -241,14 +243,7 @@ function gatherCompetitors(
         if (text.includes(needle)) {
           const rect = el.getBoundingClientRect();
           if (rect.width > 0 && rect.height > 0) {
-            // If class_contains hint also present, filter by it
-            if (classHint && typeof classHint.value === 'string') {
-              if (el.classList.contains(classHint.value)) {
-                candidateSet.add(el);
-              }
-            } else {
-              candidateSet.add(el);
-            }
+            candidateSet.add(el);
           }
         }
       }
@@ -698,9 +693,12 @@ export function waitForElementCascade(
 ): Promise<CascadeResolverResult> {
   return new Promise((resolve, reject) => {
     const overallStart = performance.now();
+    // Track last resolution result for timeout diagnostics
+    let lastResult: CascadeResolverResult | null = null;
 
     // Try immediate resolution first
     resolveElementCascade(hints).then(immediateResult => {
+      lastResult = immediateResult;
       if (immediateResult.element && isElementInteractable(immediateResult.element)) {
         resolve(immediateResult);
         return;
@@ -728,6 +726,7 @@ export function waitForElementCascade(
 
         resolveElementCascade(hints).then(result => {
           resolving = false;
+          lastResult = result;
           if (result.element && isElementInteractable(result.element)) {
             cleanup();
             // Update resolution time to include wait time
@@ -761,9 +760,17 @@ export function waitForElementCascade(
             : `${h.type}:${h.value.name}=${h.value.value}`
         ).join(', ');
 
+        // Include diagnostic info from the last resolution attempt
+        const diag = lastResult
+          ? ` (stage=${lastResult.stage}, confidence=${lastResult.confidence.toFixed(2)}, ` +
+            `element=${lastResult.element ? 'found-not-interactable' : 'not-found'}, ` +
+            `matched=[${lastResult.matchedHints.join(', ')}], ` +
+            `failed=[${lastResult.failedHints.join(', ')}])`
+          : '';
+
         reject(new Error(
           `waitForElementCascade timeout after ${timeoutMs}ms. ` +
-          `Could not find interactable element matching hints: [${hintsDebug}]`
+          `Could not find interactable element matching hints: [${hintsDebug}]${diag}`
         ));
       }, timeoutMs);
     }).catch(reject);

@@ -22,6 +22,7 @@ export function normalizeText(text: string | null | undefined, removeAccents = t
   if (!text) return '';
 
   let normalized = text
+    .replace(/[\u200B-\u200F\u2028-\u202F\uFEFF]/g, '') // Strip invisible Unicode control chars (LTR marks, zero-width spaces, etc.)
     .trim()
     .toLowerCase()
     .replace(/\s+/g, ' ') // Multiple spaces to single space
