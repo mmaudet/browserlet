@@ -3,7 +3,7 @@
 **Milestone:** v1.7 CLI Completion & Batch Testing
 **Status:** In progress
 **Phases:** 27-31
-**Last updated:** 2026-02-14
+**Last updated:** 2026-02-15
 
 ---
 
@@ -94,7 +94,10 @@ Plans:
   2. Examples directory contains 10+ real-world BSL scripts
   3. Migration guide explains extension → CLI workflow differences
   4. Troubleshooting section covers common errors and solutions
-**Plans:** TBD
+**Plans:** 1 plan in 1 wave
+
+Plans:
+- [ ] 31-01-PLAN.md — Complete CLI documentation (README.md, examples/, migration guide, troubleshooting)
 
 ---
 
