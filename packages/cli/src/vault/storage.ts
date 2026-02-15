@@ -22,6 +22,12 @@ export interface VaultCredential {
   id: string;
   /** User-friendly name for {{credential:alias}} references */
   alias?: string;
+  /** URL associated with this credential */
+  url?: string;
+  /** Username / login for this credential */
+  username?: string;
+  /** Number of BSL scripts referencing this credential */
+  usedInScripts?: number;
   /** AES-GCM encrypted credential value */
   encryptedValue: { ciphertext: string; iv: string };
   /** Unix timestamp (ms) when credential was created */

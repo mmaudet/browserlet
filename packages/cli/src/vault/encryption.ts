@@ -212,6 +212,24 @@ export async function verifyMasterPassword(
 export async function promptMasterPassword(): Promise<string> {
   process.stdout.write('Enter vault master password: ');
 
+  // Fallback for non-TTY (piped stdin): read a line without masking
+  if (!process.stdin.isTTY) {
+    return new Promise((resolve) => {
+      process.stdin.resume();
+      process.stdin.setEncoding('utf8');
+      let data = '';
+      const onData = (chunk: string) => {
+        data += chunk;
+        if (data.includes('\n')) {
+          process.stdin.pause();
+          process.stdin.removeListener('data', onData);
+          resolve(data.split('\n')[0]);
+        }
+      };
+      process.stdin.on('data', onData);
+    });
+  }
+
   return new Promise((resolve) => {
     const chars: string[] = [];
     process.stdin.setRawMode(true);

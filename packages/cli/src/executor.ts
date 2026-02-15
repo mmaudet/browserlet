@@ -149,6 +149,9 @@ export class PlaywrightExecutor {
   /**
    * Type into an element using page.fill() which clears the field first.
    * Faster than page.type() which types character-by-character.
+   *
+   * If the resolved element is a non-fillable container (e.g. a <div> wrapper),
+   * automatically looks for a child input/textarea/[contenteditable] element.
    */
   private async executeType(
     selector: string,
@@ -163,7 +166,18 @@ export class PlaywrightExecutor {
         selector,
       );
     }
-    await this.page.fill(selector, value, { timeout });
+    try {
+      await this.page.fill(selector, value, { timeout });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('not an <input>') || msg.includes('not have a role allowing')) {
+        // Resolved element is a wrapper — find the actual input inside
+        const child = this.page.locator(selector).locator('input, textarea, [contenteditable="true"]').first();
+        await child.fill(value, { timeout });
+      } else {
+        throw err;
+      }
+    }
   }
 
   /**

@@ -16,7 +16,7 @@
  */
 
 import { homedir, platform, tmpdir } from 'node:os';
-import { join, basename } from 'node:path';
+import { join } from 'node:path';
 import { existsSync, readdirSync, mkdtempSync, cpSync, rmSync } from 'node:fs';
 import { ClassicLevel } from 'classic-level';
 
@@ -73,15 +73,23 @@ function getChromeProfileDirs(): string[] {
   return dirs;
 }
 
+/** Result from scanning an extension's LevelDB */
+interface ScanResult {
+  extensionId: string;
+  tempDir: string;
+  data: ExtensionVaultData;
+}
+
 /**
- * Find the Browserlet extension ID by scanning all extension storage dirs
- * for one that contains the browserlet_pbkdf2_salt key.
+ * Scan all Chrome extension storage dirs, find the Browserlet extension,
+ * and read its vault data in a single LevelDB open/read/close cycle.
  *
- * Copies LevelDB to a temp dir to avoid Chrome's lock.
+ * LevelDB can lose WAL data between close() and reopen(), so we must
+ * read everything in one pass.
  *
- * @returns { extDir, tempDir } or null if not found
+ * @returns ScanResult or null if not found
  */
-async function findBrowserletExtension(): Promise<{ extDir: string; tempDir: string; extensionId: string } | null> {
+async function scanAndReadExtensionVault(): Promise<ScanResult | null> {
   const profileDirs = getChromeProfileDirs();
 
   for (const extSettingsDir of profileDirs) {
@@ -106,11 +114,20 @@ async function findBrowserletExtension(): Promise<{ extDir: string; tempDir: str
         const db = new ClassicLevel(tempDbDir, { valueEncoding: 'utf8' });
         try {
           await db.open();
-          const salt = await db.get('browserlet_pbkdf2_salt').catch(() => null);
+
+          // Read all vault keys in a single session
+          const saltRaw = await db.get('browserlet_pbkdf2_salt').catch(() => null);
+          const validationRaw = await db.get('browserlet_validation_data').catch(() => null);
+          const passwordsRaw = await db.get('browserlet_passwords').catch(() => null);
+
           await db.close();
 
-          if (salt !== null) {
-            return { extDir, tempDir: tempDbDir, extensionId: extId };
+          if (saltRaw && validationRaw) {
+            const salt = JSON.parse(saltRaw);
+            const validationData = JSON.parse(validationRaw);
+            const credentials: ExtensionCredential[] = passwordsRaw ? JSON.parse(passwordsRaw) : [];
+
+            return { extensionId: extId, tempDir, data: { salt, validationData, credentials } };
           }
         } catch {
           try { await db.close(); } catch { /* ignore */ }
@@ -128,40 +145,6 @@ async function findBrowserletExtension(): Promise<{ extDir: string; tempDir: str
 }
 
 /**
- * Read the extension's vault data from its LevelDB storage.
- *
- * @param dbDir - Path to the (copied) LevelDB directory
- * @returns ExtensionVaultData or null if vault not configured
- */
-async function readExtensionVault(dbDir: string): Promise<ExtensionVaultData | null> {
-  const db = new ClassicLevel(dbDir, { valueEncoding: 'utf8' });
-
-  try {
-    await db.open();
-
-    const saltRaw = await db.get('browserlet_pbkdf2_salt').catch(() => null);
-    const validationRaw = await db.get('browserlet_validation_data').catch(() => null);
-    const passwordsRaw = await db.get('browserlet_passwords').catch(() => null);
-
-    await db.close();
-
-    if (!saltRaw || !validationRaw) {
-      return null;
-    }
-
-    // Chrome stores values as JSON strings
-    const salt = JSON.parse(saltRaw);
-    const validationData = JSON.parse(validationRaw);
-    const credentials: ExtensionCredential[] = passwordsRaw ? JSON.parse(passwordsRaw) : [];
-
-    return { salt, validationData, credentials };
-  } catch {
-    try { await db.close(); } catch { /* ignore */ }
-    return null;
-  }
-}
-
-/**
  * Import vault data from the Chrome extension.
  *
  * Scans Chrome profiles, finds the Browserlet extension,
@@ -170,24 +153,16 @@ async function readExtensionVault(dbDir: string): Promise<ExtensionVaultData | n
  * @returns ExtensionVaultData and cleanup function, or null
  */
 export async function importFromExtension(): Promise<{ data: ExtensionVaultData; extensionId: string; cleanup: () => void } | null> {
-  const found = await findBrowserletExtension();
-  if (!found) {
-    return null;
-  }
-
-  const data = await readExtensionVault(found.tempDir);
-  if (!data) {
-    rmSync(found.tempDir, { recursive: true, force: true });
+  const result = await scanAndReadExtensionVault();
+  if (!result) {
     return null;
   }
 
   return {
-    data,
-    extensionId: found.extensionId,
+    data: result.data,
+    extensionId: result.extensionId,
     cleanup: () => {
-      // Find the parent temp dir (tempDir is the 'db' subdir)
-      const parentTemp = join(found.tempDir, '..');
-      rmSync(parentTemp, { recursive: true, force: true });
+      rmSync(result.tempDir, { recursive: true, force: true });
     },
   };
 }

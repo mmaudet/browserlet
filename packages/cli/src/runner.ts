@@ -83,8 +83,10 @@ export class BSLRunner {
    * @returns Object with exitCode: 0 (success), 1 (step failure), 2 (timeout)
    */
   async run(scriptPath: string): Promise<RunResult> {
-    // 1. Read the .bsl file from disk
-    const yamlContent = fs.readFileSync(scriptPath, 'utf-8');
+    // 1. Read the .bsl file from disk, strip invisible Unicode control chars
+    //    (e.g. U+200E LTR mark that can leak from browser recording)
+    const rawContent = fs.readFileSync(scriptPath, 'utf-8');
+    const yamlContent = rawContent.replace(/[\u200B-\u200F\u2028-\u202F\uFEFF]/g, '');
 
     // 2. Parse with @browserlet/core parser
     const script = parseSteps(yamlContent);

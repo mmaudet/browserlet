@@ -476,8 +476,14 @@ vault
 
     console.log(pc.bold(`Credentials (${creds.length}):`));
     for (const cred of creds) {
-      const date = new Date(cred.createdAt).toLocaleDateString();
-      console.log(`  ${pc.cyan(cred.alias || cred.id)}  ${pc.dim(date)}`);
+      const date = new Date(cred.updatedAt).toLocaleDateString();
+      const name = pc.cyan(cred.alias || cred.id);
+      const user = cred.username ? `${cred.username} @ ` : '';
+      const url = cred.url ? pc.dim(`${user}${cred.url}`) : '';
+      console.log(`  ${name}  ${pc.dim(`Updated: ${date}`)}`);
+      if (url) {
+        console.log(`    ${url}`);
+      }
     }
   });
 
@@ -584,6 +590,8 @@ vault
       cliVault.credentials.push({
         id: `cred-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
         alias,
+        url: cred.url || undefined,
+        username: cred.username || undefined,
         encryptedValue,
         createdAt: cred.createdAt,
         updatedAt: cred.updatedAt,
