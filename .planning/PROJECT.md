@@ -8,20 +8,10 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 
 **Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA** — Les sélecteurs sémantiques ciblent l'intention ("le bouton de validation") plutôt que la structure DOM fragile (`#btn-submit-x7`), rendant les scripts maintenables quand l'UI évolue.
 
-## Current Milestone: v1.7 CLI Completion & Batch Testing
+## Current State (v1.7 Shipped)
 
-**Goal:** Compléter le CLI runner avec substitution de credentials, micro-prompts LLM, exécution batch de tests, et auto-réparation IA pour un outil CI/CD d'automatisation prêt pour la production.
-
-**Target features:**
-- Wire credential substitution into CLI runner (`--vault` flag, master password prompt)
-- LLM micro-prompt bridge for CLI (`--micro-prompts` flag, `page.exposeFunction`)
-- Batch test runner — `browserlet test dossier/` with global report (JUnit XML + HTML)
-- AI auto-repair — LLM auto-correction loop on step failure (`--repair` flag)
-
-## Current State (v1.6 Shipped)
-
-**Shipped:** 2026-02-14
-**Codebase:** ~35,000 LOC TypeScript
+**Shipped:** 2026-02-15
+**Codebase:** ~37,000 LOC TypeScript
 **Tech Stack:** WXT, Preact, Monaco Editor, Chrome/Firefox Manifest V3, Playwright, Commander.js, esbuild
 **Tests:** 428 (326 extension + 102 CLI)
 
@@ -48,10 +38,14 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 - Firefox MV3 cross-browser support
 - CSS Module hashed class filtering in recording hints
 - **CLI runner:** `browserlet run script.bsl` via Playwright (headless/headed, --timeout, --output-dir)
-- **Cascade resolver in CLI:** 43KB esbuild IIFE bundle injected via page.evaluate() with SimpleResolver fallback
-- **CLI credential vault:** AES-GCM encrypted local vault with CLIPasswordStorage adapter
+- **Cascade resolver in CLI:** 44KB esbuild IIFE bundle injected via page.evaluate() with SimpleResolver fallback
+- **CLI credential vault:** AES-GCM encrypted local vault with CLIPasswordStorage adapter, vault import from extension
 - **HTTP credential bridge:** localhost-only server with one-time bearer tokens for extension-CLI communication
 - **Credential sanitizer:** zero plaintext exposure in logs (pattern + value redaction)
+- **LLM micro-prompt bridge:** `--micro-prompts` flag for cascade stages 3-5 via page.exposeFunction
+- **Batch test runner:** `browserlet test <dir>` with --workers N, --bail, aggregated reporting
+- **AI auto-repair:** `--auto-repair` and `--interactive` flags for LLM-guided hint repair on failure
+- **Vault CLI:** `vault init`, `vault add`, `vault list`, `vault import-from-extension` commands
 - **Monorepo:** @browserlet/core shared package (types, parser, prompts, substitution)
 
 ## Requirements
@@ -115,18 +109,28 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 - ✓ HTTP credential bridge — localhost-only with one-time bearer tokens
 - ✓ Credential sanitizer — zero plaintext in logs, pattern + value redaction
 
-### Active (v1.7)
+**v1.7:**
+- ✓ Credential wiring — `--vault` flag, `{{credential:alias}}` substitution, master password prompt
+- ✓ LLM micro-prompt bridge — `--micro-prompts` flag, page.exposeFunction for stages 3-5
+- ✓ Batch test runner — `browserlet test <dir>` with --workers N, --bail, summary report
+- ✓ AI auto-repair — `--auto-repair`, `--interactive` flags, hint_repairer micro-prompt
+- ✓ CLI documentation — 705-line README + 14 BSL example scripts
+- ✓ Vault management — init, add, list, import-from-extension commands
+- ✓ Real-world E2E hardening — Unicode stripping, type fallback, resolver improvements
 
-- [ ] Wire credential substitution into CLI runner (--vault flag, master password prompt)
-- [ ] LLM micro-prompt bridge for CLI (--micro-prompts flag, page.exposeFunction)
-- [ ] Batch test runner — `browserlet test dossier/` avec rapport global
-- [ ] AI auto-repair — boucle correction automatique LLM sur échec
-
-### Future (v1.8+)
+### Active (v1.8+)
 
 - [ ] Script version control
 - [ ] Intent semantic resolution documentation
 - [ ] Scheduling (exécution programmée)
+
+### Future (v1.8+)
+
+- [ ] Script version control
+- [ ] Scheduling (exécution programmée)
+- [ ] JUnit XML / HTML report for CI/CD
+- [ ] `--last-failed` flag for re-running failures
+- [ ] Screenshot diff on repair
 
 ### Out of Scope
 
@@ -197,6 +201,12 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 | globalThis.crypto.subtle for CLI | Parameter-level compatibility with extension's Web Crypto API | ✓ Good |
 | 127.0.0.1 over localhost | Prevents IPv6 ::1 resolution on dual-stack systems | ✓ Good |
 | One-time bearer tokens | Map.get()+delete for bridge auth, 256-bit entropy | ✓ Good |
+| page.exposeFunction for LLM bridge | In-page cascade calls Node.js LLM providers | ✓ Good |
+| Fresh chromium per batch script | Full test isolation, no state leaks | ✓ Good |
+| RepairEngine graceful degradation | Never throws, returns empty suggestions | ✓ Good |
+| Auto-repair threshold 0.70 | Matches cascade resolver confidence threshold | ✓ Good |
+| normalizeText strips invisible Unicode | Fixes LTR mark / zero-width char comparison failures | ✓ Good |
+| class_contains as scoring signal only | Not hard filter in gatherCompetitors fallback | ✓ Good |
 
 ---
-*Last updated: 2026-02-14 after v1.7 milestone start*
+*Last updated: 2026-02-15 after v1.7 milestone completion*
