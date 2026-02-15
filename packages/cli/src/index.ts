@@ -15,8 +15,8 @@ import pc from 'picocolors';
 import { BSLRunner } from './runner.js';
 import { BatchRunner } from './batchRunner.js';
 import { TestReporter } from './testReporter.js';
-import { promptMasterPassword, verifyMasterPassword } from './vault/encryption.js';
-import { vaultExists, readVault } from './vault/storage.js';
+import { promptMasterPassword, verifyMasterPassword, generateSalt, deriveKey, createValidationData, encrypt, bufferToBase64 } from './vault/encryption.js';
+import { vaultExists, readVault, initializeVault, addCredential, getVaultPath } from './vault/storage.js';
 import { base64ToBuffer } from './vault/encryption.js';
 
 // Re-export core modules for programmatic usage
@@ -320,6 +320,163 @@ program
       const message = error instanceof Error ? error.message : String(error);
       console.error(pc.red(`Error: ${message}`));
       process.exit(2);
+    }
+  });
+
+// ─── Vault commands ───────────────────────────────────────────
+
+const vault = program
+  .command('vault')
+  .description('Manage the encrypted credential vault');
+
+vault
+  .command('init')
+  .description('Initialize a new credential vault with a master password')
+  .action(async () => {
+    if (await vaultExists()) {
+      console.error(pc.red(`Vault already exists at ${getVaultPath()}`));
+      console.error(pc.red('Delete it manually to reinitialize.'));
+      process.exit(2);
+    }
+
+    console.log(pc.bold('Initialize credential vault'));
+    console.log(pc.dim(`Location: ${getVaultPath()}`));
+    console.log();
+
+    const password = await promptMasterPassword();
+    if (!password) {
+      console.error(pc.red('Password cannot be empty'));
+      process.exit(2);
+    }
+
+    // Confirm password
+    process.stdout.write('Confirm master password: ');
+    const confirm = await new Promise<string>((resolve) => {
+      const chars: string[] = [];
+      process.stdin.setRawMode(true);
+      process.stdin.resume();
+      process.stdin.setEncoding('utf8');
+      const onData = (ch: string) => {
+        if (ch === '\r' || ch === '\n' || ch === '\u0004') {
+          process.stdin.setRawMode(false);
+          process.stdin.pause();
+          process.stdin.removeListener('data', onData);
+          process.stdout.write('\n');
+          resolve(chars.join(''));
+        } else if (ch === '\u0003') {
+          process.stdin.setRawMode(false);
+          process.stdout.write('\n');
+          process.exit(130);
+        } else if (ch === '\u007F' || ch === '\b') {
+          if (chars.length > 0) { chars.pop(); process.stdout.write('\b \b'); }
+        } else {
+          chars.push(ch);
+          process.stdout.write('*');
+        }
+      };
+      process.stdin.on('data', onData);
+    });
+
+    if (password !== confirm) {
+      console.error(pc.red('Passwords do not match'));
+      process.exit(2);
+    }
+
+    const salt = generateSalt();
+    const key = await deriveKey(password, salt);
+    const validationData = await createValidationData(key);
+    await initializeVault(bufferToBase64(salt.buffer as ArrayBuffer), validationData);
+
+    console.log(pc.green('Vault initialized successfully'));
+  });
+
+vault
+  .command('add')
+  .description('Add a credential to the vault')
+  .argument('<alias>', 'Credential alias (used as {{credential:alias}} in BSL scripts)')
+  .action(async (alias: string) => {
+    if (!(await vaultExists())) {
+      console.error(pc.red('Vault not found. Run: browserlet vault init'));
+      process.exit(2);
+    }
+
+    // Unlock vault
+    const password = await promptMasterPassword();
+    const vaultData = await readVault();
+    const saltBuffer = base64ToBuffer(vaultData.salt);
+    const verification = await verifyMasterPassword(password, new Uint8Array(saltBuffer), vaultData.validationData);
+    if (!verification.valid) {
+      console.error(pc.red('Invalid master password'));
+      process.exit(2);
+    }
+
+    // Check for duplicate alias
+    const existing = vaultData.credentials.find((c) => c.alias === alias);
+    if (existing) {
+      console.error(pc.red(`Credential with alias "${alias}" already exists`));
+      process.exit(2);
+    }
+
+    // Prompt for credential value (masked)
+    process.stdout.write(`Enter value for "${alias}": `);
+    const value = await new Promise<string>((resolve) => {
+      const chars: string[] = [];
+      process.stdin.setRawMode(true);
+      process.stdin.resume();
+      process.stdin.setEncoding('utf8');
+      const onData = (ch: string) => {
+        if (ch === '\r' || ch === '\n' || ch === '\u0004') {
+          process.stdin.setRawMode(false);
+          process.stdin.pause();
+          process.stdin.removeListener('data', onData);
+          process.stdout.write('\n');
+          resolve(chars.join(''));
+        } else if (ch === '\u0003') {
+          process.stdin.setRawMode(false);
+          process.stdout.write('\n');
+          process.exit(130);
+        } else if (ch === '\u007F' || ch === '\b') {
+          if (chars.length > 0) { chars.pop(); process.stdout.write('\b \b'); }
+        } else {
+          chars.push(ch);
+          process.stdout.write('*');
+        }
+      };
+      process.stdin.on('data', onData);
+    });
+
+    if (!value) {
+      console.error(pc.red('Value cannot be empty'));
+      process.exit(2);
+    }
+
+    const encrypted = await encrypt(value, verification.key!);
+    const id = await addCredential(alias, encrypted);
+
+    console.log(pc.green(`Credential "${alias}" added (${id})`));
+  });
+
+vault
+  .command('list')
+  .description('List stored credentials (aliases only, no values)')
+  .action(async () => {
+    if (!(await vaultExists())) {
+      console.error(pc.red('Vault not found. Run: browserlet vault init'));
+      process.exit(2);
+    }
+
+    const vaultData = await readVault();
+    const creds = vaultData.credentials;
+
+    if (creds.length === 0) {
+      console.log(pc.dim('No credentials stored. Add one with: browserlet vault add <alias>'));
+      return;
+    }
+
+    console.log(pc.bold(`Credentials (${creds.length}):`));
+    for (const cred of creds) {
+      const date = new Date(cred.createdAt).toLocaleDateString();
+      console.log(`  ${pc.cyan(cred.alias || cred.id)}  ${pc.dim(date)}`);
     }
   });
 
