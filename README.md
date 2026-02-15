@@ -29,6 +29,19 @@ Browserlet takes a different approach: **use AI once to generate a semantic auto
 
 **AI is used only during script creation.** Execution is 100% deterministic through a 6-stage cascade resolver that targets elements by intent ("the login button") rather than fragile XPath (`#btn-submit-x7`).
 
+### The 6-Stage Cascade Resolver
+
+| Stage | Name | Type | What it does |
+|-------|------|------|-------------|
+| 1 | **Deterministic hint matching** | Deterministic | Scores every candidate element against the recorded semantic hints (role, text, aria-label, etc.) using weighted scoring. Requires confidence >= 0.85 and at least one high-weight hint match. |
+| 2 | **Enriched structural matching** | Deterministic | Takes competing candidates from Stage 1 and applies structural boosts from DOM context — fieldset legends, associated labels, landmark regions, section headings. Requires adjusted confidence >= 0.70. |
+| 3 | **`hint_suggester` micro-prompt** | LLM | Triggered when no candidate was found at all. Sends the failed hints + a DOM excerpt to the LLM, which suggests alternative hints. Retries Stages 1-2 with the new hints. |
+| 4 | **`disambiguator` micro-prompt** | LLM | Triggered when 2+ candidates score >= 0.70. Presents their attributes and structural context to the LLM, which picks the correct one. |
+| 5 | **`confidence_booster` micro-prompt** | LLM | Triggered when a single candidate scores between 0.50 and 0.69. The LLM confirms or rejects the match; if confirmed, confidence is boosted by +0.20. |
+| 6 | **CSS fallback** | Deterministic | Last resort — falls back to the `fallback_selector` (CSS selector captured during recording). |
+
+Stages 1-2 resolve ~85% of elements with zero LLM cost. Stages 3-5 are only invoked when `--micro-prompts` is enabled. Stage 6 uses the raw CSS selector from the original recording session.
+
 ## Quick Start
 
 ### Extension (Chrome / Firefox)
@@ -174,19 +187,45 @@ browserlet vault list                    # List aliases (no plaintext)
 browserlet vault import-from-extension   # Import from browser vault
 ```
 
-### Batch Testing & Auto-Repair
+### Batch Testing
 
-Run entire script directories as test suites:
+`browserlet test` discovers every `.bsl` file in a directory, runs each in an isolated browser, and reports pass/fail per script. The process exits with `0` (all pass), `1` (any failure), or `2` (any error) — designed for CI integration.
 
 ```bash
-browserlet test ./scripts/ \
-  --workers 4 \            # Parallel execution (fresh browser per script)
-  --bail \                 # Stop on first failure
-  --auto-repair \          # LLM-guided hint repair on resolution failure
-  --interactive            # Approve repairs before applying
+browserlet test ./scripts/
 ```
 
-Auto-repair uses a `hint_repairer` micro-prompt to suggest alternative hints when resolution fails, then retries the step with the repaired selector.
+#### Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--workers <n>` | Parallel workers (fresh browser each) | `1` |
+| `--bail` | Stop on first failure | `false` |
+| `--headed` | Visible browser | `false` |
+| `--timeout <ms>` | Step timeout | `30000` |
+| `--output-dir <dir>` | Failure screenshots directory | `browserlet-output` |
+| `--vault` | Enable credential vault | `false` |
+| `--auto-repair` | LLM-guided hint repair (confidence >= 0.70) | `false` |
+| `--interactive` | Approve repair suggestions manually | `false` |
+| `--micro-prompts` | Enable LLM for cascade resolver stages 3-5 | `false` |
+
+#### Examples
+
+**Simple test suite** — run a directory of smoke tests sequentially:
+
+```bash
+browserlet test ./smoke-tests/
+```
+
+**CI with parallel workers, bail, and auto-repair:**
+
+```bash
+browserlet test ./regression/ --workers 4 --bail --auto-repair
+```
+
+#### Auto-Repair
+
+When `--auto-repair` is enabled, a failed element resolution triggers the `hint_repairer` micro-prompt, which suggests an alternative hint. If the suggestion meets the confidence threshold (>= 0.70), the step is retried automatically with the repaired selector. Use `--interactive` to review each suggestion before it is applied.
 
 ### Screenshots & Visual Debugging
 
