@@ -16,8 +16,9 @@ import { BSLRunner } from './runner.js';
 import { BatchRunner } from './batchRunner.js';
 import { TestReporter } from './testReporter.js';
 import { promptMasterPassword, verifyMasterPassword, generateSalt, deriveKey, createValidationData, encrypt, bufferToBase64 } from './vault/encryption.js';
-import { vaultExists, readVault, initializeVault, addCredential, getVaultPath } from './vault/storage.js';
+import { vaultExists, readVault, initializeVault, addCredential, getVaultPath, writeVault } from './vault/storage.js';
 import { base64ToBuffer } from './vault/encryption.js';
+import { importFromExtension } from './vault/chromeImporter.js';
 
 // Re-export core modules for programmatic usage
 export { PlaywrightExecutor, parseTimeout } from './executor.js';
@@ -478,6 +479,126 @@ vault
       const date = new Date(cred.createdAt).toLocaleDateString();
       console.log(`  ${pc.cyan(cred.alias || cred.id)}  ${pc.dim(date)}`);
     }
+  });
+
+vault
+  .command('import-from-extension')
+  .description('Import credentials from the Chrome extension vault')
+  .action(async () => {
+    console.log(pc.bold('Scanning Chrome profiles for Browserlet extension...'));
+
+    const result = await importFromExtension();
+    if (!result) {
+      console.error(pc.red('Browserlet extension vault not found in any Chrome profile.'));
+      console.error(pc.dim('Make sure the extension is installed and has a master password configured.'));
+      process.exit(2);
+    }
+
+    const { data, extensionId, cleanup } = result;
+    console.log(pc.green(`Found extension vault (${extensionId})`));
+    console.log(pc.dim(`  ${data.credentials.length} credential(s) available`));
+
+    if (data.credentials.length === 0) {
+      console.log(pc.yellow('No credentials to import.'));
+      cleanup();
+      return;
+    }
+
+    // Verify extension master password
+    console.log();
+    console.log('Enter your extension master password to decrypt credentials:');
+    const extPassword = await promptMasterPassword();
+    const saltBuffer = base64ToBuffer(data.salt);
+    const verification = await verifyMasterPassword(extPassword, new Uint8Array(saltBuffer), data.validationData);
+    if (!verification.valid) {
+      console.error(pc.red('Invalid master password for extension vault'));
+      cleanup();
+      process.exit(2);
+    }
+
+    const extKey = verification.key!;
+
+    // Check if CLI vault exists
+    const cliVaultExists = await vaultExists();
+
+    if (!cliVaultExists) {
+      // Create CLI vault with same salt+validation (same master password works)
+      await initializeVault(data.salt, data.validationData);
+      console.log(pc.green('CLI vault created (same master password as extension)'));
+    }
+
+    // Read current CLI vault
+    const cliVault = await readVault();
+
+    // If CLI vault uses a different password, we need to re-encrypt
+    let cliKey: CryptoKey;
+    if (cliVaultExists) {
+      const cliSaltBuffer = base64ToBuffer(cliVault.salt);
+      const cliVerification = await verifyMasterPassword(extPassword, new Uint8Array(cliSaltBuffer), cliVault.validationData);
+      if (cliVerification.valid) {
+        // Same password — can use encrypted data directly
+        cliKey = cliVerification.key!;
+      } else {
+        // Different password — need CLI password to re-encrypt
+        console.log();
+        console.log('CLI vault uses a different password. Enter CLI master password:');
+        const cliPassword = await promptMasterPassword();
+        const cliVerification2 = await verifyMasterPassword(cliPassword, new Uint8Array(cliSaltBuffer), cliVault.validationData);
+        if (!cliVerification2.valid) {
+          console.error(pc.red('Invalid CLI vault master password'));
+          cleanup();
+          process.exit(2);
+        }
+        cliKey = cliVerification2.key!;
+      }
+    } else {
+      cliKey = extKey;
+    }
+
+    // Import credentials
+    const { decrypt } = await import('./vault/encryption.js');
+    let imported = 0;
+    let skipped = 0;
+
+    for (const cred of data.credentials) {
+      const alias = cred.alias || cred.username || cred.id;
+
+      // Skip if alias already exists in CLI vault
+      const existing = cliVault.credentials.find((c) => c.alias === alias);
+      if (existing) {
+        console.log(pc.dim(`  skip: ${alias} (already exists)`));
+        skipped++;
+        continue;
+      }
+
+      // If same password, copy encrypted data directly; otherwise re-encrypt
+      let encryptedValue: { ciphertext: string; iv: string };
+      if (cliKey === extKey) {
+        encryptedValue = cred.encryptedPassword;
+      } else {
+        // Decrypt with extension key, re-encrypt with CLI key
+        const plaintext = await decrypt(cred.encryptedPassword, extKey);
+        encryptedValue = await encrypt(plaintext, cliKey);
+      }
+
+      cliVault.credentials.push({
+        id: `cred-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+        alias,
+        encryptedValue,
+        createdAt: cred.createdAt,
+        updatedAt: cred.updatedAt,
+      });
+
+      console.log(pc.green(`  imported: ${alias}`));
+      imported++;
+    }
+
+    // Save vault
+    await writeVault(cliVault);
+    cleanup();
+
+    console.log();
+    console.log(pc.bold(`Done: ${imported} imported, ${skipped} skipped`));
   });
 
 program.parse();

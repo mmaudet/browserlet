@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@browserlet/core": "*",
+    "classic-level": "^3.0.0",
     "commander": "^14.0.0",
     "env-paths": "^3.0.0",
     "ora": "^9.0.0",
