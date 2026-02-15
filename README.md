@@ -42,6 +42,14 @@ Browserlet takes a different approach: **use AI once to generate a semantic auto
 
 Stages 1-2 resolve ~85% of elements with zero LLM cost. Stages 3-5 are only invoked when `--micro-prompts` is enabled. Stage 6 uses the raw CSS selector from the original recording session.
 
+#### How micro-prompts flow in the extension
+
+During playback (never during recording), the cascade resolver runs in the **content script**. When Stages 1-2 are insufficient and micro-prompts are enabled, the content script sends a `MICRO_PROMPT_REQUEST` message to the **background service worker**, which routes it through the `MicroPromptRouter` → `LLMService.generate()` → returns the typed result back to the content script. The resolver then uses the LLM output to retry with better hints (Stage 3), pick the right candidate (Stage 4), or confirm a borderline match (Stage 5).
+
+The extension also maintains a **HintStabilityTracker** that records per-site hint success/failure rates in `chrome.storage.local`. Hints with > 90% success rate (and >= 5 attempts) receive a +0.20 confidence boost — a learning loop that improves resolution over time without any LLM call.
+
+> **Micro-prompts do not modify the BSL script.** They only assist element resolution at runtime. To permanently update hints in the `.bsl` file, use the CLI's `--auto-repair` flag — see [Auto-Repair](#auto-repair) below.
+
 ## Quick Start
 
 ### Extension (Chrome / Firefox)
