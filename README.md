@@ -323,4 +323,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and [SECURITY.
 
 ## License
 
-[AGPL-3.0](LICENSE) — Built by [LINAGORA](https://linagora.com).
+[AGPL-3.0](LICENSE) — Michel-Marie MAUDET (mmaudet@linagora.com)
