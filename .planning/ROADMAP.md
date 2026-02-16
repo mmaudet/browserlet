@@ -64,11 +64,12 @@ Plans:
   2. User reopens browser, runs same script, and is NOT prompted to log in again
   3. Extension captures all cookie metadata (HttpOnly, SameSite, Secure, domain, path, expiry) during snapshot
   4. User views session snapshot in chrome.storage.local and sees encrypted blob (not plaintext cookies)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 33-01: TBD
-- [ ] 33-02: TBD
+- [ ] 033-01-PLAN.md — Session capture infrastructure with chrome.cookies API and encrypted storage
+- [ ] 033-02-PLAN.md — Session restoration with chrome.cookies.set API and localStorage bridge
+- [ ] 033-03-PLAN.md — Script execution integration and UI controls for session management
 
 ### Phase 34: CLI Session Persistence
 **Goal**: CLI users capture session state (cookies + localStorage) after script execution and restore before subsequent runs via --session-restore flag
@@ -80,11 +81,11 @@ Plans:
   3. Session state files are stored in platform-specific directory (~/.browserlet/sessions/ on macOS/Linux, %APPDATA%/browserlet/sessions/ on Windows)
   4. User views session file and sees encrypted JSON (not plaintext cookies)
   5. CLI validates protocol match (HTTPS session cannot restore to HTTP) and warns user
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 34-01: TBD
-- [ ] 34-02: TBD
+- [ ] 034-01-PLAN.md — Session storage module with encrypted snapshot save/load and platform-specific paths
+- [ ] 034-02-PLAN.md — CLI integration (capture after run, restore before run, --session-restore flag, protocol validation)
 
 ### Phase 35: BSL Integration & Validation
 **Goal**: Users declare session_persistence in BSL metadata block to control auto-capture behavior per script
