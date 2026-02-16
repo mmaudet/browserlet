@@ -9,6 +9,7 @@
  */
 
 import fs from 'node:fs';
+import { unlink } from 'node:fs/promises';
 import { Command } from 'commander';
 import { chromium } from 'playwright';
 import pc from 'picocolors';
@@ -16,7 +17,7 @@ import { BSLRunner } from './runner.js';
 import { BatchRunner } from './batchRunner.js';
 import { TestReporter } from './testReporter.js';
 import { promptMasterPassword, verifyMasterPassword, generateSalt, deriveKey, createValidationData, encrypt, bufferToBase64 } from './vault/encryption.js';
-import { vaultExists, readVault, initializeVault, addCredential, getVaultPath, writeVault } from './vault/storage.js';
+import { vaultExists, readVault, initializeVault, addCredential, getVaultPath, writeVault, getCredential, deleteCredential } from './vault/storage.js';
 import { base64ToBuffer } from './vault/encryption.js';
 import { importFromExtension } from './vault/chromeImporter.js';
 
@@ -607,6 +608,101 @@ vault
 
     console.log();
     console.log(pc.bold(`Done: ${imported} imported, ${skipped} skipped`));
+  });
+
+vault
+  .command('del')
+  .description('Delete a credential from the vault')
+  .argument('<alias>', 'Credential alias to delete')
+  .action(async (alias: string) => {
+    if (!(await vaultExists())) {
+      console.error(pc.red('Vault not found. Run: browserlet vault init'));
+      process.exit(2);
+    }
+
+    // Unlock vault
+    const password = await promptMasterPassword();
+    const vaultData = await readVault();
+    const saltBuffer = base64ToBuffer(vaultData.salt);
+    const verification = await verifyMasterPassword(password, new Uint8Array(saltBuffer), vaultData.validationData);
+    if (!verification.valid) {
+      console.error(pc.red('Invalid master password'));
+      process.exit(2);
+    }
+
+    // Find credential by alias
+    const credential = await getCredential(alias);
+    if (!credential) {
+      console.error(pc.red(`Credential "${alias}" not found`));
+      process.exit(2);
+    }
+
+    // Confirm deletion
+    process.stdout.write(`Delete credential "${alias}"? (y/N) `);
+    const answer = await new Promise<string>((resolve) => {
+      process.stdin.resume();
+      process.stdin.setEncoding('utf8');
+      process.stdin.once('data', (data: string) => {
+        process.stdin.pause();
+        resolve(data.trim().toLowerCase());
+      });
+    });
+
+    if (answer !== 'y' && answer !== 'yes') {
+      console.log(pc.dim('Cancelled'));
+      return;
+    }
+
+    const deleted = await deleteCredential(credential.id);
+    if (!deleted) {
+      console.error(pc.red('Failed to delete credential'));
+      process.exit(2);
+    }
+
+    console.log(pc.green(`Credential "${alias}" deleted`));
+  });
+
+vault
+  .command('reset')
+  .description('Delete the entire vault and all stored credentials')
+  .action(async () => {
+    if (!(await vaultExists())) {
+      console.error(pc.red('Vault not found. Nothing to reset.'));
+      process.exit(2);
+    }
+
+    // Unlock vault
+    const password = await promptMasterPassword();
+    const vaultData = await readVault();
+    const saltBuffer = base64ToBuffer(vaultData.salt);
+    const verification = await verifyMasterPassword(password, new Uint8Array(saltBuffer), vaultData.validationData);
+    if (!verification.valid) {
+      console.error(pc.red('Invalid master password'));
+      process.exit(2);
+    }
+
+    const credCount = vaultData.credentials.length;
+
+    // Confirm reset
+    process.stdout.write(
+      pc.red(`This will permanently delete the vault (${credCount} credential${credCount !== 1 ? 's' : ''}). Continue? (y/N) `)
+    );
+    const answer = await new Promise<string>((resolve) => {
+      process.stdin.resume();
+      process.stdin.setEncoding('utf8');
+      process.stdin.once('data', (data: string) => {
+        process.stdin.pause();
+        resolve(data.trim().toLowerCase());
+      });
+    });
+
+    if (answer !== 'y' && answer !== 'yes') {
+      console.log(pc.dim('Cancelled'));
+      return;
+    }
+
+    await unlink(getVaultPath());
+    console.log(pc.green('Vault deleted. Run `browserlet vault init` to create a new one.'));
   });
 
 program.parse();
