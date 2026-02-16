@@ -58,6 +58,10 @@ Recent decisions for v1.8:
 - Separate sessionRestore.ts from sessions.ts for parallel plan execution (033-02)
 - decryptApiKey used for session decryption (symmetric with encryptApiKey capture) (033-02)
 - Individual cookie/localStorage failures are non-fatal during restoration (033-02)
+- Use encryptApiKey() directly for session encryption (internal key selection) (033-01)
+- cookies permission added to manifest for chrome.cookies.getAll access (033-01)
+- Non-fatal capture failures to avoid breaking script execution (033-01)
+- TTL metadata stored unencrypted alongside encrypted snapshot for efficient expiry checks (033-01)
 
 ### Pending Todos
 
@@ -77,9 +81,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 034-01-PLAN.md (session storage module)
-Resume with: Execute 034-02-PLAN.md (CLI session commands integration)
+Stopped at: Completed 033-01-PLAN.md (session capture infrastructure)
+Resume with: Execute 034-02-PLAN.md (CLI session commands integration) or 033-03-PLAN.md
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-16 after completing 034-01-PLAN.md*
+*Last updated: 2026-02-16 after completing 033-01-PLAN.md*
