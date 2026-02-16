@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** v1.8 Session Persistence & Vault UX - Phases 33+34 (Extension + CLI Session Persistence)
+**Current focus:** v1.8 Session Persistence & Vault UX - All phases complete (32-35)
 
 ## Current Position
 
 Milestone: v1.8 Session Persistence & Vault UX
 Phase: 35 of 35 (BSL Integration & Validation)
-Plan: 035-01 complete. Additional plans TBD.
-Status: Phase 35 in progress. BSL parser integration complete.
-Last activity: 2026-02-16 — Phase 35 Plan 01 executed (BSL session_persistence parser)
+Plan: 035-02 complete. Phase 35 complete. All v1.8 phases complete.
+Status: v1.8 milestone complete. All 9 plans across 4 phases executed.
+Last activity: 2026-02-16 — Phase 35 Plan 02 executed (CLI auto-capture/restore from BSL session_persistence)
 
-Progress: [█████████████████████░░░░░░░░░░] 68%
+Progress: [███████████████████████████████] 100%
 
 ## Performance Metrics
 
@@ -26,16 +26,16 @@ Progress: [█████████████████████░░
 - Quick tasks completed: 2 (quick-10, quick-11)
 
 **v1.8 Progress:**
-- Total plans completed: 8 (032×2 + 033×3 + 034×2 + 035×1)
-- Total phases completed: 3 (Phase 32, 33, 34)
+- Total plans completed: 9 (032x2 + 033x3 + 034x2 + 035x2)
+- Total phases completed: 4 (Phase 32, 33, 34, 35)
 - Coverage: 12/12 requirements mapped (100%)
 
-**Latest Execution (035-01):**
-- Duration: 181 seconds
+**Latest Execution (035-02):**
+- Duration: 145 seconds
 - Tasks: 2/2 completed
 - Files created: 0
-- Files modified: 5 (bsl.ts, index.ts, stepParser.ts, stepParser.test.ts, parser.ts)
-- Commits: 2 (bac111a, 3528810)
+- Files modified: 3 (runner.ts, index.ts, runner.test.ts)
+- Commits: 3 (196e2a2, 1a8ae43, d422a43)
 
 ## Accumulated Context
 
@@ -73,6 +73,10 @@ Recent decisions for v1.8:
 - Extension Script.sessionPersistence uses different format than ParsedScript (035-01)
 - Import bridge maps enabled directly but not max_age to ttl (extension uses default) (035-01)
 - Syntactic validation only for max_age string format in parser (no ms library call) (035-01)
+- Auto-capture uses snapshot_id directly as sessionId for stable file names (035-02)
+- Three-path session handling: manual --session-restore > BSL auto-restore > default random ID (035-02)
+- Auto-restore skips explicit protocol validation (implicit during navigation) (035-02)
+- Manual --session-restore takes precedence over BSL session_persistence declaration (035-02)
 
 ### Pending Todos
 
@@ -92,9 +96,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 035-01-PLAN.md (BSL session_persistence parser integration)
-Resume with: Continue Phase 35 if additional BSL integration plans exist, or move to next phase/milestone
+Stopped at: Completed 035-02-PLAN.md (CLI auto-capture/restore from BSL session_persistence)
+Resume with: v1.8 milestone complete. Ship v1.8 or proceed to v1.9 planning.
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-16 after completing 035-01-PLAN.md tasks 1-2*
+*Last updated: 2026-02-16 after completing 035-02-PLAN.md tasks 1-2 (Phase 35 complete, v1.8 complete)*
