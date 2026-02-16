@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Milestone: v1.7 CLI Completion & Batch Testing
 Phase: 31 of 31 (All phases complete)
 Status: v1.7 SHIPPED
-Last activity: 2026-02-15 — Milestone v1.7 archived
+Last activity: 2026-02-16 - Completed quick task 11: Ajouter un délai de 2s avant le screenshot
 
 Progress: [██████████████████████████████] 100% (8 milestones shipped, v1.0-v1.7)
 
@@ -22,7 +22,7 @@ Progress: [███████████████████████
 - Total plans completed: 111
 - Total phases completed: 31
 - 8 milestones shipped
-- Quick tasks completed: 1 (quick-10)
+- Quick tasks completed: 2 (quick-10, quick-11)
 
 **v1.7 Final Stats:**
 - Phases: 5 (27-31)
@@ -46,12 +46,19 @@ None.
 
 None — milestone complete.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 10 | Ajouter les commandes vault del et vault reset | 2026-02-16 | 58d04e4 | [10-ajouter-les-commandes-vault-del-et-vault](./quick/10-ajouter-les-commandes-vault-del-et-vault/) |
+| 11 | Ajouter un délai de 2s avant le screenshot | 2026-02-16 | eab43f3 | [11-ajouter-un-d-lai-de-2s-avant-le-screensh](./quick/11-ajouter-un-d-lai-de-2s-avant-le-screensh/) |
+
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed quick-10 (vault del and vault reset commands)
+Stopped at: Completed quick-11 (2-second pre-screenshot delay)
 Resume with: `/gsd:new-milestone` to start v1.8
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-16 after quick task 10 completion*
+*Last updated: 2026-02-16 after quick task 11 completion*
