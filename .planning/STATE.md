@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 Milestone: v1.8 Session Persistence & Vault UX
 Phase: 33+34 of 35 (Extension + CLI Session Persistence — parallel)
-Plan: Ready to plan
-Status: Phase 32 verified. Planning phases 33+34 in parallel.
-Last activity: 2026-02-16 — Phase 32 verified (6/6 must-haves)
+Plan: 034-01 complete, 034-02 next
+Status: Executing phase 034 (CLI session persistence). Plan 01 complete.
+Last activity: 2026-02-16 — 034-01 complete (session storage module)
 
-Progress: [████████░░░░░░░░░░░░░░░░░░░░░░░] 25%
+Progress: [██████████░░░░░░░░░░░░░░░░░░░░░] 30%
 
 ## Performance Metrics
 
@@ -26,16 +26,16 @@ Progress: [████████░░░░░░░░░░░░░░░
 - Quick tasks completed: 2 (quick-10, quick-11)
 
 **v1.8 Progress:**
-- Total plans completed: 2
+- Total plans completed: 3
 - Total phases completed: 1 (Phase 32)
 - Coverage: 12/12 requirements mapped (100%)
 
-**Latest Execution (032-02):**
-- Duration: 89 seconds
+**Latest Execution (034-01):**
+- Duration: 103 seconds
 - Tasks: 2/2 completed
-- Files created: 0
-- Files modified: 1 (index.ts)
-- Commits: 2 (203a03a, 8550a32)
+- Files created: 1 (session/storage.ts)
+- Files modified: 0
+- Commits: 2 (c0f26a5, ae5dfbd)
 
 ## Accumulated Context
 
@@ -52,6 +52,9 @@ Recent decisions for v1.8:
 - Delete-before-write pattern ensures 0600 permissions apply to cache files (032-01)
 - Cache write failures are non-fatal (graceful degradation - user just prompted again next time) (032-02)
 - vault lock command requires no password (cache clearing is non-destructive operation) (032-02)
+- Sessions stored in env-paths data directory (persistent across reboots, not temp) (034-01)
+- Reuse device key from vault for session encryption (no new key management) (034-01)
+- Protocol validation is permissive for HTTP->HTTPS with warning (034-01)
 
 ### Pending Todos
 
@@ -71,9 +74,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed phase 32 (vault unlock cache) - both infrastructure and CLI integration done
-Resume with: Move to phase 33 (extension session persistence) or phase 34 (CLI session persistence)
+Stopped at: Completed 034-01-PLAN.md (session storage module)
+Resume with: Execute 034-02-PLAN.md (CLI session commands integration)
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-16 after completing 032-02-PLAN.md*
+*Last updated: 2026-02-16 after completing 034-01-PLAN.md*

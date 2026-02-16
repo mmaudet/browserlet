@@ -8,6 +8,7 @@ import { showAutoExecuteNotification, showCompletionNotification } from './trigg
 import { PasswordCapture } from './recording/passwordCapture';
 import { CredentialCaptureIndicator } from './recording/visualFeedback';
 import { storage } from '../../utils/storage/browserCompat';
+import { captureLocalStorage, restoreLocalStorage } from './localStorageBridge';
 
 // Singleton instances
 let recordingManager: RecordingManager | null = null;
@@ -326,6 +327,18 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
           textNodes
         }
       };
+    }
+
+    // Session persistence: localStorage capture and restoration (Phase 33)
+    case 'CAPTURE_LOCALSTORAGE': {
+      const data = captureLocalStorage();
+      return { success: true, data };
+    }
+
+    case 'RESTORE_LOCALSTORAGE': {
+      const { data } = (message.payload as { data: Record<string, string> }) || {};
+      restoreLocalStorage(data);
+      return { success: true };
     }
 
     default:
