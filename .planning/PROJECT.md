@@ -8,6 +8,17 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 
 **Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA** — Les sélecteurs sémantiques ciblent l'intention ("le bouton de validation") plutôt que la structure DOM fragile (`#btn-submit-x7`), rendant les scripts maintenables quand l'UI évolue.
 
+## Current Milestone: v1.8 Session Persistence & Vault UX
+
+**Goal:** Ajouter la persistance de session entre exécutions (extension + CLI) et améliorer l'UX du vault CLI avec un cache de déverrouillage.
+
+**Target features:**
+- Session snapshot capture/restore (cookies + localStorage) dans l'extension via chrome.cookies API
+- Session persistence CLI via Playwright storageState natif
+- Déclaration BSL `auth.session_persistence` (capture, ttl, on_invalid, encryption)
+- Validation de session avec TTL configurable et fallback automatique
+- Vault unlock cache CLI — fichier temp chiffré avec TTL 15min par défaut
+
 ## Current State (v1.7 Shipped)
 
 **Shipped:** 2026-02-15
@@ -45,7 +56,7 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 - **LLM micro-prompt bridge:** `--micro-prompts` flag for cascade stages 3-5 via page.exposeFunction
 - **Batch test runner:** `browserlet test <dir>` with --workers N, --bail, aggregated reporting
 - **AI auto-repair:** `--auto-repair` and `--interactive` flags for LLM-guided hint repair on failure
-- **Vault CLI:** `vault init`, `vault add`, `vault list`, `vault import-from-extension` commands
+- **Vault CLI:** `vault init`, `vault add`, `vault list`, `vault del`, `vault reset`, `vault import-from-extension` commands
 - **Monorepo:** @browserlet/core shared package (types, parser, prompts, substitution)
 
 ## Requirements
@@ -118,19 +129,23 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 - ✓ Vault management — init, add, list, import-from-extension commands
 - ✓ Real-world E2E hardening — Unicode stripping, type fallback, resolver improvements
 
-### Active (v1.8+)
+### Active (v1.8)
 
-- [ ] Script version control
-- [ ] Intent semantic resolution documentation
-- [ ] Scheduling (exécution programmée)
+- [ ] Session snapshot capture/restore — extension (chrome.cookies + localStorage)
+- [ ] Session snapshot capture/restore — CLI (Playwright storageState)
+- [ ] BSL `auth.session_persistence` declaration — capture, ttl, on_invalid, encryption
+- [ ] Session validation with TTL and semantic indicators
+- [ ] Fallback behavior on expired/invalid session (login, prompt, abort)
+- [ ] Vault unlock cache CLI — encrypted temp file, 15min TTL default, configurable
 
-### Future (v1.8+)
+### Future (v1.9+)
 
 - [ ] Script version control
 - [ ] Scheduling (exécution programmée)
 - [ ] JUnit XML / HTML report for CI/CD
 - [ ] `--last-failed` flag for re-running failures
 - [ ] Screenshot diff on repair
+- [ ] Intent semantic resolution documentation
 
 ### Out of Scope
 
@@ -208,5 +223,9 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 | normalizeText strips invisible Unicode | Fixes LTR mark / zero-width char comparison failures | ✓ Good |
 | class_contains as scoring signal only | Not hard filter in gatherCompetitors fallback | ✓ Good |
 
+| Playwright storageState for CLI sessions | Native JSON format, proven, no custom serialization | — Pending |
+| Encrypted temp file for vault cache | Secure (0600 perms), TTL-based, no daemon needed | — Pending |
+| chrome.cookies API for extension snapshots | Native MV3 API, no headless browser needed | — Pending |
+
 ---
-*Last updated: 2026-02-15 after v1.7 milestone completion*
+*Last updated: 2026-02-16 after v1.8 milestone start*

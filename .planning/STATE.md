@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-15)
+See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** v1.7 shipped — planning next milestone
+**Current focus:** v1.8 Session Persistence & Vault UX
 
 ## Current Position
 
-Milestone: v1.7 CLI Completion & Batch Testing
-Phase: 31 of 31 (All phases complete)
-Status: v1.7 SHIPPED
-Last activity: 2026-02-16 - Completed quick task 11: Ajouter un délai de 2s avant le screenshot
+Milestone: v1.8 Session Persistence & Vault UX
+Phase: Not started (defining requirements)
+Status: Defining requirements
+Last activity: 2026-02-16 — Milestone v1.8 started
 
-Progress: [██████████████████████████████] 100% (8 milestones shipped, v1.0-v1.7)
+Progress: [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -23,14 +23,6 @@ Progress: [███████████████████████
 - Total phases completed: 31
 - 8 milestones shipped
 - Quick tasks completed: 2 (quick-10, quick-11)
-
-**v1.7 Final Stats:**
-- Phases: 5 (27-31)
-- Plans: 9 total
-- Requirements: 21 — ALL SATISFIED
-- Files: 59 changed, +5,924 / -239 lines
-- Commits: 38
-- Timeline: 2 days (2026-02-14 → 2026-02-15)
 
 ## Accumulated Context
 
@@ -44,7 +36,7 @@ None.
 
 ### Blockers/Concerns
 
-None — milestone complete.
+None.
 
 ### Quick Tasks Completed
 
@@ -56,9 +48,9 @@ None — milestone complete.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed quick-11 (2-second pre-screenshot delay)
-Resume with: `/gsd:new-milestone` to start v1.8
+Stopped at: Milestone v1.8 initialized, defining requirements
+Resume with: Continue requirements definition
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-16 after quick task 11 completion*
+*Last updated: 2026-02-16 after v1.8 milestone start*
