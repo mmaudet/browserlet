@@ -261,3 +261,107 @@ export async function deleteSession(sessionId: string): Promise<boolean> {
     throw error;
   }
 }
+
+// --- Helper Functions ---
+
+/**
+ * Generate a unique session ID.
+ *
+ * Format: "session-{timestamp}-{randomHex}" where timestamp is Date.now()
+ * and randomHex is 4 random bytes encoded as hex (8 characters).
+ *
+ * Example: "session-1708112345678-a3f2c1d4"
+ *
+ * @returns Unique session ID string
+ */
+export function generateSessionId(): string {
+  const timestamp = Date.now();
+  const random = randomBytes(4).toString('hex');
+  return `session-${timestamp}-${random}`;
+}
+
+/**
+ * Clean up expired sessions from disk.
+ *
+ * Lists all sessions and deletes any with an expiresAt timestamp in the past.
+ * Runs sequentially (acceptable for small session counts).
+ * Failures are silently ignored (graceful cleanup).
+ *
+ * Intended to be called during CLI startup for housekeeping.
+ */
+export async function cleanupExpiredSessions(): Promise<void> {
+  try {
+    const sessions = await listSessions();
+    const now = Date.now();
+
+    for (const session of sessions) {
+      if (session.expiresAt && session.expiresAt < now) {
+        await deleteSession(session.id).catch(() => {});
+      }
+    }
+  } catch {
+    // Graceful failure - expired sessions will be cleaned up on next run
+  }
+}
+
+/**
+ * Validate protocol compatibility between a saved session URL and a target URL.
+ *
+ * Protocol rules:
+ * - Same protocol: valid, no warning
+ * - HTTPS session -> HTTP target: invalid (security risk, cookies may leak)
+ * - HTTP session -> HTTPS target: valid with warning (cookies may not persist)
+ * - Invalid URLs: invalid with error message
+ *
+ * @param sessionUrl - URL the session was originally captured from
+ * @param targetUrl - URL the session will be restored to
+ * @returns Validation result with optional warning message
+ */
+export function validateProtocolMatch(
+  sessionUrl: string,
+  targetUrl: string
+): { valid: boolean; warning?: string } {
+  let sessionProtocol: string;
+  let targetProtocol: string;
+
+  try {
+    sessionProtocol = new URL(sessionUrl).protocol;
+  } catch {
+    return { valid: false, warning: 'Invalid session URL format' };
+  }
+
+  try {
+    targetProtocol = new URL(targetUrl).protocol;
+  } catch {
+    return { valid: false, warning: 'Invalid target URL format' };
+  }
+
+  // Same protocol - ideal case
+  if (sessionProtocol === targetProtocol) {
+    return { valid: true };
+  }
+
+  // HTTPS session -> HTTP target: security risk
+  if (sessionProtocol === 'https:' && targetProtocol === 'http:') {
+    return {
+      valid: false,
+      warning:
+        'Cannot restore HTTPS session to HTTP URL (security risk)',
+    };
+  }
+
+  // HTTP session -> HTTPS target: permissible but cookies may not persist
+  if (sessionProtocol === 'http:' && targetProtocol === 'https:') {
+    return {
+      valid: true,
+      warning:
+        'Restoring HTTP session to HTTPS URL (cookies may not persist)',
+    };
+  }
+
+  // Other protocol mismatch (e.g., ftp, file)
+  return {
+    valid: false,
+    warning: `Protocol mismatch: session is ${sessionProtocol} but target is ${targetProtocol}`,
+  };
+}
