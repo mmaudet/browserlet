@@ -33,8 +33,8 @@
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 32: Vault Unlock Cache** - CLI caches derived key for 15 minutes to avoid repeated master password prompts (completed 2026-02-16)
-- [ ] **Phase 33: Extension Session Persistence** - Capture/restore cookies and localStorage via chrome.cookies API and content scripts
-- [ ] **Phase 34: CLI Session Persistence** - Capture/restore session state via Playwright storageState with encrypted file storage
+- [x] **Phase 33: Extension Session Persistence** - Capture/restore cookies and localStorage via chrome.cookies API and content scripts (completed 2026-02-16)
+- [x] **Phase 34: CLI Session Persistence** - Capture/restore session state via Playwright storageState with encrypted file storage (completed 2026-02-16)
 - [ ] **Phase 35: BSL Integration & Validation** - session_persistence BSL declaration, parser validation, auto-capture after successful runs
 
 ## Phase Details
@@ -96,11 +96,11 @@ Plans:
   2. User runs script with session_persistence enabled, and session snapshot is automatically captured after successful execution (no manual command)
   3. User runs same script second time, and session is automatically restored before first step (no manual --session-restore flag)
   4. User runs script with session_persistence disabled, and NO session snapshot is captured or restored
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 35-01: TBD
-- [ ] 35-02: TBD
+- [ ] 035-01-PLAN.md — Parser extension: SessionPersistenceConfig type, parseSessionPersistence validation, tests, extension import bridge
+- [ ] 035-02-PLAN.md — CLI integration: auto-capture/restore from parsed BSL session_persistence metadata
 
 ## Progress
 
@@ -110,8 +110,8 @@ Phases execute in numeric order: 32 → 33 → 34 → 35
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 32. Vault Unlock Cache | 2/2 | Complete | 2026-02-16 |
-| 33. Extension Session Persistence | 0/0 | Not started | - |
-| 34. CLI Session Persistence | 0/0 | Not started | - |
+| 33. Extension Session Persistence | 3/3 | Complete (human-verify pending) | 2026-02-16 |
+| 34. CLI Session Persistence | 2/2 | Complete | 2026-02-16 |
 | 35. BSL Integration & Validation | 0/0 | Not started | - |
 
 ---
