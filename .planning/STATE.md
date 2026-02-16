@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 ## Current Position
 
 Milestone: v1.8 Session Persistence & Vault UX
-Phase: 33+34 of 35 (Extension + CLI Session Persistence — parallel)
-Plan: 033-03 tasks 1-2 complete (task 3 human-verify pending)
-Status: Executing phase 033. Plan 03 tasks 1-2 done, awaiting human verification.
-Last activity: 2026-02-16 — 033-03 tasks 1-2 complete (session UI integration)
+Phase: 35 of 35 (BSL Integration & Validation)
+Plan: 035-01 complete. Additional plans TBD.
+Status: Phase 35 in progress. BSL parser integration complete.
+Last activity: 2026-02-16 — Phase 35 Plan 01 executed (BSL session_persistence parser)
 
-Progress: [█████████████░░░░░░░░░░░░░░░░░░] 45%
+Progress: [█████████████████████░░░░░░░░░░] 68%
 
 ## Performance Metrics
 
@@ -26,16 +26,16 @@ Progress: [█████████████░░░░░░░░░░
 - Quick tasks completed: 2 (quick-10, quick-11)
 
 **v1.8 Progress:**
-- Total plans completed: 7
-- Total phases completed: 1 (Phase 32)
+- Total plans completed: 8 (032×2 + 033×3 + 034×2 + 035×1)
+- Total phases completed: 3 (Phase 32, 33, 34)
 - Coverage: 12/12 requirements mapped (100%)
 
-**Latest Execution (033-03):**
-- Duration: 230 seconds
-- Tasks: 2/2 completed (Task 3 human-verify pending)
+**Latest Execution (035-01):**
+- Duration: 181 seconds
+- Tasks: 2/2 completed
 - Files created: 0
-- Files modified: 5 (types.ts, execution.ts, ScriptList.tsx, en/messages.json, fr/messages.json)
-- Commits: 2 (3a03054, aac1050)
+- Files modified: 5 (bsl.ts, index.ts, stepParser.ts, stepParser.test.ts, parser.ts)
+- Commits: 2 (bac111a, 3528810)
 
 ## Accumulated Context
 
@@ -69,6 +69,10 @@ Recent decisions for v1.8:
 - Session integration in execution.ts store (ScriptExecutor.tsx does not exist) (033-03)
 - Module-level signal for session status map for cross-component reactivity (033-03)
 - Non-fatal try/catch for session restore/capture to never break execution (033-03)
+- SessionPersistenceConfig validated at parse-time with enabled boolean required (035-01)
+- Extension Script.sessionPersistence uses different format than ParsedScript (035-01)
+- Import bridge maps enabled directly but not max_age to ttl (extension uses default) (035-01)
+- Syntactic validation only for max_age string format in parser (no ms library call) (035-01)
 
 ### Pending Todos
 
@@ -88,9 +92,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 033-03-PLAN.md tasks 1-2 (session UI integration). Task 3 human-verify pending.
-Resume with: Human verification of 033-03 Task 3, then remaining plans
+Stopped at: Completed 035-01-PLAN.md (BSL session_persistence parser integration)
+Resume with: Continue Phase 35 if additional BSL integration plans exist, or move to next phase/milestone
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-16 after completing 033-03-PLAN.md tasks 1-2*
+*Last updated: 2026-02-16 after completing 035-01-PLAN.md tasks 1-2*
