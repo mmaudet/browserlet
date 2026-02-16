@@ -11,7 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import type { Page } from 'playwright';
+import type { Page, BrowserContext } from 'playwright';
 import pc from 'picocolors';
 import { parseSteps } from '@browserlet/core/parser';
 import {
@@ -35,6 +35,7 @@ import type { RepairContext, RepairSuggestion } from './repair/types.js';
 import { applyRepair } from './repair/repairApplier.js';
 import { RepairHistoryLogger } from './repair/repairHistory.js';
 import { captureDOMContext } from './repair/domCapture.js';
+import { saveSessionSnapshot, generateSessionId, type PlaywrightStorageState } from './session/storage.js';
 
 /** Actions that do not require selector resolution */
 const NO_SELECTOR_ACTIONS = new Set(['navigate', 'screenshot']);
@@ -57,6 +58,7 @@ export interface BSLRunnerOptions {
   };
   autoRepair?: boolean;    // --auto-repair: apply repairs >= 0.70 confidence automatically
   interactive?: boolean;   // --interactive: prompt user to approve each repair
+  sessionId?: string;      // If provided, save session snapshot after successful run
 }
 
 /**
@@ -69,10 +71,12 @@ export interface BSLRunnerOptions {
  */
 export class BSLRunner {
   private page: Page;
+  private context: BrowserContext;
   private options: BSLRunnerOptions;
 
-  constructor(page: Page, options: BSLRunnerOptions) {
+  constructor(page: Page, context: BrowserContext, options: BSLRunnerOptions) {
     this.page = page;
+    this.context = context;
     this.options = options;
   }
 
@@ -364,6 +368,21 @@ export class BSLRunner {
 
     // All steps succeeded
     const totalDuration = performance.now() - scriptStartTime;
+
+    // Capture session state if sessionId provided (only on success)
+    if (this.options.sessionId) {
+      try {
+        const currentUrl = this.page.url();
+        const state = await this.context.storageState() as PlaywrightStorageState;
+        await saveSessionSnapshot(this.options.sessionId, currentUrl, state);
+        console.log(`[Session] Captured session: ${this.options.sessionId}`);
+      } catch (error: unknown) {
+        // Session capture failure is non-fatal (don't fail the script)
+        const msg = error instanceof Error ? error.message : String(error);
+        console.warn(`[Session] Failed to capture session: ${msg}`);
+      }
+    }
+
     reporter.scriptPass(totalDuration);
     return { exitCode: 0 };
   }
