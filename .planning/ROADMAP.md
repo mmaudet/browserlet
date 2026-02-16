@@ -49,11 +49,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User runs `browserlet run` after 15 minutes and IS prompted for master password again
   4. User runs `browserlet vault lock` and immediately triggered master password prompt on next vault access
   5. Vault cache file has 0600 permissions (owner read/write only) preventing local privilege escalation
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 32-01: TBD
-- [ ] 32-02: TBD
+- [ ] 032-01-PLAN.md -- Vault cache module with encrypted key storage and device key infrastructure
+- [ ] 032-02-PLAN.md -- CLI integration (run/test cache-aware unlock, vault lock command, startup cleanup)
 
 ### Phase 33: Extension Session Persistence
 **Goal**: Extension users capture session cookies and localStorage after successful authentication, restore them before script execution to skip re-authentication
