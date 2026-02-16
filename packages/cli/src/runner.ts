@@ -103,6 +103,13 @@ export class BSLRunner {
       .replace(/[^a-zA-Z0-9_-]/g, '_')
       .replace(/_+/g, '_');
 
+    // Auto-enable session capture from BSL session_persistence declaration
+    if (script.sessionPersistence?.enabled && !this.options.sessionId) {
+      const snapshotId = script.sessionPersistence.snapshot_id || scriptBaseName;
+      this.options.sessionId = snapshotId;
+      console.log(`[Session] Auto-capture enabled via BSL session_persistence (id: ${snapshotId})`);
+    }
+
     // 4. Install LLM bridge if micro-prompts enabled
     if (this.options.microPrompts) {
       if (!this.options.llmConfig) {
