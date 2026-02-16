@@ -1013,5 +1013,22 @@
   "takeScreenshotTitle": {
     "message": "Ajouter une action de capture au script",
     "description": "Info-bulle du bouton de capture"
+  },
+
+  "sessionPersistenceEnable": {
+    "message": "Memoriser la connexion (persistance de session)",
+    "description": "Label case a cocher pour activer la persistance de session par script"
+  },
+  "sessionActive": {
+    "message": "Active",
+    "description": "Badge quand une session valide existe"
+  },
+  "sessionExpired": {
+    "message": "Expiree",
+    "description": "Badge quand la session a expire"
+  },
+  "sessionNone": {
+    "message": "Aucune",
+    "description": "Badge quand aucune session n'existe"
   }
 }

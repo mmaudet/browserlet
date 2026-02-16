@@ -1,4 +1,4 @@
-import { useSignal } from '@preact/signals';
+import { useSignal, signal } from '@preact/signals';
 import { Type, Pencil, Trash2, Zap, History, Play, CheckCircle, XCircle, StopCircle, Loader2, X, Plus, Database, Camera, ChevronDown, ChevronRight } from 'lucide-preact';
 import type { Script, ExecutionRecord, ScreenshotRecord } from '../../../utils/types';
 import { filteredScripts, searchTerm, isLoading, selectScript, selectedScriptId, updateScriptInState } from '../stores/scripts';
@@ -14,6 +14,49 @@ import { ExtractedDataModal } from './ExtractedDataModal';
 import { ScreenshotGallery } from './ScreenshotGallery';
 import { exportToJSON, exportToCSV } from '../../../utils/export/dataExport';
 
+// Session status tracking per script (Phase 33)
+interface SessionStatusInfo {
+  exists: boolean;
+  expired: boolean;
+  capturedAt?: number;
+}
+const sessionStatusMap = signal<Map<string, SessionStatusInfo>>(new Map());
+
+async function updateSessionStatus(scriptId: string): Promise<void> {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tabs[0]?.url) return;
+
+    const domain = new URL(tabs[0].url).hostname;
+    const response = await chrome.runtime.sendMessage({
+      type: 'GET_SESSION_STATUS',
+      payload: { scriptId, domain }
+    });
+
+    if (response?.success) {
+      const newMap = new Map(sessionStatusMap.value);
+      newMap.set(scriptId, response.data as SessionStatusInfo);
+      sessionStatusMap.value = newMap;
+    }
+  } catch (err) {
+    console.warn('[Browserlet] Failed to fetch session status:', err);
+  }
+}
+
+async function handleToggleSessionPersistence(script: Script, enabled: boolean): Promise<void> {
+  const updated = await saveScript({
+    ...script,
+    sessionPersistence: {
+      enabled,
+      ttl: script.sessionPersistence?.ttl
+    }
+  });
+  updateScriptInState(updated);
+  if (enabled) {
+    updateSessionStatus(script.id);
+  }
+}
+
 interface ScriptListProps {
   onScriptSelect?: (script: Script) => void;
   onNewScript?: () => void;
@@ -26,6 +69,7 @@ interface ScriptItemProps {
   isRunning: boolean;
   runStatus: 'idle' | 'running' | 'completed' | 'failed' | 'stopped' | 'waiting_auth';
   progress: number;
+  sessionStatus: SessionStatusInfo | undefined;
   onEdit: () => void;
   onRun: () => void;
   onStop: () => void;
@@ -33,9 +77,10 @@ interface ScriptItemProps {
   onViewHistory: () => void;
   onDelete: () => void;
   onRename: () => void;
+  onToggleSession: (enabled: boolean) => void;
 }
 
-function ScriptItem({ script, isSelected, triggerCount, isRunning, runStatus, progress, onEdit, onRun, onStop, onConfigureTriggers, onViewHistory, onDelete, onRename }: ScriptItemProps) {
+function ScriptItem({ script, isSelected, triggerCount, isRunning, runStatus, progress, sessionStatus, onEdit, onRun, onStop, onConfigureTriggers, onViewHistory, onDelete, onRename, onToggleSession }: ScriptItemProps) {
   return (
     <div
       style={{
@@ -199,6 +244,38 @@ function ScriptItem({ script, isSelected, triggerCount, isRunning, runStatus, pr
           ))}
         </div>
       )}
+      {/* Session persistence toggle and status badge */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+        <label style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={script.sessionPersistence?.enabled || false}
+            onChange={(e: Event) => {
+              e.stopPropagation();
+              onToggleSession((e.target as HTMLInputElement).checked);
+            }}
+            style={{ margin: 0 }}
+          />
+          {chrome.i18n.getMessage('sessionPersistenceEnable') || 'Remember login'}
+        </label>
+        {script.sessionPersistence?.enabled && sessionStatus && (
+          <span style={{
+            fontSize: '11px',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            backgroundColor: sessionStatus.exists
+              ? (sessionStatus.expired ? '#ff9500' : '#4caf50')
+              : '#ccc',
+            color: 'white'
+          }}>
+            {sessionStatus.exists
+              ? (sessionStatus.expired
+                ? (chrome.i18n.getMessage('sessionExpired') || 'Expired')
+                : (chrome.i18n.getMessage('sessionActive') || 'Active'))
+              : (chrome.i18n.getMessage('sessionNone') || 'None')}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -456,6 +533,17 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
   const showTriggerConfig = useSignal<string | null>(null);
   const showHistoryModal = useSignal<{ scriptId: string; scriptName: string } | null>(null);
   const showDataModal = useSignal<{ scriptName: string; results: Record<string, unknown> } | null>(null);
+  const sessionStatusLoaded = useSignal(false);
+
+  // Fetch session status for scripts with session persistence enabled (on first render)
+  if (!sessionStatusLoaded.value && !isLoading.value && filteredScripts.value.length > 0) {
+    sessionStatusLoaded.value = true;
+    filteredScripts.value.forEach(script => {
+      if (script.sessionPersistence?.enabled) {
+        updateSessionStatus(script.id);
+      }
+    });
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -540,6 +628,7 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
                   isRunning={scriptIsRunning}
                   runStatus={scriptIsRunning ? executionStatus.value : 'idle'}
                   progress={scriptIsRunning ? progressPercent.value : 0}
+                  sessionStatus={sessionStatusMap.value.get(script.id)}
                   onEdit={() => {
                     selectScript(script.id);
                     onScriptSelect?.(script);
@@ -560,6 +649,7 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
                   }}
                   onDelete={() => handleDeleteScript(script)}
                   onRename={() => handleRenameScript(script)}
+                  onToggleSession={(enabled) => handleToggleSessionPersistence(script, enabled)}
                 />
               );
             })}

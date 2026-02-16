@@ -1013,5 +1013,22 @@
   "takeScreenshotTitle": {
     "message": "Add screenshot action to script",
     "description": "Tooltip for screenshot button"
+  },
+
+  "sessionPersistenceEnable": {
+    "message": "Remember login (session persistence)",
+    "description": "Checkbox label to enable session persistence per script"
+  },
+  "sessionActive": {
+    "message": "Active",
+    "description": "Badge label when a valid session exists"
+  },
+  "sessionExpired": {
+    "message": "Expired",
+    "description": "Badge label when session has expired"
+  },
+  "sessionNone": {
+    "message": "None",
+    "description": "Badge label when no session exists"
   }
 }
