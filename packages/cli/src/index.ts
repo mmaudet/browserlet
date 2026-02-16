@@ -731,6 +731,23 @@ vault
     console.log(pc.green('Vault deleted. Run `browserlet vault init` to create a new one.'));
   });
 
+vault
+  .command('lock')
+  .description('Clear cached vault key (force re-authentication on next command)')
+  .action(async () => {
+    try {
+      await clearCache();
+      console.log(pc.green('Vault cache cleared. Next vault access will require master password.'));
+    } catch (err: any) {
+      if (err.code === 'ENOENT') {
+        console.log(pc.dim('Vault was already locked (no active cache)'));
+      } else {
+        console.error(pc.red(`Failed to clear vault cache: ${err.message}`));
+        process.exit(2);
+      }
+    }
+  });
+
 // Cleanup expired vault cache before processing commands
 cleanupExpiredCache();
 
