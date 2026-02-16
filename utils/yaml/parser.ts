@@ -40,6 +40,17 @@ export function parseScript(yamlContent: string): ParseResult {
       tags: Array.isArray(obj.tags) ? obj.tags.filter((t): t is string => typeof t === 'string') : undefined,
     };
 
+    // Extract session_persistence if present (maps to Script.sessionPersistence)
+    if (obj.session_persistence && typeof obj.session_persistence === 'object') {
+      const sp = obj.session_persistence as Record<string, unknown>;
+      if (typeof sp.enabled === 'boolean') {
+        script.sessionPersistence = {
+          enabled: sp.enabled,
+          ...(typeof sp.ttl === 'number' ? { ttl: sp.ttl } : {}),
+        };
+      }
+    }
+
     return { success: true, data: script };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown parsing error';

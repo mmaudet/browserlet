@@ -107,6 +107,73 @@ steps:
       expect(result.session_check?.url_patterns).toEqual(['/dashboard']);
     });
 
+    it('should parse session_persistence with all fields', () => {
+      const yaml = `
+name: Test Script
+session_persistence:
+  enabled: true
+  max_age: "72h"
+  snapshot_id: "myapp"
+steps:
+  - action: navigate
+    value: https://example.com
+`;
+
+      const result = parseSteps(yaml);
+
+      expect(result.sessionPersistence).toBeDefined();
+      expect(result.sessionPersistence).toEqual({
+        enabled: true,
+        max_age: '72h',
+        snapshot_id: 'myapp',
+      });
+    });
+
+    it('should parse session_persistence with enabled only', () => {
+      const yaml = `
+name: Test Script
+session_persistence:
+  enabled: true
+steps:
+  - action: navigate
+    value: https://example.com
+`;
+
+      const result = parseSteps(yaml);
+
+      expect(result.sessionPersistence).toBeDefined();
+      expect(result.sessionPersistence).toEqual({ enabled: true });
+    });
+
+    it('should parse session_persistence with enabled false', () => {
+      const yaml = `
+name: Test Script
+session_persistence:
+  enabled: false
+steps:
+  - action: navigate
+    value: https://example.com
+`;
+
+      const result = parseSteps(yaml);
+
+      expect(result.sessionPersistence).toBeDefined();
+      expect(result.sessionPersistence).toEqual({ enabled: false });
+    });
+
+    it('should return undefined sessionPersistence when field absent', () => {
+      const yaml = `
+name: Test Script
+steps:
+  - action: navigate
+    value: https://example.com
+`;
+
+      const result = parseSteps(yaml);
+
+      expect(result.sessionPersistence).toBeUndefined();
+    });
+
     it('should parse all valid action types', () => {
       const yaml = `
 name: Action Test
@@ -339,6 +406,53 @@ steps:
 
       expect(() => parseSteps(yaml)).toThrow(
         'Invalid BSL script: expected an object'
+      );
+    });
+
+    it('should throw error for non-boolean enabled in session_persistence', () => {
+      const yaml = `
+name: Test Script
+session_persistence:
+  enabled: "yes"
+steps:
+  - action: navigate
+    value: https://example.com
+`;
+
+      expect(() => parseSteps(yaml)).toThrow(
+        'session_persistence.enabled must be a boolean'
+      );
+    });
+
+    it('should throw error for non-string max_age in session_persistence', () => {
+      const yaml = `
+name: Test Script
+session_persistence:
+  enabled: true
+  max_age: 72
+steps:
+  - action: navigate
+    value: https://example.com
+`;
+
+      expect(() => parseSteps(yaml)).toThrow(
+        'session_persistence.max_age must be a non-empty string'
+      );
+    });
+
+    it('should throw error for empty snapshot_id in session_persistence', () => {
+      const yaml = `
+name: Test Script
+session_persistence:
+  enabled: true
+  snapshot_id: ""
+steps:
+  - action: navigate
+    value: https://example.com
+`;
+
+      expect(() => parseSteps(yaml)).toThrow(
+        'session_persistence.snapshot_id must be a non-empty string'
       );
     });
   });
