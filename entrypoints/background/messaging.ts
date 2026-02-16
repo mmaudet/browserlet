@@ -10,6 +10,7 @@ import type { ContextState, TriggerConfig } from '../../utils/triggers/types';
 import { getAllTriggers, saveTrigger, deleteTrigger, setSiteOverride } from '../../utils/storage/triggers';
 import { handlePasswordMessage } from './passwords';
 import { saveScreenshot, getScreenshots, deleteScreenshot } from '../../utils/storage/screenshots';
+import { captureSession, getSessionStatus, clearSession } from './sessions';
 import { restoreSession } from './sessionRestore';
 
 // Storage key for persisted execution state
@@ -350,7 +351,52 @@ async function processMessage(
       return { success: true };
     }
 
-    // Session restoration (Phase 33)
+    // Session persistence messages (Phase 33)
+    case 'CAPTURE_SESSION': {
+      const { scriptId, tabId } = message.payload as {
+        scriptId: string;
+        tabId: number;
+      };
+      try {
+        await captureSession(scriptId, tabId);
+        return { success: true };
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Session capture failed';
+        console.error('[Browserlet BG] CAPTURE_SESSION error:', msg);
+        return { success: false, error: msg };
+      }
+    }
+
+    case 'GET_SESSION_STATUS': {
+      const { scriptId, domain } = message.payload as {
+        scriptId: string;
+        domain: string;
+      };
+      try {
+        const status = await getSessionStatus(scriptId, domain);
+        return { success: true, data: status };
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Session status check failed';
+        console.error('[Browserlet BG] GET_SESSION_STATUS error:', msg);
+        return { success: false, error: msg };
+      }
+    }
+
+    case 'CLEAR_SESSION': {
+      const { scriptId, domain } = message.payload as {
+        scriptId: string;
+        domain: string;
+      };
+      try {
+        await clearSession(scriptId, domain);
+        return { success: true };
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Session clear failed';
+        console.error('[Browserlet BG] CLEAR_SESSION error:', msg);
+        return { success: false, error: msg };
+      }
+    }
+
     case 'RESTORE_SESSION': {
       const { scriptId, domain, tabId } = message.payload as {
         scriptId: string;

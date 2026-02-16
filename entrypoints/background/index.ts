@@ -4,6 +4,7 @@ import { initializeState } from './storage';
 import { initializeTriggerEngine } from './triggers';
 import { initializePasswordInfrastructure } from './passwords';
 import { initializeLLMFromStorage } from './llm';
+import { cleanupExpiredSessions } from './sessions';
 import { isFirefox } from '../../utils/browser-detect';
 import { storage } from '../../utils/storage/browserCompat';
 
@@ -72,5 +73,10 @@ export default defineBackground(() => {
   // Initialize LLM service from stored config (for BSL generation, etc.)
   initializeLLMFromStorage().catch(error => {
     console.error('[Browserlet] Failed to initialize LLM from storage:', error);
+  });
+
+  // Cleanup expired session snapshots on startup
+  cleanupExpiredSessions().catch(error => {
+    console.error('[Browserlet] Failed to cleanup expired sessions:', error);
   });
 });
