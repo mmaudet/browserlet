@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 Milestone: v1.8 Session Persistence & Vault UX
 Phase: 33+34 of 35 (Extension + CLI Session Persistence — parallel)
-Plan: 034-02 complete
-Status: Phase 034 complete (CLI session persistence). Both plans done.
-Last activity: 2026-02-16 — 034-02 complete (CLI session integration)
+Plan: 033-03 tasks 1-2 complete (task 3 human-verify pending)
+Status: Executing phase 033. Plan 03 tasks 1-2 done, awaiting human verification.
+Last activity: 2026-02-16 — 033-03 tasks 1-2 complete (session UI integration)
 
-Progress: [████████████░░░░░░░░░░░░░░░░░░░] 40%
+Progress: [█████████████░░░░░░░░░░░░░░░░░░] 45%
 
 ## Performance Metrics
 
@@ -26,16 +26,16 @@ Progress: [████████████░░░░░░░░░░░
 - Quick tasks completed: 2 (quick-10, quick-11)
 
 **v1.8 Progress:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Total phases completed: 1 (Phase 32)
 - Coverage: 12/12 requirements mapped (100%)
 
-**Latest Execution (034-02):**
-- Duration: 187 seconds
-- Tasks: 3/3 completed
+**Latest Execution (033-03):**
+- Duration: 230 seconds
+- Tasks: 2/2 completed (Task 3 human-verify pending)
 - Files created: 0
-- Files modified: 4 (runner.ts, index.ts, batchRunner.ts, storage.ts)
-- Commits: 2 (bbada90, 46e321b)
+- Files modified: 5 (types.ts, execution.ts, ScriptList.tsx, en/messages.json, fr/messages.json)
+- Commits: 2 (3a03054, aac1050)
 
 ## Accumulated Context
 
@@ -66,6 +66,9 @@ Recent decisions for v1.8:
 - Auto-generate sessionId for all runs for implicit capture (034-02)
 - No session capture when restoring (avoid overwriting source session) (034-02)
 - Added loadSessionWithMeta helper for URL access during protocol validation (034-02)
+- Session integration in execution.ts store (ScriptExecutor.tsx does not exist) (033-03)
+- Module-level signal for session status map for cross-component reactivity (033-03)
+- Non-fatal try/catch for session restore/capture to never break execution (033-03)
 
 ### Pending Todos
 
@@ -85,9 +88,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 034-02-PLAN.md (CLI session integration)
-Resume with: Execute remaining plans in phases 033 or 035
+Stopped at: Completed 033-03-PLAN.md tasks 1-2 (session UI integration). Task 3 human-verify pending.
+Resume with: Human verification of 033-03 Task 3, then remaining plans
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-16 after completing 034-02-PLAN.md*
+*Last updated: 2026-02-16 after completing 033-03-PLAN.md tasks 1-2*
