@@ -62,6 +62,30 @@ export async function startExecution(script: Script): Promise<void> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   console.log('[Browserlet] Active tab:', tab?.id, tab?.url);
   if (tab?.id) {
+    // Session restore: if session persistence is enabled, restore before playback
+    if (script.sessionPersistence?.enabled && tab.url) {
+      try {
+        const domain = new URL(tab.url).hostname;
+        console.log('[Browserlet] Restoring session for', domain);
+        const response = await chrome.runtime.sendMessage({
+          type: 'RESTORE_SESSION',
+          payload: {
+            scriptId: script.id,
+            domain,
+            tabId: tab.id
+          }
+        });
+        if (response?.success && response.data?.restored) {
+          console.log('[Browserlet] Session restored for', domain);
+        } else {
+          console.log('[Browserlet] No session to restore for', domain);
+        }
+      } catch (err) {
+        // Non-fatal: session restore failure should not block execution
+        console.warn('[Browserlet] Session restore failed (non-fatal):', err);
+      }
+    }
+
     try {
       console.log('[Browserlet] Sending EXECUTE_SCRIPT to tab', tab.id);
       await chrome.tabs.sendMessage(tab.id, {
@@ -106,12 +130,13 @@ export async function updateProgress(step: number, result?: unknown): Promise<vo
 // Complete execution
 export async function completeExecution(results?: unknown): Promise<void> {
   console.log('[Browserlet] completeExecution called with results:', results);
+  const script = currentScript.value;
   isExecuting.value = false;
   executionStatus.value = 'completed';
   currentStep.value = totalSteps.value;
 
   // Show completion modal
-  completedScriptName.value = currentScript.value?.name || null;
+  completedScriptName.value = script?.name || null;
   showCompletionModal.value = true;
 
   // Results from PlaybackManager are already a Record<string, unknown>
@@ -121,15 +146,36 @@ export async function completeExecution(results?: unknown): Promise<void> {
     executionResults.value = Array.isArray(results) ? results : [results];
   }
 
-  if (currentRecordId.value && currentScript.value) {
+  if (currentRecordId.value && script) {
     console.log('[Browserlet] Saving results to record:', { recordId: currentRecordId.value, results });
-    await updateExecutionRecord(currentScript.value.id, currentRecordId.value, {
+    await updateExecutionRecord(script.id, currentRecordId.value, {
       status: 'completed',
       completedAt: Date.now(),
       currentStep: totalSteps.value, // Update to final step count
       // Store results directly as object, not wrapped in array
       results: results as Record<string, unknown>
     });
+  }
+
+  // Session capture: if execution succeeded and session persistence enabled, capture session
+  if (script?.sessionPersistence?.enabled) {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id && tab.url) {
+        const domain = new URL(tab.url).hostname;
+        await chrome.runtime.sendMessage({
+          type: 'CAPTURE_SESSION',
+          payload: {
+            scriptId: script.id,
+            tabId: tab.id
+          }
+        });
+        console.log('[Browserlet] Session captured for', domain);
+      }
+    } catch (err) {
+      // Non-fatal: session capture failure should not affect execution result
+      console.warn('[Browserlet] Session capture failed (non-fatal):', err);
+    }
   }
 }
 

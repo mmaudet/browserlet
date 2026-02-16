@@ -106,6 +106,10 @@ export interface Script {
   content: string;               // YAML content (BSL script)
   createdAt: number;             // Timestamp
   updatedAt: number;             // Timestamp
+  sessionPersistence?: {         // Session persistence (Phase 33)
+    enabled: boolean;
+    ttl?: number;                // Optional TTL override in ms (default 1 hour)
+  };
 }
 
 // Execution history (STOR-05)
