@@ -241,6 +241,7 @@ export class PlaywrightExecutor {
     value: string | undefined,
     timeout: number,
   ): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 2000));
     const path = value || `screenshot-${Date.now()}.png`;
     await this.page.screenshot({ path, timeout });
   }
