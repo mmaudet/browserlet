@@ -9,10 +9,12 @@
  */
 
 import fs from 'node:fs';
+import path from 'node:path';
 import { unlink } from 'node:fs/promises';
 import { Command } from 'commander';
 import { chromium } from 'playwright';
 import pc from 'picocolors';
+import { parseSteps } from '@browserlet/core/parser';
 import { BSLRunner } from './runner.js';
 import { BatchRunner } from './batchRunner.js';
 import { TestReporter } from './testReporter.js';
@@ -159,12 +161,23 @@ program
       }
     }
 
-    // Handle --session-restore flag
+    // Parse script to check for session_persistence declaration
+    let parsedSessionPersistence: { enabled: boolean; snapshot_id?: string } | undefined;
+    try {
+      const yamlContent = fs.readFileSync(scriptPath, 'utf-8').replace(/[\u200B-\u200F\u2028-\u202F\uFEFF]/g, '');
+      const parsed = parseSteps(yamlContent);
+      parsedSessionPersistence = parsed.sessionPersistence;
+    } catch {
+      // Parse errors will be caught later in runner.run()
+    }
+
+    // Handle session restore/capture
     let sessionStorageState: import('./session/storage.js').PlaywrightStorageState | undefined;
     let sessionId: string | undefined;
-    if (options.sessionRestore) {
-      const snapshotData = await loadSessionWithMeta(options.sessionRestore);
 
+    if (options.sessionRestore) {
+      // Manual --session-restore takes precedence
+      const snapshotData = await loadSessionWithMeta(options.sessionRestore);
       if (!snapshotData) {
         console.error(pc.red(`Session not found: ${options.sessionRestore}`));
         console.error(pc.dim('Run script without --session-restore to create a new session.'));
@@ -191,8 +204,23 @@ program
       sessionStorageState = snapshotData.state;
       sessionId = options.sessionRestore;
       console.log(pc.green(`[Session] Restoring session from: ${snapshotData.url}`));
+    } else if (parsedSessionPersistence?.enabled) {
+      // Auto-restore from BSL session_persistence declaration
+      const scriptBase = path.basename(scriptPath, path.extname(scriptPath))
+        .replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
+      const snapshotId = parsedSessionPersistence.snapshot_id || scriptBase;
+
+      const snapshotData = await loadSessionWithMeta(snapshotId);
+      if (snapshotData) {
+        // Session exists - restore it
+        sessionStorageState = snapshotData.state;
+        console.log(pc.green(`[Session] Auto-restoring session: ${snapshotId} (from: ${snapshotData.url})`));
+      } else {
+        console.log(pc.dim(`[Session] No existing session for: ${snapshotId} (will capture after successful run)`));
+      }
+      sessionId = snapshotId;
     } else {
-      // Auto-generate session ID for capture on successful runs
+      // Default: generate random session ID for implicit capture
       sessionId = generateSessionId();
     }
 
