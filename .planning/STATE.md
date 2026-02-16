@@ -5,14 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** v1.8 Session Persistence & Vault UX
+**Current focus:** v1.8 Session Persistence & Vault UX - Phase 32 (Vault Unlock Cache)
 
 ## Current Position
 
 Milestone: v1.8 Session Persistence & Vault UX
-Phase: Not started (defining requirements)
-Status: Defining requirements
-Last activity: 2026-02-16 — Milestone v1.8 started
+Phase: 32 of 35 (Vault Unlock Cache)
+Plan: Ready to plan
+Status: Roadmap created, awaiting phase planning
+Last activity: 2026-02-16 — Roadmap created for v1.8 with 4 phases
 
 Progress: [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0%
 
@@ -24,11 +25,21 @@ Progress: [░░░░░░░░░░░░░░░░░░░░░░░
 - 8 milestones shipped
 - Quick tasks completed: 2 (quick-10, quick-11)
 
+**v1.8 Progress:**
+- Total plans completed: 0
+- Total phases completed: 0
+- Coverage: 12/12 requirements mapped (100%)
+
 ## Accumulated Context
 
 ### Decisions
 
 See PROJECT.md Key Decisions table for full list.
+
+Recent decisions for v1.8:
+- Playwright storageState for CLI sessions (native JSON format, proven)
+- Encrypted temp file for vault cache (secure 0600 perms, TTL-based, no daemon)
+- chrome.cookies API for extension snapshots (native MV3 API, no headless browser)
 
 ### Pending Todos
 
@@ -48,9 +59,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Milestone v1.8 initialized, defining requirements
-Resume with: Continue requirements definition
+Stopped at: ROADMAP.md and STATE.md created for v1.8
+Resume with: `/gsd:plan-phase 32`
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-16 after v1.8 milestone start*
+*Last updated: 2026-02-16 after v1.8 roadmap creation*
