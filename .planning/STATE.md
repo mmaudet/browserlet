@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** v1.8 Session Persistence & Vault UX - Phase 32 (Vault Unlock Cache)
+**Current focus:** v1.8 Session Persistence & Vault UX - Phases 33+34 (Extension + CLI Session Persistence)
 
 ## Current Position
 
 Milestone: v1.8 Session Persistence & Vault UX
-Phase: 32 of 35 (Vault Unlock Cache)
-Plan: 2 of 2 (032-02 completed - phase complete)
-Status: Phase 32 completed - vault cache fully integrated
-Last activity: 2026-02-16 — Completed 032-02-PLAN.md (vault cache CLI integration)
+Phase: 33+34 of 35 (Extension + CLI Session Persistence — parallel)
+Plan: Ready to plan
+Status: Phase 32 verified. Planning phases 33+34 in parallel.
+Last activity: 2026-02-16 — Phase 32 verified (6/6 must-haves)
 
-Progress: [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░] ~11%
+Progress: [████████░░░░░░░░░░░░░░░░░░░░░░░] 25%
 
 ## Performance Metrics
 

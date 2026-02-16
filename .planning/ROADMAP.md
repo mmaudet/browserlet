@@ -32,7 +32,7 @@
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 32: Vault Unlock Cache** - CLI caches derived key for 15 minutes to avoid repeated master password prompts
+- [x] **Phase 32: Vault Unlock Cache** - CLI caches derived key for 15 minutes to avoid repeated master password prompts (completed 2026-02-16)
 - [ ] **Phase 33: Extension Session Persistence** - Capture/restore cookies and localStorage via chrome.cookies API and content scripts
 - [ ] **Phase 34: CLI Session Persistence** - Capture/restore session state via Playwright storageState with encrypted file storage
 - [ ] **Phase 35: BSL Integration & Validation** - session_persistence BSL declaration, parser validation, auto-capture after successful runs
@@ -108,7 +108,7 @@ Phases execute in numeric order: 32 → 33 → 34 → 35
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 32. Vault Unlock Cache | 0/0 | Not started | - |
+| 32. Vault Unlock Cache | 2/2 | Complete | 2026-02-16 |
 | 33. Extension Session Persistence | 0/0 | Not started | - |
 | 34. CLI Session Persistence | 0/0 | Not started | - |
 | 35. BSL Integration & Validation | 0/0 | Not started | - |
