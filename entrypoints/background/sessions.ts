@@ -30,6 +30,7 @@ export interface CookieSnapshot {
 /** Full session snapshot before encryption */
 export interface SessionSnapshot {
   cookies: CookieSnapshot[];
+  localStorage: Record<string, string>; // Page localStorage key-value pairs
   capturedAt: number; // Unix timestamp in milliseconds
   ttl: number; // TTL in milliseconds
 }
@@ -123,9 +124,24 @@ export async function captureSession(
       expiresAt: cookie.expirationDate ?? null,
     }));
 
+    // Capture localStorage via content script
+    let localStorageData: Record<string, string> = {};
+    try {
+      const response = await chrome.tabs.sendMessage(tabId, {
+        type: 'CAPTURE_LOCALSTORAGE',
+      });
+      if (response?.success && response.data) {
+        localStorageData = response.data as Record<string, string>;
+      }
+    } catch (error) {
+      // Content script may not support localStorage capture yet - continue with cookies only
+      console.warn('[Browserlet] Could not capture localStorage:', error);
+    }
+
     // Create session snapshot
     const snapshot: SessionSnapshot = {
       cookies: cookieSnapshots,
+      localStorage: localStorageData,
       capturedAt: Date.now(),
       ttl: DEFAULT_TTL_MS,
     };

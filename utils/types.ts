@@ -58,7 +58,14 @@ export type MessageType =
   // Screenshot messages
   | 'CAPTURE_SCREENSHOT'          // Content -> Background: request viewport capture
   | 'GET_SCREENSHOTS'             // Sidepanel -> Background: fetch screenshots for script
-  | 'DELETE_SCREENSHOT';          // Sidepanel -> Background: delete single screenshot
+  | 'DELETE_SCREENSHOT'           // Sidepanel -> Background: delete single screenshot
+  // Session persistence messages (Phase 33)
+  | 'CAPTURE_SESSION'             // Content -> Background: capture cookies + localStorage snapshot
+  | 'GET_SESSION_STATUS'          // Sidepanel -> Background: check if session exists for script+domain
+  | 'CLEAR_SESSION'               // Sidepanel -> Background: remove session snapshot
+  | 'RESTORE_SESSION'             // Background: restore cookies + localStorage from snapshot
+  | 'CAPTURE_LOCALSTORAGE'        // Background -> Content: capture page localStorage
+  | 'RESTORE_LOCALSTORAGE';       // Background -> Content: restore page localStorage
 
 export interface Message {
   type: MessageType;

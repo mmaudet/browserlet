@@ -10,6 +10,7 @@ import type { ContextState, TriggerConfig } from '../../utils/triggers/types';
 import { getAllTriggers, saveTrigger, deleteTrigger, setSiteOverride } from '../../utils/storage/triggers';
 import { handlePasswordMessage } from './passwords';
 import { saveScreenshot, getScreenshots, deleteScreenshot } from '../../utils/storage/screenshots';
+import { restoreSession } from './sessionRestore';
 
 // Storage key for persisted execution state
 const EXECUTION_STATE_KEY = 'browserlet_execution_state';
@@ -347,6 +348,23 @@ async function processMessage(
       const { scriptId, screenshotId } = message.payload as { scriptId: string; screenshotId: string };
       await deleteScreenshot(scriptId, screenshotId);
       return { success: true };
+    }
+
+    // Session restoration (Phase 33)
+    case 'RESTORE_SESSION': {
+      const { scriptId, domain, tabId } = message.payload as {
+        scriptId: string;
+        domain: string;
+        tabId: number;
+      };
+      try {
+        const restored = await restoreSession(scriptId, domain, tabId);
+        return { success: true, data: { restored } };
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Session restoration failed';
+        console.error('[Browserlet BG] RESTORE_SESSION error:', msg);
+        return { success: false, error: msg };
+      }
     }
 
     default:
