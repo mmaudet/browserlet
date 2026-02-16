@@ -45,7 +45,7 @@ export default defineConfig({
     const isFirefox = browser === 'firefox';
 
     // Base permissions (common to all browsers)
-    const basePermissions = ['storage', 'unlimitedStorage', 'tabs', 'activeTab', 'notifications', 'alarms', 'idle'];
+    const basePermissions = ['storage', 'unlimitedStorage', 'tabs', 'activeTab', 'notifications', 'alarms', 'idle', 'cookies'];
 
     // Chrome-specific permissions
     const chromePermissions = [...basePermissions, 'scripting', 'sidePanel'];
