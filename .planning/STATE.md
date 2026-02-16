@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 Milestone: v1.8 Session Persistence & Vault UX
 Phase: 33+34 of 35 (Extension + CLI Session Persistence — parallel)
-Plan: 034-01 complete, 034-02 next
-Status: Executing phase 034 (CLI session persistence). Plan 01 complete.
-Last activity: 2026-02-16 — 034-01 complete (session storage module)
+Plan: 034-02 complete
+Status: Phase 034 complete (CLI session persistence). Both plans done.
+Last activity: 2026-02-16 — 034-02 complete (CLI session integration)
 
-Progress: [██████████░░░░░░░░░░░░░░░░░░░░░] 30%
+Progress: [████████████░░░░░░░░░░░░░░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -26,16 +26,16 @@ Progress: [██████████░░░░░░░░░░░░░
 - Quick tasks completed: 2 (quick-10, quick-11)
 
 **v1.8 Progress:**
-- Total plans completed: 5
+- Total plans completed: 6
 - Total phases completed: 1 (Phase 32)
 - Coverage: 12/12 requirements mapped (100%)
 
-**Latest Execution (033-01):**
-- Duration: 315 seconds
-- Tasks: 2/2 completed
-- Files created: 1 (sessions.ts)
-- Files modified: 4 (messaging.ts, index.ts, types.ts, wxt.config.ts)
-- Commits: 2 (57a5e41, 4971072)
+**Latest Execution (034-02):**
+- Duration: 187 seconds
+- Tasks: 3/3 completed
+- Files created: 0
+- Files modified: 4 (runner.ts, index.ts, batchRunner.ts, storage.ts)
+- Commits: 2 (bbada90, 46e321b)
 
 ## Accumulated Context
 
@@ -62,6 +62,10 @@ Recent decisions for v1.8:
 - cookies permission added to manifest for chrome.cookies.getAll access (033-01)
 - Non-fatal capture failures to avoid breaking script execution (033-01)
 - TTL metadata stored unencrypted alongside encrypted snapshot for efficient expiry checks (033-01)
+- Session capture only on exitCode 0 to avoid overwriting valid sessions with partial state (034-02)
+- Auto-generate sessionId for all runs for implicit capture (034-02)
+- No session capture when restoring (avoid overwriting source session) (034-02)
+- Added loadSessionWithMeta helper for URL access during protocol validation (034-02)
 
 ### Pending Todos
 
@@ -81,9 +85,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 033-01-PLAN.md (session capture infrastructure)
-Resume with: Execute 034-02-PLAN.md (CLI session commands integration) or 033-03-PLAN.md
+Stopped at: Completed 034-02-PLAN.md (CLI session integration)
+Resume with: Execute remaining plans in phases 033 or 035
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-16 after completing 033-01-PLAN.md*
+*Last updated: 2026-02-16 after completing 034-02-PLAN.md*
