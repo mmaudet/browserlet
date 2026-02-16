@@ -3,7 +3,7 @@
  */
 
 import yaml from 'js-yaml';
-import type { BSLStep, ParsedScript, ActionType, SessionCheckConfig, TransformType } from '../types/index.js';
+import type { BSLStep, ParsedScript, ActionType, SessionCheckConfig, SessionPersistenceConfig, TransformType } from '../types/index.js';
 import type { SemanticHint } from '../types/index.js';
 import { extractVariableRefs } from '../substitution/variables.js';
 
@@ -205,6 +205,47 @@ function parseSessionCheck(rawConfig: unknown): SessionCheckConfig | undefined {
 }
 
 /**
+ * Parse session_persistence configuration from raw object
+ * @param rawConfig - Raw session_persistence object from YAML
+ * @returns Validated SessionPersistenceConfig
+ * @throws Error if validation fails
+ */
+function parseSessionPersistence(rawConfig: unknown): SessionPersistenceConfig | undefined {
+  if (!rawConfig || typeof rawConfig !== 'object') {
+    return undefined;
+  }
+
+  const config = rawConfig as Record<string, unknown>;
+
+  // Validate enabled field (required)
+  if (typeof config.enabled !== 'boolean') {
+    throw new Error('session_persistence.enabled must be a boolean');
+  }
+
+  const result: SessionPersistenceConfig = {
+    enabled: config.enabled,
+  };
+
+  // Validate max_age if present (optional string)
+  if (config.max_age !== undefined) {
+    if (typeof config.max_age !== 'string' || config.max_age.trim() === '') {
+      throw new Error('session_persistence.max_age must be a non-empty string');
+    }
+    result.max_age = config.max_age;
+  }
+
+  // Validate snapshot_id if present (optional string)
+  if (config.snapshot_id !== undefined) {
+    if (typeof config.snapshot_id !== 'string' || config.snapshot_id.trim() === '') {
+      throw new Error('session_persistence.snapshot_id must be a non-empty string');
+    }
+    result.snapshot_id = config.snapshot_id;
+  }
+
+  return result;
+}
+
+/**
  * Validate extracted variable references in a step
  * Returns warnings (not errors) for potential issues like forward references
  * @param step - The BSL step to validate
@@ -313,6 +354,12 @@ export function parseSteps(yamlContent: string): ParsedScript {
   const sessionCheck = parseSessionCheck(rawScript.session_check);
   if (sessionCheck) {
     script.session_check = sessionCheck;
+  }
+
+  // Extract session_persistence if present
+  const sessionPersistence = parseSessionPersistence(rawScript.session_persistence);
+  if (sessionPersistence) {
+    script.sessionPersistence = sessionPersistence;
   }
 
   return script;

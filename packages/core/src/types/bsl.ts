@@ -65,10 +65,21 @@ export interface SessionCheckConfig {
   url_patterns?: string[];
 }
 
+/**
+ * Session persistence configuration
+ * Maps to BSL YAML field: session_persistence (snake_case) → sessionPersistence (camelCase)
+ */
+export interface SessionPersistenceConfig {
+  enabled: boolean;
+  max_age?: string;      // e.g., "72h", "30d"
+  snapshot_id?: string;  // Custom session identifier
+}
+
 // A parsed BSL script ready for execution
 export interface ParsedScript {
   name: string;
   steps: BSLStep[];
   metadata?: Record<string, unknown>;
   session_check?: SessionCheckConfig;
+  sessionPersistence?: SessionPersistenceConfig;
 }

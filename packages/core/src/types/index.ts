@@ -13,6 +13,7 @@ export type {
   TableExtractionResult,
   BSLStep,
   SessionCheckConfig,
+  SessionPersistenceConfig,
   ParsedScript,
 } from './bsl.js';
 export { HINT_WEIGHTS } from './weights.js';
