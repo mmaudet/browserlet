@@ -13,6 +13,7 @@ import { randomBytes } from 'node:crypto';
 import { dirname } from 'node:path';
 import { join } from 'node:path';
 import envPaths from 'env-paths';
+import { bufferToBase64, base64ToBuffer } from './encryption.js';
 
 /**
  * A single encrypted credential stored in the vault.
@@ -46,6 +47,8 @@ export interface VaultData {
   validationData: { ciphertext: string; iv: string };
   /** Array of encrypted credentials */
   credentials: VaultCredential[];
+  /** Random 256-bit key (base64) for encrypting vault cache. Generated during vault init. */
+  deviceKey?: string;
 }
 
 /**
@@ -197,4 +200,49 @@ export async function deleteCredential(id: string): Promise<boolean> {
   vault.credentials.splice(index, 1);
   await writeVault(vault);
   return true;
+}
+
+/**
+ * Get or create the device key for vault cache encryption.
+ *
+ * The device key is a random 256-bit AES-GCM key stored in vault.json.
+ * It's used to encrypt the cached master key (not derived from password).
+ * This avoids PBKDF2 overhead on every cache read/write.
+ *
+ * For backward compatibility with existing vaults, the key is created
+ * lazily on first access if it doesn't exist (lazy migration).
+ *
+ * @returns CryptoKey suitable for AES-GCM encryption/decryption
+ */
+export async function getOrCreateDeviceKey(): Promise<CryptoKey> {
+  const vault = await readVault();
+
+  // If device key exists, import and return it
+  if (vault.deviceKey) {
+    const keyBytes = base64ToBuffer(vault.deviceKey);
+    return await globalThis.crypto.subtle.importKey(
+      'raw',
+      keyBytes,
+      { name: 'AES-GCM' },
+      true,
+      ['encrypt', 'decrypt']
+    );
+  }
+
+  // Generate new 256-bit device key (32 bytes)
+  const keyBytes = globalThis.crypto.getRandomValues(new Uint8Array(32));
+  const deviceKeyBase64 = bufferToBase64(keyBytes.buffer);
+
+  // Store in vault for future use
+  vault.deviceKey = deviceKeyBase64;
+  await writeVault(vault);
+
+  // Import and return as CryptoKey
+  return await globalThis.crypto.subtle.importKey(
+    'raw',
+    keyBytes,
+    { name: 'AES-GCM' },
+    true,
+    ['encrypt', 'decrypt']
+  );
 }
