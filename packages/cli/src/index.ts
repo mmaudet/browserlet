@@ -21,6 +21,7 @@ import { vaultExists, readVault, initializeVault, addCredential, getVaultPath, w
 import { base64ToBuffer } from './vault/encryption.js';
 import { importFromExtension } from './vault/chromeImporter.js';
 import { getCachedKey, setCachedKey, clearCache, cleanupExpiredCache } from './vault/cache.js';
+import { loadSessionWithMeta, cleanupExpiredSessions, validateProtocolMatch, generateSessionId } from './session/storage.js';
 
 // Re-export core modules for programmatic usage
 export { PlaywrightExecutor, parseTimeout } from './executor.js';
@@ -52,7 +53,8 @@ program
   .option('--micro-prompts', 'Enable LLM micro-prompts for cascade resolver stages 3-5 (requires ANTHROPIC_API_KEY or Ollama)', false)
   .option('--auto-repair', 'Automatically apply LLM-suggested repairs for failed selectors (confidence >= 0.70)', false)
   .option('--interactive', 'Interactively approve repair suggestions for failed selectors', false)
-  .action(async (scriptPath: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean; microPrompts: boolean; autoRepair: boolean; interactive: boolean }) => {
+  .option('--session-restore <sessionId>', 'Restore session state from a previous run (skips authentication)')
+  .action(async (scriptPath: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean; microPrompts: boolean; autoRepair: boolean; interactive: boolean; sessionRestore?: string }) => {
     // Validate script path
     if (!fs.existsSync(scriptPath)) {
       console.error(pc.red(`Error: Script file not found: ${scriptPath}`));
@@ -157,16 +159,55 @@ program
       }
     }
 
+    // Handle --session-restore flag
+    let sessionStorageState: import('./session/storage.js').PlaywrightStorageState | undefined;
+    let sessionId: string | undefined;
+    if (options.sessionRestore) {
+      const snapshotData = await loadSessionWithMeta(options.sessionRestore);
+
+      if (!snapshotData) {
+        console.error(pc.red(`Session not found: ${options.sessionRestore}`));
+        console.error(pc.dim('Run script without --session-restore to create a new session.'));
+        process.exit(2);
+      }
+
+      // Protocol validation: read script to find first navigate URL
+      const scriptContent = fs.readFileSync(scriptPath, 'utf-8');
+      const firstNavigateMatch = scriptContent.match(/action:\s*navigate[\s\S]*?value:\s*["']?(https?:\/\/[^\s"']+)/);
+
+      if (firstNavigateMatch) {
+        const targetUrl = firstNavigateMatch[1]!;
+        const validation = validateProtocolMatch(snapshotData.url, targetUrl);
+
+        if (!validation.valid) {
+          console.error(pc.red(`[Session] ${validation.warning}`));
+          console.error(pc.dim('Session cannot be restored. Run without --session-restore to re-authenticate.'));
+          process.exit(2);
+        } else if (validation.warning) {
+          console.warn(pc.yellow(`[Session] ${validation.warning}`));
+        }
+      }
+
+      sessionStorageState = snapshotData.state;
+      sessionId = options.sessionRestore;
+      console.log(pc.green(`[Session] Restoring session from: ${snapshotData.url}`));
+    } else {
+      // Auto-generate session ID for capture on successful runs
+      sessionId = generateSessionId();
+    }
+
     let browser = null;
     try {
       browser = await chromium.launch({
         headless: !options.headed,
         timeout: 30000, // Browser launch timeout, separate from step timeout
       });
-      const context = await browser.newContext();
+      const context = await browser.newContext(
+        sessionStorageState ? { storageState: sessionStorageState } : {}
+      );
       const page = await context.newPage();
 
-      const runner = new BSLRunner(page, {
+      const runner = new BSLRunner(page, context, {
         globalTimeout: timeout,
         outputDir: options.outputDir,
         derivedKey,
@@ -174,6 +215,7 @@ program
         llmConfig,
         autoRepair: options.autoRepair,
         interactive: options.interactive,
+        sessionId: options.sessionRestore ? undefined : sessionId,
       });
 
       const result = await runner.run(scriptPath);
@@ -748,7 +790,8 @@ vault
     }
   });
 
-// Cleanup expired vault cache before processing commands
+// Cleanup expired vault cache and session snapshots before processing commands
 cleanupExpiredCache();
+cleanupExpiredSessions().catch(() => {}); // Non-fatal async cleanup
 
 program.parse();

@@ -187,6 +187,43 @@ export async function loadSessionSnapshot(
 }
 
 /**
+ * Load and decrypt a session snapshot with metadata (including URL).
+ *
+ * Same as loadSessionSnapshot but returns the session URL alongside
+ * the decrypted state for protocol validation during restore.
+ *
+ * @param sessionId - Unique session identifier
+ * @returns Object with decrypted state and session URL, or null
+ */
+export async function loadSessionWithMeta(
+  sessionId: string
+): Promise<{ state: PlaywrightStorageState; url: string } | null> {
+  const filePath = join(getSessionsPath(), `${sessionId}.json`);
+
+  try {
+    const content = await readFile(filePath, 'utf-8');
+    const snapshot: SessionSnapshot = JSON.parse(content);
+
+    if (snapshot.expiresAt && Date.now() > snapshot.expiresAt) {
+      await unlink(filePath).catch(() => {});
+      return null;
+    }
+
+    const deviceKey = await getOrCreateDeviceKey();
+    const stateJson = await decrypt(snapshot.encryptedState, deviceKey);
+    const state = JSON.parse(stateJson) as PlaywrightStorageState;
+
+    return { state, url: snapshot.url };
+  } catch (error: unknown) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return null;
+    }
+    await unlink(filePath).catch(() => {});
+    return null;
+  }
+}
+
+/**
  * List all session snapshots with metadata (without decrypting).
  *
  * Reads session files and returns metadata sorted by createdAt descending.

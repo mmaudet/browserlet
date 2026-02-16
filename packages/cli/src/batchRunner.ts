@@ -121,7 +121,7 @@ export class BatchRunner {
       const context = await browser.newContext();
       const page = await context.newPage();
 
-      const runner = new BSLRunner(page, {
+      const runner = new BSLRunner(page, context, {
         globalTimeout: this.options.globalTimeout,
         outputDir: this.options.outputDir,
         derivedKey: this.options.derivedKey,
