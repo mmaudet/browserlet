@@ -20,6 +20,7 @@ import { promptMasterPassword, verifyMasterPassword, generateSalt, deriveKey, cr
 import { vaultExists, readVault, initializeVault, addCredential, getVaultPath, writeVault, getCredential, deleteCredential } from './vault/storage.js';
 import { base64ToBuffer } from './vault/encryption.js';
 import { importFromExtension } from './vault/chromeImporter.js';
+import { getCachedKey, setCachedKey, clearCache, cleanupExpiredCache } from './vault/cache.js';
 
 // Re-export core modules for programmatic usage
 export { PlaywrightExecutor, parseTimeout } from './executor.js';
@@ -74,18 +75,29 @@ program
         process.exit(2);
       }
 
-      // Prompt for master password
-      const password = await promptMasterPassword();
+      // Try cached key first (avoids repeated password prompts within 15-min TTL)
+      const cachedKey = await getCachedKey();
+      if (cachedKey) {
+        derivedKey = cachedKey;
+      } else {
+        // No valid cache -- prompt for master password
+        const password = await promptMasterPassword();
 
-      // Read vault and verify password against stored validation data
-      const vault = await readVault();
-      const saltBuffer = base64ToBuffer(vault.salt);
-      const verification = await verifyMasterPassword(password, new Uint8Array(saltBuffer), vault.validationData);
-      if (!verification.valid) {
-        console.error(pc.red('Invalid master password'));
-        process.exit(2);
+        // Read vault and verify password against stored validation data
+        const vault = await readVault();
+        const saltBuffer = base64ToBuffer(vault.salt);
+        const verification = await verifyMasterPassword(password, new Uint8Array(saltBuffer), vault.validationData);
+        if (!verification.valid) {
+          console.error(pc.red('Invalid master password'));
+          process.exit(2);
+        }
+        derivedKey = verification.key!;
+
+        // Cache the derived key for subsequent commands (15-min TTL)
+        await setCachedKey(derivedKey).catch(() => {
+          // Cache write failure is non-fatal -- user just gets prompted again next time
+        });
       }
-      derivedKey = verification.key!
     }
 
     // Handle --micro-prompts flag: read LLM config from environment
@@ -229,15 +241,29 @@ program
         process.exit(2);
       }
 
-      const password = await promptMasterPassword();
-      const vault = await readVault();
-      const saltBuffer = base64ToBuffer(vault.salt);
-      const verification = await verifyMasterPassword(password, new Uint8Array(saltBuffer), vault.validationData);
-      if (!verification.valid) {
-        console.error(pc.red('Invalid master password'));
-        process.exit(2);
+      // Try cached key first (avoids repeated password prompts within 15-min TTL)
+      const cachedKey = await getCachedKey();
+      if (cachedKey) {
+        derivedKey = cachedKey;
+      } else {
+        // No valid cache -- prompt for master password
+        const password = await promptMasterPassword();
+
+        // Read vault and verify password against stored validation data
+        const vault = await readVault();
+        const saltBuffer = base64ToBuffer(vault.salt);
+        const verification = await verifyMasterPassword(password, new Uint8Array(saltBuffer), vault.validationData);
+        if (!verification.valid) {
+          console.error(pc.red('Invalid master password'));
+          process.exit(2);
+        }
+        derivedKey = verification.key!;
+
+        // Cache the derived key for subsequent commands (15-min TTL)
+        await setCachedKey(derivedKey).catch(() => {
+          // Cache write failure is non-fatal -- user just gets prompted again next time
+        });
       }
-      derivedKey = verification.key!;
     }
 
     // Handle --micro-prompts flag: read LLM config from environment
@@ -704,5 +730,8 @@ vault
     await unlink(getVaultPath());
     console.log(pc.green('Vault deleted. Run `browserlet vault init` to create a new one.'));
   });
+
+// Cleanup expired vault cache before processing commands
+cleanupExpiredCache();
 
 program.parse();
