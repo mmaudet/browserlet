@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** v1.8 Session Persistence & Vault UX - All phases complete (32-35)
+**Current focus:** Phase 13 UX Sidepanel Refactoring - Plan 01 complete
 
 ## Current Position
 
-Milestone: v1.8 Session Persistence & Vault UX
-Phase: 35 of 35 (BSL Integration & Validation)
-Plan: 035-02 complete. Phase 35 complete. All v1.8 phases complete.
-Status: v1.8 milestone complete. All 9 plans across 4 phases executed.
-Last activity: 2026-02-16 — Phase 35 Plan 02 executed (CLI auto-capture/restore from BSL session_persistence)
+Milestone: v1.9 UX Sidepanel Refactoring
+Phase: 13 of ? (UX Sidepanel Refactoring)
+Plan: 013-01 complete. 2 plans remaining (13-02, 13-03).
+Status: Phase 13 in progress — Plan 01 executed (ActionBar component and sidepanel layout restructure)
+Last activity: 2026-02-19 — Phase 13 Plan 01 executed (ActionBar component, restructured sidepanel layout)
 
 Progress: [███████████████████████████████] 100%
 
@@ -36,6 +36,13 @@ Progress: [███████████████████████
 - Files created: 0
 - Files modified: 3 (runner.ts, index.ts, runner.test.ts)
 - Commits: 3 (196e2a2, 1a8ae43, d422a43)
+
+**Latest Execution (013-01):**
+- Duration: 104 seconds
+- Tasks: 2/2 completed
+- Files created: 1 (ActionBar.tsx)
+- Files modified: 1 (main.tsx)
+- Commits: 2 (1c1d08b, 006e702)
 
 ## Accumulated Context
 
@@ -77,6 +84,8 @@ Recent decisions for v1.8:
 - Three-path session handling: manual --session-restore > BSL auto-restore > default random ID (035-02)
 - Auto-restore skips explicit protocol validation (implicit during navigation) (035-02)
 - Manual --session-restore takes precedence over BSL session_persistence declaration (035-02)
+- [Phase 13-ux-sidepanel-refactoring]: ActionBar has 3 buttons (Record, Credentials, Settings) - 'list' tab removed since scripts list is default home view
+- [Phase 13-ux-sidepanel-refactoring]: ActionBar is position: fixed at bottom (not in flex flow) for persistent visibility
 
 ### Pending Todos
 
@@ -92,13 +101,12 @@ None.
 |---|-------------|------|--------|-----------|
 | 10 | Ajouter les commandes vault del et vault reset | 2026-02-16 | 58d04e4 | [10-ajouter-les-commandes-vault-del-et-vault](./quick/10-ajouter-les-commandes-vault-del-et-vault/) |
 | 11 | Ajouter un délai de 2s avant le screenshot | 2026-02-16 | eab43f3 | [11-ajouter-un-d-lai-de-2s-avant-le-screensh](./quick/11-ajouter-un-d-lai-de-2s-avant-le-screensh/) |
-
 ## Session Continuity
 
-Last session: 2026-02-16
-Stopped at: Completed 035-02-PLAN.md (CLI auto-capture/restore from BSL session_persistence)
-Resume with: v1.8 milestone complete. Ship v1.8 or proceed to v1.9 planning.
+Last session: 2026-02-19
+Stopped at: Completed 013-01-PLAN.md (ActionBar component and sidepanel layout restructure)
+Resume with: Phase 13 Plan 02 (13-02-PLAN.md)
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-16 after completing 035-02-PLAN.md tasks 1-2 (Phase 35 complete, v1.8 complete)*
+*Last updated: 2026-02-19 after completing 013-01-PLAN.md tasks 1-2 (Phase 13 Plan 01 complete)*
