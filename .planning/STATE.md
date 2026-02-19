@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** Phase 13 UX Sidepanel Refactoring - Plan 01 complete
+**Current focus:** Phase 13 UX Sidepanel Refactoring - Plan 02 complete
 
 ## Current Position
 
 Milestone: v1.9 UX Sidepanel Refactoring
 Phase: 13 of ? (UX Sidepanel Refactoring)
-Plan: 013-01 complete. 2 plans remaining (13-02, 13-03).
-Status: Phase 13 in progress — Plan 01 executed (ActionBar component and sidepanel layout restructure)
-Last activity: 2026-02-19 — Phase 13 Plan 01 executed (ActionBar component, restructured sidepanel layout)
+Plan: 013-02 complete. 1 plan remaining (13-03).
+Status: Phase 13 in progress — Plan 02 executed (Import button moved to ScriptList toolbar with onImport prop)
+Last activity: 2026-02-19 — Phase 13 Plan 02 executed (onImport prop added to ScriptList, ContentRouter wired)
 
 Progress: [███████████████████████████████] 100%
 
@@ -43,6 +43,13 @@ Progress: [███████████████████████
 - Files created: 1 (ActionBar.tsx)
 - Files modified: 1 (main.tsx)
 - Commits: 2 (1c1d08b, 006e702)
+
+**Latest Execution (013-02):**
+- Duration: 82 seconds
+- Tasks: 2/2 completed
+- Files created: 0
+- Files modified: 2 (ScriptList.tsx, main.tsx)
+- Commits: 2 (5bdacc6, 8425d38)
 
 ## Accumulated Context
 
@@ -104,9 +111,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 013-01-PLAN.md (ActionBar component and sidepanel layout restructure)
-Resume with: Phase 13 Plan 02 (13-02-PLAN.md)
+Stopped at: Completed 013-02-PLAN.md (Import button onImport prop and ContentRouter wiring)
+Resume with: Phase 13 Plan 03 (13-03-PLAN.md)
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-19 after completing 013-01-PLAN.md tasks 1-2 (Phase 13 Plan 01 complete)*
+*Last updated: 2026-02-19 after completing 013-02-PLAN.md tasks 1-2 (Phase 13 Plan 02 complete)*
