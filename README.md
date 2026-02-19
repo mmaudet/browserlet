@@ -1,8 +1,8 @@
 # Browserlet
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
-[![Version: v1.7](https://img.shields.io/badge/version-v1.7-green.svg)]()
-[![Tests: 428](https://img.shields.io/badge/tests-428%20passing-brightgreen.svg)]()
+[![Version: v1.8](https://img.shields.io/badge/version-v1.8-green.svg)]()
+[![Tests: 444](https://img.shields.io/badge/tests-444%20passing-brightgreen.svg)]()
 [![Chrome](https://img.shields.io/badge/Chrome-MV3-yellow.svg)]()
 [![Firefox](https://img.shields.io/badge/Firefox-MV3-orange.svg)]()
 
@@ -192,6 +192,9 @@ Credentials are decrypted only at execution time and never appear in logs.
 browserlet vault init                    # Set master password
 browserlet vault add my-alias            # Add credential (prompted for value)
 browserlet vault list                    # List aliases (no plaintext)
+browserlet vault del my-alias            # Delete a credential
+browserlet vault reset                   # Delete all credentials
+browserlet vault lock                    # Clear unlock cache immediately
 browserlet vault import-from-extension   # Import from browser vault
 ```
 
@@ -216,6 +219,7 @@ browserlet test ./scripts/
 | `--auto-repair` | LLM-guided hint repair (confidence >= 0.70) | `false` |
 | `--interactive` | Approve repair suggestions manually | `false` |
 | `--micro-prompts` | Enable LLM for cascade resolver stages 3-5 | `false` |
+| `--session-restore` | Restore session state (cookies + localStorage) from previous run | `false` |
 
 #### Examples
 
@@ -234,6 +238,29 @@ browserlet test ./regression/ --workers 4 --bail --auto-repair
 #### Auto-Repair
 
 When `--auto-repair` is enabled, a failed element resolution triggers the `hint_repairer` micro-prompt, which suggests an alternative hint. If the suggestion meets the confidence threshold (>= 0.70), the step is retried automatically with the repaired selector. Use `--interactive` to review each suggestion before it is applied.
+
+### Session Persistence
+
+Browserlet can capture and restore session state (cookies + localStorage) to skip re-authentication across runs.
+
+**Extension:** Enable "Memoriser la connexion" per script — session is automatically captured after successful execution and restored on next run.
+
+**CLI:** Use `--session-restore` to restore a previous session, or declare `session_persistence` in your BSL script for automatic capture/restore:
+
+```yaml
+name: Daily ERP check
+session_persistence:
+  enabled: true
+  max_age: "72h"
+  snapshot_id: "erp-prod"
+steps:
+  - action: navigate
+    url: https://erp.example.com
+  # First run: logs in, captures session
+  # Subsequent runs: restores session, skips login
+```
+
+The vault unlock cache reduces master password prompts during batch execution — after the first unlock, subsequent commands within 15 minutes proceed without prompting.
 
 ### Screenshots & Visual Debugging
 
@@ -316,7 +343,8 @@ browserlet/                          # npm workspaces monorepo
 │   └── cli/                         # @browserlet/cli — headless runner
 │       └── src/
 │           ├── commands/            #   run, test, vault (Commander.js)
-│           ├── vault/               #   AES-GCM encryption, LevelDB storage
+│           ├── vault/               #   AES-GCM encryption, LevelDB storage, unlock cache
+│           ├── session/             #   Session persistence (storageState snapshots)
 │           ├── credentials/         #   Resolver, log sanitizer
 │           ├── llm/                 #   Micro-prompt router
 │           └── repair/              #   AI auto-repair engine
@@ -340,7 +368,7 @@ npm install                 # Install all workspaces
 npm run dev                 # Extension dev mode (Chrome, HMR)
 npm run dev:firefox         # Extension dev mode (Firefox)
 npm run build               # Production build
-npm test                    # Run all tests (428 tests, 24 suites)
+npm test                    # Run all tests (444 tests, 24 suites)
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and [SECURITY.md](SECURITY.md) for security policy.
@@ -359,8 +387,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and [SECURITY.
 | v1.5 | Resilience | Cascade resolver (6 stages), 13 hint types, Firefox MV3, micro-prompts |
 | v1.6 | CLI & Monorepo | `browserlet run`, @browserlet/core, Playwright runner, CLI vault |
 | v1.7 | Testing & Repair | `browserlet test`, batch workers, AI auto-repair, vault CLI |
+| v1.8 | Session Persistence | Session capture/restore (extension + CLI), vault unlock cache, BSL `session_persistence` |
 
-### What's Next (v1.8+)
+### What's Next (v1.9+)
 
 - Script version control
 - Scheduled execution (cron-like)
