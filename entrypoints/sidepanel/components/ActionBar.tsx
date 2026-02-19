@@ -1,4 +1,4 @@
-import { Circle, KeyRound, Settings } from 'lucide-preact';
+import { Circle, KeyRound, List, Settings } from 'lucide-preact';
 import { navigateTo, ViewName } from '../router';
 
 interface ActionBarProps {
@@ -54,12 +54,31 @@ const styles: Record<string, Record<string, string | number>> = {
 };
 
 export function ActionBar({ currentView, isRecording }: ActionBarProps) {
+  const isListActive = currentView === 'list';
   const isRecordingActive = currentView === 'recording';
   const isCredentialsActive = currentView === 'credentials';
   const isSettingsActive = currentView === 'settings';
 
   return (
     <nav style={styles.bar}>
+      {/* Scripts button */}
+      <button
+        style={isListActive ? styles.activeButton : styles.button}
+        onClick={() => navigateTo('list')}
+        title={chrome.i18n.getMessage('scripts') || 'Scripts'}
+      >
+        <span style={styles.iconWrapper}>
+          <List
+            size={22}
+            strokeWidth={isListActive ? 2 : 1.5}
+            color={isListActive ? '#4285f4' : '#8e8e93'}
+          />
+        </span>
+        <span style={{ color: isListActive ? '#4285f4' : '#8e8e93', fontWeight: isListActive ? 500 : 400 }}>
+          {chrome.i18n.getMessage('scripts') || 'Scripts'}
+        </span>
+      </button>
+
       {/* Record button */}
       <button
         style={isRecordingActive ? styles.activeButton : styles.button}
