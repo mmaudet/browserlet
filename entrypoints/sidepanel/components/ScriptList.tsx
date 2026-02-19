@@ -60,6 +60,7 @@ async function handleToggleSessionPersistence(script: Script, enabled: boolean):
 interface ScriptListProps {
   onScriptSelect?: (script: Script) => void;
   onNewScript?: () => void;
+  onImport?: (script: Script) => void;
 }
 
 interface ScriptItemProps {
@@ -529,7 +530,7 @@ function ScriptHistoryModal({ scriptId, scriptName, onClose, onViewData }: Scrip
   );
 }
 
-export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}) {
+export function ScriptList({ onScriptSelect, onNewScript, onImport }: ScriptListProps = {}) {
   const showTriggerConfig = useSignal<string | null>(null);
   const showHistoryModal = useSignal<{ scriptId: string; scriptName: string } | null>(null);
   const showDataModal = useSignal<{ scriptName: string; results: Record<string, unknown> } | null>(null);
@@ -587,7 +588,7 @@ export function ScriptList({ onScriptSelect, onNewScript }: ScriptListProps = {}
             onInput={(e: Event) => { searchTerm.value = (e.target as HTMLInputElement).value; }}
             style={{ flex: 1, padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
           />
-          <ImportButton onImport={(script) => onScriptSelect?.(script)} />
+          <ImportButton onImport={onImport} />
           {onNewScript && (
             <button
               onClick={onNewScript}
