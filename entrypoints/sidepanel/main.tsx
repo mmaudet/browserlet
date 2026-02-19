@@ -132,6 +132,7 @@ function ContentRouter() {
       <ScriptList
         onScriptSelect={(script) => navigateTo('editor', script)}
         onNewScript={createNewScript}
+        onImport={(script) => navigateTo('editor', script)}
       />
     );
   }
