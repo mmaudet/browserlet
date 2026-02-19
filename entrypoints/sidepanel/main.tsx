@@ -1,8 +1,8 @@
 import '../../utils/firefoxPolyfill';
 import { render } from 'preact';
 import { signal } from '@preact/signals';
-import { List, Circle, KeyRound, Settings, ArrowLeft, Loader2, CheckCircle } from 'lucide-preact';
-import { currentView, navigateTo, goBack, editorScript, ViewName } from './router';
+import { ArrowLeft, Loader2, CheckCircle } from 'lucide-preact';
+import { currentView, navigateTo, goBack, editorScript } from './router';
 import { loadScripts, selectScript } from './stores/scripts';
 import { loadLLMConfig, llmConfigStore } from './stores/llmConfig';
 import { loadPasswords, passwordStore, refreshVaultState } from './stores/passwords';
@@ -17,7 +17,8 @@ import type { Script } from '../../utils/types';
 import { SuggestedScripts } from './components/SuggestedScripts';
 import { suggestedScriptIds, loadTriggers } from './stores/triggers';
 import { CredentialManager } from './components/CredentialManager';
-import { startExecution, isExecuting, showCompletionModal, completedScriptName } from './stores/execution';
+import { ActionBar } from './components/ActionBar';
+import { startExecution, showCompletionModal, completedScriptName } from './stores/execution';
 
 // App initialization state
 const appState = signal<'loading' | 'needs_setup' | 'needs_unlock' | 'ready'>('loading');
@@ -98,62 +99,6 @@ function CompletionModal() {
         </button>
       </div>
     </div>
-  );
-}
-
-// Bottom action bar component
-function BottomActionBar() {
-  const actions: Array<{ id: ViewName; icon: typeof List; labelKey: string; isRecording?: boolean }> = [
-    { id: 'list', icon: List, labelKey: 'scripts' },
-    { id: 'recording', icon: Circle, labelKey: 'record', isRecording: true },
-    { id: 'credentials', icon: KeyRound, labelKey: 'credentials' },
-    { id: 'settings', icon: Settings, labelKey: 'settings' }
-  ];
-
-  return (
-    <nav style={{
-      display: 'flex',
-      borderTop: '1px solid #e5e5e5',
-      background: 'rgba(255, 255, 255, 0.8)',
-      backdropFilter: 'blur(10px)',
-      padding: '6px 0 8px'
-    }}>
-      {actions.map(action => {
-        const isActive = currentView.value === action.id;
-        const IconComponent = action.icon;
-        return (
-          <button
-            key={action.id}
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px',
-              padding: '6px 8px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-              color: isActive ? '#007AFF' : '#8e8e93',
-              fontSize: '10px',
-              fontWeight: isActive ? 500 : 400,
-              transition: 'color 0.15s ease'
-            }}
-            onClick={() => navigateTo(action.id)}
-          >
-            <span style={{ height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconComponent
-                size={22}
-                strokeWidth={isActive ? 2 : 1.5}
-                fill={action.isRecording ? '#ff3b30' : 'none'}
-                color={action.isRecording ? '#ff3b30' : isActive ? '#007AFF' : '#8e8e93'}
-              />
-            </span>
-            <span>{chrome.i18n.getMessage(action.labelKey) || action.labelKey}</span>
-          </button>
-        );
-      })}
-    </nav>
   );
 }
 
@@ -415,8 +360,8 @@ function App() {
   // Ready state - full app
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f5f5' }}>
-      {/* Context zone en haut */}
-      <div style={{ padding: '12px 16px 0' }}>
+      {/* Context zone at very top */}
+      <div style={{ padding: '12px 16px', background: 'white', borderBottom: '1px solid #ddd' }}>
         <ContextZone />
       </div>
 
@@ -435,13 +380,13 @@ function App() {
         </div>
       )}
 
-      {/* Content area */}
+      {/* Main content area - scripts list or other views */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <ContentRouter />
       </div>
 
-      {/* Bottom action bar - toujours visible pour navigation rapide */}
-      <BottomActionBar />
+      {/* Fixed bottom action bar */}
+      <ActionBar currentView={currentView.value} />
 
       {/* Execution completion modal */}
       <CompletionModal />
