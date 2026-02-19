@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA
-**Current focus:** Phase 13 UX Sidepanel Refactoring - Plan 02 complete
+**Current focus:** Phase 13 UX Sidepanel Refactoring - ALL PLANS COMPLETE
 
 ## Current Position
 
 Milestone: v1.9 UX Sidepanel Refactoring
 Phase: 13 of ? (UX Sidepanel Refactoring)
-Plan: 013-02 complete. 1 plan remaining (13-03).
-Status: Phase 13 in progress — Plan 02 executed (Import button moved to ScriptList toolbar with onImport prop)
-Last activity: 2026-02-19 — Phase 13 Plan 02 executed (onImport prop added to ScriptList, ContentRouter wired)
+Plan: 013-03 complete. Phase 13 complete (all 3 plans executed).
+Status: Phase 13 complete — Plan 03 executed (ExecutionHistoryModal extracted to standalone component, wired into ScriptList)
+Last activity: 2026-02-20 — Phase 13 Plan 03 executed (ExecutionHistoryModal.tsx created, ScriptList updated)
 
 Progress: [███████████████████████████████] 100%
 
@@ -50,6 +50,13 @@ Progress: [███████████████████████
 - Files created: 0
 - Files modified: 2 (ScriptList.tsx, main.tsx)
 - Commits: 2 (5bdacc6, 8425d38)
+
+**Latest Execution (013-03):**
+- Duration: 120 seconds
+- Tasks: 2/2 completed
+- Files created: 1 (ExecutionHistoryModal.tsx)
+- Files modified: 1 (ScriptList.tsx)
+- Commits: 2 (6153e21, 586976b)
 
 ## Accumulated Context
 
@@ -93,6 +100,8 @@ Recent decisions for v1.8:
 - Manual --session-restore takes precedence over BSL session_persistence declaration (035-02)
 - [Phase 13-ux-sidepanel-refactoring]: ActionBar has 3 buttons (Record, Credentials, Settings) - 'list' tab removed since scripts list is default home view
 - [Phase 13-ux-sidepanel-refactoring]: ActionBar is position: fixed at bottom (not in flex flow) for persistent visibility
+- [Phase 13-ux-sidepanel-refactoring 13-03]: ExecutionHistoryModal extracted as standalone component (richer than planned - includes screenshots, expandable records, data viewing)
+- [Phase 13-ux-sidepanel-refactoring 13-03]: Signal-based immediate call pattern used for mount-time history load (consistent with ScriptList pattern)
 
 ### Pending Todos
 
@@ -110,10 +119,10 @@ None.
 | 11 | Ajouter un délai de 2s avant le screenshot | 2026-02-16 | eab43f3 | [11-ajouter-un-d-lai-de-2s-avant-le-screensh](./quick/11-ajouter-un-d-lai-de-2s-avant-le-screensh/) |
 ## Session Continuity
 
-Last session: 2026-02-19
-Stopped at: Completed 013-02-PLAN.md (Import button onImport prop and ContentRouter wiring)
-Resume with: Phase 13 Plan 03 (13-03-PLAN.md)
+Last session: 2026-02-20
+Stopped at: Completed 013-03-PLAN.md (ExecutionHistoryModal extracted to standalone component)
+Resume with: Next milestone/phase
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-19 after completing 013-02-PLAN.md tasks 1-2 (Phase 13 Plan 02 complete)*
+*Last updated: 2026-02-20 after completing 013-03-PLAN.md tasks 1-2 (Phase 13 complete - all 3 plans done)*
