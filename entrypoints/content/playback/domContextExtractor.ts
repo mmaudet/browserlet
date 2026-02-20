@@ -43,7 +43,7 @@ const TAG_TO_LANDMARK: Record<string, string> = {
 
 /** Role attribute values that are landmarks */
 const LANDMARK_ROLES = new Set([
-  'navigation', 'main', 'complementary', 'banner', 'contentinfo', 'form',
+  'navigation', 'main', 'complementary', 'banner', 'contentinfo', 'form', 'search',
 ]);
 
 /**
@@ -212,7 +212,7 @@ function extractLandmark(element: Element): string | null {
   const landmark = element.closest(
     'nav, main, aside, header, footer, form, ' +
     '[role="navigation"], [role="main"], [role="complementary"], ' +
-    '[role="banner"], [role="contentinfo"], [role="form"]'
+    '[role="banner"], [role="contentinfo"], [role="form"], [role="search"]'
   );
 
   if (!landmark) return null;

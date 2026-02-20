@@ -19,6 +19,7 @@ export const HINT_WEIGHTS: Record<HintType, number> = {
   placeholder_contains: 0.7, // Placeholder text - may change
   fieldset_context: 0.7, // Fieldset legend - critical for form section disambiguation
   associated_label: 0.7, // Explicit label association (for=/aria-labelledby)
+  landmark_context: 0.65, // ARIA landmark region - page structure context
   section_context: 0.6,  // Section heading - page section disambiguation
   near_label: 0.6,      // Less reliable in tables/complex layouts
   class_contains: 0.5,  // Often minified/generated
