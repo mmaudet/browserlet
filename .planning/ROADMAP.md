@@ -40,11 +40,11 @@ v1.9 fiabilises the record-generate-execute pipeline to achieve >90% first-try s
   2. When user records on a page with CSS Module hashed classes or React-generated IDs, those unstable hints are filtered out before reaching the LLM
   3. When user records on a React/Vue SPA, the recording annotates component boundaries and dynamic content zones in the captured context
   4. When user records a click and multiple similar elements exist (e.g., 5 "Edit" buttons in a table), the recording captures enough disambiguation context to distinguish the target from its siblings
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 036-01: TBD
-- [ ] 036-02: TBD
+- [ ] 036-01-PLAN.md — Add landmark_context hint (14th type) + expand Vue/Angular artifact filtering (REC-01, REC-02)
+- [ ] 036-02-PLAN.md — Add position_context hint for repeated elements + SPA framework detection on CapturedAction (REC-03, REC-04)
 
 ### Phase 37: Generation Quality
 **Goal**: LLM generates BSL that faithfully preserves recorded context, selects the most stable hint combinations, and can be validated against the original page
@@ -112,7 +112,7 @@ Phases execute in numeric order: 36 -> 37 -> 38 -> 39 -> 40
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 36. Recording Enrichment | 0/? | Not started | - |
+| 36. Recording Enrichment | 0/2 | Not started | - |
 | 37. Generation Quality | 0/? | Not started | - |
 | 38. Failure Diagnostics | 0/? | Not started | - |
 | 39. Repair Workflow | 0/? | Not started | - |
