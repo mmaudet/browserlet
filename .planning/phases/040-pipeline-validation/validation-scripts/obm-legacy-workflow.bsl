@@ -24,17 +24,16 @@ steps:
   - action: navigate
     value: "https://extranet.linagora.com/obm"
 
-  # Step 2: Wait for the login form to render
-  # OBM uses a traditional HTML form with named input fields
+  # Step 2: Wait for the SSO login form to render (LemonLDAP::NG on auth.linagora.com)
   - action: wait_for
     target:
-      intent: "Login username field"
+      intent: "Login username field on SSO portal"
       hints:
         - type: name
-          value: login
-        - type: type
-          value: text
-      fallback_selector: "input[name='login']"
+          value: user
+        - type: placeholder_contains
+          value: "identifiant"
+      fallback_selector: "input[name='user'], input[name='login'], input[type='text']"
     timeout: "15s"
 
   # Step 3: Enter username from the credential vault
@@ -43,10 +42,10 @@ steps:
       intent: "Login username field"
       hints:
         - type: name
-          value: login
-        - type: type
-          value: text
-      fallback_selector: "input[name='login']"
+          value: user
+        - type: placeholder_contains
+          value: "identifiant"
+      fallback_selector: "input[name='user'], input[name='login'], input[type='text']"
     value: "{{credential:obm_username}}"
 
   # Step 4: Enter password from the credential vault
@@ -58,11 +57,11 @@ steps:
           value: password
         - type: type
           value: password
-      fallback_selector: "input[name='password']"
+      fallback_selector: "input[name='password'], input[type='password']"
     value: "{{credential:obm_password}}"
 
   # Step 5: Click the login/submit button
-  # OBM login form uses a submit input or button labeled "Connexion"
+  # SSO portal button says "Se connecter"
   - action: click
     target:
       intent: "Login submit button"
@@ -70,20 +69,20 @@ steps:
         - type: role
           value: button
         - type: text_contains
-          value: "Connexion"
-      fallback_selector: "input[type='submit'], button[type='submit']"
+          value: "Se connecter"
+      fallback_selector: "button[type='submit'], input[type='submit']"
 
-  # Step 6: Wait for the main navigation to appear after login
-  # OBM renders a navigation bar or table-based nav after successful auth
+  # Step 6: Wait for the main page to load after login
+  # OBM is a legacy app — no ARIA landmarks. Target a known post-login element.
   - action: wait_for
     target:
-      intent: "OBM main navigation area after login"
+      intent: "OBM post-login page element"
       hints:
         - type: role
-          value: navigation
-        - type: landmark_context
-          value: navigation
-      fallback_selector: "#main-nav, .obm-nav, table.navigation, #bannerLeft, #calendarNavigation"
+          value: link
+        - type: text_contains
+          value: "Agenda"
+      fallback_selector: "a[href*='calendar'], a[href*='agenda'], a[href*='contact'], #bannerLeft"
     timeout: "20s"
 
   # Step 7: Take a screenshot to capture post-login dashboard

@@ -397,17 +397,25 @@ export function waitForElement(
       return false;
     };
 
-    // Set up MutationObserver
-    observer = new MutationObserver(() => {
-      checkElement();
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'style', 'hidden', 'aria-hidden', 'disabled', 'aria-disabled'],
-    });
+    // Set up MutationObserver — guard against document.body being null
+    // during page navigation/redirect (e.g., SSO login → app redirect)
+    const startObserver = () => {
+      const target = document.body || document.documentElement;
+      if (!target) {
+        setTimeout(startObserver, 50);
+        return;
+      }
+      observer = new MutationObserver(() => {
+        checkElement();
+      });
+      observer.observe(target, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style', 'hidden', 'aria-hidden', 'disabled', 'aria-disabled'],
+      });
+    };
+    startObserver();
 
     // Set up timeout fallback
     timeoutId = setTimeout(() => {
