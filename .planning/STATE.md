@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Automatisation web resiliente pour applications legacy, sans cout recurrent d'IA
-**Current focus:** v1.9 Reliability & Diagnostics -- Phase 37: Generation Quality
+**Current focus:** v1.9 Reliability & Diagnostics -- Phase 38: Failure Diagnostics
 
 ## Current Position
 
 Milestone: v1.9 Reliability & Diagnostics
-Phase: 37 of 40 (Generation Quality)
-Plan: 3 of 3 complete
-Status: Phase 037 Complete
-Last activity: 2026-02-20 -- Completed 036-02 (position_context + SPA detection)
+Phase: 38 of 40 (Failure Diagnostics)
+Plan: 1 of 1 complete
+Status: Phase 038 Complete
+Last activity: 2026-02-20 -- Completed 038-01 (Full failure diagnostics pipeline)
 
-Progress: [███░░░░░░░] 10%
+Progress: [████░░░░░░] 15%
 
 ## Performance Metrics
 
@@ -44,6 +44,9 @@ See PROJECT.md Key Decisions table for full list.
 - [036-02] position_context weight = 0.55 (above class_contains, below near_label) -- fragile if rows reorder but critical for table disambiguation
 - [036-02] detectSPAContext returns undefined for non-SPA pages to avoid false positives
 - [036-02] Position disambiguation requires both role + text_contains hints to avoid noise
+- [Phase 038]: PartialFailureDiagnostic assembled in-browser, completed CLI-side with Node.js context (stepId, pageUrl, searchedHints, timestamp)
+- [Phase 038]: DiagnosticError.message preserves matched=[]/failed=[] format for RepairEngine backward compatibility
+- [Phase 038]: Text diagnostics to stderr, JSON diagnostics to stdout for clean piping with --diagnostic-json
 
 ### Pending Todos
 
@@ -63,13 +66,14 @@ None.
 | Phase 037 P01 | 4min | 3 tasks | 3 files |
 | Phase 036 P02 | 5min | 2 tasks | 8 files |
 | Phase 037 P03 | 3min | 2 tasks | 2 files |
+| Phase 038 P01 | 8min | 3 tasks | 15 files |
 
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 036-02-PLAN.md (position_context + SPA detection -- Phase 036 complete)
-Resume with: /gsd:execute-phase 038
+Stopped at: Completed 038-01-PLAN.md (Full failure diagnostics pipeline -- Phase 038 complete)
+Resume with: /gsd:execute-phase 039
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-20 after 036-02 completion*
+*Last updated: 2026-02-20 after 038-01 completion*

@@ -23,11 +23,11 @@ Requirements for v1.9 Reliability & Diagnostics. Fiabiliser le pipeline record â
 
 ### Diagnostics
 
-- [ ] **DIAG-01**: Failed step reports which hints were searched and their individual scores per candidate
-- [ ] **DIAG-02**: Failed step shows expected element description vs actual candidates found with structural context
-- [ ] **DIAG-03**: Failed step reports confidence gap (threshold vs best candidate score)
-- [ ] **DIAG-04**: Diagnostic output suggests most likely fix (hint correction, alternative selector)
-- [ ] **DIAG-05**: Diagnostic report available in structured format (JSON for CLI automation, readable text for extension)
+- [x] **DIAG-01**: Failed step reports which hints were searched and their individual scores per candidate
+- [x] **DIAG-02**: Failed step shows expected element description vs actual candidates found with structural context
+- [x] **DIAG-03**: Failed step reports confidence gap (threshold vs best candidate score)
+- [x] **DIAG-04**: Diagnostic output suggests most likely fix (hint correction, alternative selector)
+- [x] **DIAG-05**: Diagnostic report available in structured format (JSON for CLI automation, readable text for extension)
 
 ### Repair Workflow
 
@@ -82,11 +82,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GEN-02 | Phase 37 | Complete |
 | GEN-03 | Phase 37 | Complete |
 | GEN-04 | Phase 37 | Complete |
-| DIAG-01 | Phase 38 | Pending |
-| DIAG-02 | Phase 38 | Pending |
-| DIAG-03 | Phase 38 | Pending |
-| DIAG-04 | Phase 38 | Pending |
-| DIAG-05 | Phase 38 | Pending |
+| DIAG-01 | Phase 38 | Complete |
+| DIAG-02 | Phase 38 | Complete |
+| DIAG-03 | Phase 38 | Complete |
+| DIAG-04 | Phase 38 | Complete |
+| DIAG-05 | Phase 38 | Complete |
 | REP-01 | Phase 39 | Pending |
 | REP-02 | Phase 39 | Pending |
 | REP-03 | Phase 39 | Pending |
