@@ -21,7 +21,9 @@ export type HintType =
   | 'id'
   | 'fieldset_context'
   | 'associated_label'
-  | 'section_context';
+  | 'section_context'
+  | 'landmark_context'
+  | 'position_context';
 
 export interface SemanticHint {
   type: HintType;
@@ -40,8 +42,10 @@ export const HINT_WEIGHTS: Record<HintType, number> = {
   placeholder_contains: 0.7,
   fieldset_context: 0.7,
   associated_label: 0.7,
+  landmark_context: 0.65,
   section_context: 0.6,
   near_label: 0.6,
+  position_context: 0.55,
   class_contains: 0.5,
 };
 
@@ -108,4 +112,41 @@ export interface DisambiguatorOutput {
 export interface ConfidenceBoosterOutput {
   is_correct: boolean;
   reasoning: string;
+}
+
+// ---------------------------------------------------------------------------
+// Diagnostic types -- Copied from packages/core/src/types/diagnostic.ts -- keep in sync
+// ---------------------------------------------------------------------------
+
+/** Score a single candidate received for a single hint */
+export interface DiagnosticHintScore {
+  hint: string;
+  weight: number;
+  matched: boolean;
+  contribution: number;
+}
+
+/** Snapshot of one candidate element as a human-readable descriptor (no DOM ref) */
+export interface CandidateDescriptor {
+  tag: string;
+  text: string;
+  attributes: Record<string, string>;
+  structuralContext: string;
+}
+
+/** Per-candidate scoring row (DIAG-01) */
+export interface CandidateScoringRow {
+  candidate: CandidateDescriptor;
+  baseConfidence: number;
+  adjustedConfidence: number;
+  hintScores: DiagnosticHintScore[];
+}
+
+/** In-browser partial diagnostic -- stepId and pageUrl added by CLI caller */
+export interface PartialFailureDiagnostic {
+  failedAtStage: number;
+  confidenceThreshold: number;
+  bestCandidateScore: number | null;
+  confidenceGap: number | null;
+  topCandidates: CandidateScoringRow[];
 }

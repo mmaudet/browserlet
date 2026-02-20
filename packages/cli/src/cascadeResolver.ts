@@ -14,10 +14,31 @@
 
 import type { Page } from 'playwright';
 import type { BSLStep } from '@browserlet/core/types';
+import type { FailureDiagnostic, CandidateScoringRow } from '@browserlet/core/types';
 import { RESOLVER_BUNDLE } from './resolverBundleCode.js';
+
+/** Error thrown by CascadeCLIResolver when cascade resolution fails, carrying structured diagnostic */
+export class DiagnosticError extends Error {
+  constructor(
+    message: string,
+    public readonly diagnostic: FailureDiagnostic,
+  ) {
+    super(message);
+    this.name = 'DiagnosticError';
+  }
+}
 
 /** Actions that do not require selector resolution */
 const NO_SELECTOR_ACTIONS = new Set(['navigate', 'screenshot']);
+
+/** Partial diagnostic data from the in-browser resolver (no stepId/pageUrl) */
+interface PartialDiagnosticData {
+  failedAtStage: number;
+  confidenceThreshold: number;
+  bestCandidateScore: number | null;
+  confidenceGap: number | null;
+  topCandidates: CandidateScoringRow[];
+}
 
 /**
  * Result returned from page.evaluate when cascade resolution succeeds.
@@ -29,6 +50,7 @@ interface CascadeEvalResult {
   stage: number;
   matchedHints: string[];
   failedHints: string[];
+  diagnostic?: PartialDiagnosticData;
 }
 
 /**
@@ -149,6 +171,7 @@ export class CascadeCLIResolver {
             stage: cascadeResult.stage as number,
             matchedHints: cascadeResult.matchedHints as string[],
             failedHints: cascadeResult.failedHints as string[],
+            diagnostic: cascadeResult.diagnostic ?? undefined,
           };
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : String(err);
@@ -169,7 +192,8 @@ export class CascadeCLIResolver {
       return (result as CascadeEvalResult & { success: true }).selector;
     }
 
-    // Cascade failed -- throw with diagnostics for BSLRunner fallback
+    // Cascade failed -- throw DiagnosticError with structured data
+    // Preserve matched=[]/failed=[] format in message for backward compatibility (RepairEngine parses it)
     const diag = [
       `stage=${result.stage}`,
       `confidence=${result.confidence.toFixed(2)}`,
@@ -181,8 +205,22 @@ export class CascadeCLIResolver {
         : 'failed=[]',
     ].join(', ');
 
-    throw new Error(
-      `CascadeCLIResolver failed for step ${step.id || step.action}: ${result.error} (${diag})`,
+    const stepId = step.id || step.action;
+    const pageUrl = this.page.url();
+
+    throw new DiagnosticError(
+      `CascadeCLIResolver failed for step ${stepId}: ${result.error} (${diag})`,
+      {
+        stepId,
+        pageUrl,
+        searchedHints: step.target.hints,
+        timestamp: new Date().toISOString(),
+        failedAtStage: result.diagnostic?.failedAtStage ?? result.stage,
+        confidenceThreshold: 0.70,
+        bestCandidateScore: result.diagnostic?.bestCandidateScore ?? (result.confidence > 0 ? result.confidence : null),
+        confidenceGap: result.diagnostic?.confidenceGap ?? (result.confidence > 0 ? 0.70 - result.confidence : null),
+        topCandidates: result.diagnostic?.topCandidates ?? [],
+      },
     );
   }
 }

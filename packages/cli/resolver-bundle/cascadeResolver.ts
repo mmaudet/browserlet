@@ -30,6 +30,10 @@ import type {
   HintSuggesterOutput,
   DisambiguatorOutput,
   ConfidenceBoosterOutput,
+  PartialFailureDiagnostic,
+  CandidateScoringRow,
+  DiagnosticHintScore,
+  CandidateDescriptor,
 } from './types';
 import { HINT_WEIGHTS } from './types';
 import { resolveElement, isElementInteractable } from './semanticResolver';
@@ -140,6 +144,8 @@ export interface CascadeResolverResult extends ResolverResult {
   stabilityBoost?: number;
   /** Performance: resolution time in milliseconds */
   resolutionTimeMs: number;
+  /** Diagnostic data populated on failure paths for Phase 38 diagnostics */
+  diagnostic?: PartialFailureDiagnostic;
 }
 
 // ---------------------------------------------------------------------------
@@ -358,6 +364,66 @@ function formatDOMContextString(ctx: DOMContext): string {
 }
 
 /**
+ * Build a CandidateDescriptor from a DOM element for diagnostic output.
+ * Extracts tag, text (80 chars), key attributes, and structural context.
+ */
+function buildCandidateDescriptor(element: Element): CandidateDescriptor {
+  const tag = element.tagName.toLowerCase();
+
+  // Text content trimmed to 80 chars
+  const text = normalizeText(element.textContent).slice(0, 80);
+
+  // Key attributes: id, name, type, role, aria-label, placeholder, class (first 3 tokens)
+  const attributes: Record<string, string> = {};
+  const attrNames = ['id', 'name', 'type', 'role', 'aria-label', 'placeholder'];
+  for (const name of attrNames) {
+    const val = element.getAttribute(name);
+    if (val) attributes[name] = val;
+  }
+  const classList = element.getAttribute('class');
+  if (classList) {
+    attributes['class'] = classList.split(/\s+/).slice(0, 3).join(' ');
+  }
+
+  // Structural context from DOMContextExtractor
+  const ctx = extractDOMContext(element);
+  const structuralContext = formatDOMContextString(ctx);
+
+  return { tag, text, attributes, structuralContext };
+}
+
+/**
+ * Build a CandidateScoringRow for diagnostic output.
+ * Scores a candidate element against all hints with per-hint breakdown.
+ */
+function buildCandidateScoringRow(
+  candidate: { element: Element; confidence: number; matchedHints: string[]; failedHints: string[] },
+  hints: SemanticHint[],
+  adjustedConfidence: number,
+): CandidateScoringRow {
+  const matchedSet = new Set(candidate.matchedHints);
+
+  const hintScores: DiagnosticHintScore[] = hints.map(hint => {
+    const hintDescription = typeof hint.value === 'string'
+      ? `${hint.type}:${hint.value}`
+      : `${hint.type}:${hint.value.name}=${hint.value.value}`;
+
+    const weight = HINT_WEIGHTS[hint.type] ?? 0;
+    const matched = matchedSet.has(hintDescription);
+    const contribution = matched ? weight : 0;
+
+    return { hint: hintDescription, weight, matched, contribution };
+  });
+
+  return {
+    candidate: buildCandidateDescriptor(candidate.element),
+    baseConfidence: candidate.confidence,
+    adjustedConfidence,
+    hintScores,
+  };
+}
+
+/**
  * Get a DOM excerpt around the expected area for hint_suggester.
  * Uses the page body's first 500 chars of visible text as a rough excerpt.
  * This is a best-effort heuristic since we have no candidates to anchor on.
@@ -487,11 +553,18 @@ export async function resolveElementCascade(
       }
     }
 
-    // No resolution -- return failure
+    // No resolution -- return failure with diagnostic
     const result: CascadeResolverResult = {
       ...stage1Result,
       stage: microPromptsEnabled ? 3 : 2,
       resolutionTimeMs: performance.now() - startTime,
+      diagnostic: {
+        failedAtStage: microPromptsEnabled ? 3 : 2,
+        confidenceThreshold: STAGE_2_CONFIDENCE,
+        bestCandidateScore: null,
+        confidenceGap: null,
+        topCandidates: [],
+      },
     };
     recordFailure(hints);
     return result;
@@ -665,6 +738,23 @@ export async function resolveElementCascade(
   }
 
   // No resolution above threshold -- fall through to Stage 6 (CSS fallback in PlaybackManager)
+  // Build diagnostic scoring rows for top candidates
+  const diagnosticCandidates = competitors
+    .map(c => {
+      const ctx = extractDOMContext(c.element);
+      const boost = computeStructuralBoost(ctx, hints);
+      const adj = Math.min(c.confidence + boost.total + stabilityBoost, 1.0);
+      return { ...c, adjustedConfidence: adj };
+    })
+    .sort((a, b) => b.adjustedConfidence - a.adjustedConfidence)
+    .slice(0, 5);
+
+  const diagnosticRows: CandidateScoringRow[] = diagnosticCandidates.map(c =>
+    buildCandidateScoringRow(c, hints, c.adjustedConfidence)
+  );
+
+  const bestScore = bestCandidate?.adjustedConfidence ?? null;
+
   const failResult: CascadeResolverResult = {
     element: bestCandidate?.element ?? null,
     confidence: bestCandidate?.adjustedConfidence ?? stage1Result.confidence,
@@ -674,6 +764,13 @@ export async function resolveElementCascade(
     structuralBoost: bestCandidate?.structuralBoost,
     stabilityBoost: stabilityBoost > 0 ? stabilityBoost : undefined,
     resolutionTimeMs: performance.now() - startTime,
+    diagnostic: {
+      failedAtStage: microPromptsEnabled ? 5 : 2,
+      confidenceThreshold: STAGE_2_CONFIDENCE,
+      bestCandidateScore: bestScore,
+      confidenceGap: bestScore !== null ? STAGE_2_CONFIDENCE - bestScore : null,
+      topCandidates: diagnosticRows,
+    },
   };
 
   recordFailure(hints);

@@ -17,3 +17,4 @@ export type {
   ParsedScript,
 } from './bsl.js';
 export { HINT_WEIGHTS } from './weights.js';
+export type { FailureDiagnostic, CandidateScoringRow, CandidateDescriptor, DiagnosticHintScore } from './diagnostic.js';
