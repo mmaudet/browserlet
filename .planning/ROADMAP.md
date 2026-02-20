@@ -71,11 +71,10 @@ Plans:
   3. When a step fails, the report shows the confidence threshold, the best candidate's score, and the gap between them
   4. When a step fails, the diagnostic output includes a suggested fix (e.g., "try changing hint X to Y" or "add hint Z for disambiguation")
   5. Diagnostic reports are available as structured JSON (for CLI piping and automation) and as human-readable text (for extension side panel display)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 038-01: TBD
-- [ ] 038-02: TBD
+- [ ] 038-01-PLAN.md — FailureDiagnostic type, resolver bundle diagnostic collection, DiagnosticFormatter/Suggester, BSLRunner wiring, --diagnostic-json flag, unit tests
 
 ### Phase 39: Repair Workflow
 **Goal**: User can fix a broken BSL script by editing specific hints from the diagnostic output, get alternative suggestions from the live page, re-validate immediately, and track what changed
@@ -114,7 +113,7 @@ Phases execute in numeric order: 36 -> 37 -> 38 -> 39 -> 40
 |-------|----------------|--------|-----------|
 | 36. Recording Enrichment | 0/2 | Not started | - |
 | 37. Generation Quality | 0/? | Not started | - |
-| 38. Failure Diagnostics | 0/? | Not started | - |
+| 38. Failure Diagnostics | 0/1 | Planned | - |
 | 39. Repair Workflow | 0/? | Not started | - |
 | 40. Pipeline Validation | 0/? | Not started | - |
 
