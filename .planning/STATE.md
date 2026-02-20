@@ -13,7 +13,7 @@ Milestone: v1.9 Reliability & Diagnostics
 Phase: 37 of 40 (Generation Quality)
 Plan: 3 of 3 complete
 Status: Phase 037 Complete
-Last activity: 2026-02-20 -- Completed 037-03 (layout-aware generation)
+Last activity: 2026-02-20 -- Completed 036-02 (position_context + SPA detection)
 
 Progress: [███░░░░░░░] 10%
 
@@ -41,6 +41,9 @@ See PROJECT.md Key Decisions table for full list.
 - [037-03] Generic layout produces empty string guidance (zero token overhead for common case)
 - [Phase 036]: landmark_context weight set to 0.65 (between section_context 0.6 and fieldset_context 0.7)
 - [Phase 036]: Added role='search' to domContextExtractor for search landmark detection
+- [036-02] position_context weight = 0.55 (above class_contains, below near_label) -- fragile if rows reorder but critical for table disambiguation
+- [036-02] detectSPAContext returns undefined for non-SPA pages to avoid false positives
+- [036-02] Position disambiguation requires both role + text_contains hints to avoid noise
 
 ### Pending Todos
 
@@ -58,14 +61,15 @@ None.
 | 11 | Ajouter un delai de 2s avant le screenshot | 2026-02-16 | eab43f3 | [11-ajouter-un-d-lai-de-2s-avant-le-screensh](./quick/11-ajouter-un-d-lai-de-2s-avant-le-screensh/) |
 | Phase 036 P01 | 5min | 2 tasks | 6 files |
 | Phase 037 P01 | 4min | 3 tasks | 3 files |
+| Phase 036 P02 | 5min | 2 tasks | 8 files |
 | Phase 037 P03 | 3min | 2 tasks | 2 files |
 
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 037-03-PLAN.md (layout-aware generation -- Phase 037 complete)
+Stopped at: Completed 036-02-PLAN.md (position_context + SPA detection -- Phase 036 complete)
 Resume with: /gsd:execute-phase 038
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-20 after 037-03 completion*
+*Last updated: 2026-02-20 after 036-02 completion*
