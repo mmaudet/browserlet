@@ -18,3 +18,4 @@ export type {
 } from './bsl.js';
 export { HINT_WEIGHTS } from './weights.js';
 export type { FailureDiagnostic, CandidateScoringRow, CandidateDescriptor, DiagnosticHintScore } from './diagnostic.js';
+export type { RepairTarget, RepairAuditEntry } from './repair.js';

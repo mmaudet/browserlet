@@ -53,6 +53,7 @@ const VALID_PROMPT_TYPES: readonly MicroPromptType[] = [
   'hint_suggester',
   'disambiguator',
   'confidence_booster',
+  'hint_repairer',
 ];
 
 // ---------------------------------------------------------------------------
