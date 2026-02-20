@@ -164,7 +164,7 @@ steps:
   - action: click|type|select|navigate|wait_for|scroll|hover|extract|table_extract|screenshot
     target:
       hints:
-        - type: data_attribute|role|type|aria_label|name|text_contains|placeholder_contains|near_label|fieldset_context|associated_label|section_context|landmark_context|class_contains|id
+        - type: data_attribute|role|type|aria_label|name|text_contains|placeholder_contains|near_label|fieldset_context|associated_label|section_context|landmark_context|position_context|class_contains|id
           value: "hint value"
       fallback_selector: "css selector as backup"
     value: "for type/select actions"
@@ -187,8 +187,9 @@ steps:
 10. **associated_label** - Label text via for=/aria-labelledby - More precise than near_label when explicit label association exists
 11. **section_context** - Nearest section heading text (h1-h6) - Helps identify which page section the element belongs to
 12. **landmark_context** - Nearest ARIA landmark region (navigation, main, search, form, banner, contentinfo) - Disambiguates elements across major page sections
-13. **class_contains** - Semantic CSS classes (NOT utility classes like Tailwind) - Less stable
-14. **id** - Element ID - ONLY if not auto-generated (avoid UUIDs, React/Vue prefixes)
+13. **position_context** - Positional disambiguation (e.g., "row 3 of 5", "item 2 of 3") - Critical when multiple identical elements exist (e.g., "Edit" buttons in a table). ALWAYS include in generated BSL when present in recorded hints.
+14. **class_contains** - Semantic CSS classes (NOT utility classes like Tailwind) - Less stable
+15. **id** - Element ID - ONLY if not auto-generated (avoid UUIDs, React/Vue prefixes)
 
 ## IMPORTANT: ARIA Roles (NOT HTML tags)
 The "role" hint MUST use ARIA role names, NOT HTML tag names. Here is the mapping:
@@ -307,7 +308,31 @@ Without fieldset_context, these two steps would be indistinguishable.
     - Elements with role="menuitem" or inside \`[role="menu"]\` typically require opening the parent menu first
 15. **STRUCTURAL HINTS**: When captured actions include \`fieldset_context\`, \`associated_label\`, \`section_context\`, or \`landmark_context\` hints, ALWAYS preserve them in the generated BSL. These hints are critical for disambiguating identical elements in different form/page sections. Without them, the resolver cannot distinguish between e.g., "Email" in billing vs "Email" in shipping.
 16. **HINT PRESERVATION (CRITICAL)**: Every hint of type data_attribute, role, type, aria_label, name, text_contains, fieldset_context, or associated_label that appears in a recorded action MUST appear in the generated BSL step for that action. These are high-stability hints (weight >= 0.7). Do NOT drop them to "simplify" the output — they are the primary means of finding the element reliably.
-17. **HINT ORDER**: Hints in a step's target.hints array MUST be ordered from most stable to least stable (data_attribute > role > type > aria_label > name > text_contains > placeholder_contains > fieldset_context > associated_label > section_context > near_label > class_contains). This ordering is already applied in the input — preserve it.
+17. **HINT ORDER**: Hints in a step's target.hints array MUST be ordered from most stable to least stable (data_attribute > role > type > aria_label > name > text_contains > placeholder_contains > fieldset_context > associated_label > section_context > near_label > position_context > class_contains). This ordering is already applied in the input — preserve it.
+18. **SPA CONTEXT**: If a captured action includes a \`spa_context\` field with \`framework: "react"\` or \`framework: "vue"\`, this is a Single Page Application. For SPA scripts:
+    - Add \`wait_for\` steps BEFORE clicking elements that trigger route changes or async data loads (timeout: "5s")
+    - If \`spa_context.is_dynamic_zone: true\`, always add a \`wait_for\` after the preceding action that triggers navigation
+    - If \`spa_context.component\` is present, include it as context in the step intent comment (BSL supports YAML comments \`# Component: UserTable\`)
+
+## IMPORTANT: Position Context Hints (Repeated Element Disambiguation)
+When actions include \`position_context\` hints, multiple identical elements exist on the page:
+- **position_context** "row 3 of 5" means this was the 3rd row's element in a 5-row table
+- **position_context** "item 2 of 3" means this was the 2nd occurrence among 3 identical elements
+- ALWAYS include \`position_context\` in generated BSL when present — without it, the resolver cannot pick the correct element
+- Combine with other disambiguating hints (section_context, fieldset_context) for maximum resilience
+
+Example — clicking the 2nd "Edit" button in a table:
+\`\`\`yaml
+- action: click
+  target:
+    hints:
+      - type: role
+        value: button
+      - type: text_contains
+        value: "edit"
+      - type: position_context
+        value: "row 2 of 5"
+\`\`\`
 ${layoutGuidance}
 ## BSL Examples (Correct Format)
 \`\`\`yaml
@@ -421,7 +446,7 @@ BSL format:
 - version: "1.0.0"
 - steps: array with action, target (hints array only), value, output (for extract)
 
-Hints (by priority): data_attribute, role, type, aria_label, name, text_contains, placeholder_contains, near_label, fieldset_context, associated_label, section_context, landmark_context, class_contains, id
+Hints (by priority): data_attribute, role, type, aria_label, name, text_contains, placeholder_contains, near_label, fieldset_context, associated_label, section_context, landmark_context, position_context, class_contains, id
 
 ARIA roles (use these for "role" hint, NOT HTML tags):
 - h1-h6 → "heading", p → "paragraph", a → "link", button → "button"
@@ -445,6 +470,8 @@ Rules:
 - STRUCTURAL HINTS: fieldset_context (fieldset legend), associated_label (label[for]/aria-labelledby), section_context (heading), landmark_context (ARIA landmark region) disambiguate identical elements in different form/page sections. ALWAYS preserve these when present.
 - HINT PRESERVATION (CRITICAL): Every hint of type data_attribute, role, type, aria_label, name, text_contains, fieldset_context, or associated_label MUST appear in the generated BSL. These are high-stability hints (weight >= 0.7). Do NOT drop them.
 - HINT ORDER: Preserve the input hint ordering (most stable first). Do not reorder hints.
+- POSITION CONTEXT: When position_context hint is present (e.g., "row 2 of 5", "item 3 of 4"), ALWAYS include it — it disambiguates identical elements.
+- SPA CONTEXT: If action has spa_context with framework (react/vue/angular), add wait_for before route-change clicks and after navigation. Include spa_context.component in YAML comments.
 ${layoutNote}
 Output ONLY YAML.`;
 }

@@ -1,5 +1,5 @@
 import { CapturedAction, ActionType } from './types';
-import { generateHints } from './hintGenerator';
+import { generateHints, detectSPAContext } from './hintGenerator';
 
 export type EventCallback = (action: CapturedAction) => void;
 
@@ -242,6 +242,12 @@ export class EventCapture {
       frameId: this.getFrameId(),
       ...extra
     };
+
+    // Detect SPA framework context (React/Vue/Angular)
+    const spaCtx = detectSPAContext(element);
+    if (spaCtx) {
+      action.spa_context = spaCtx;
+    }
 
     // Capture fallback selector for links (href is very stable)
     if (element.tagName.toLowerCase() === 'a') {
