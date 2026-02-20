@@ -34,7 +34,7 @@ steps:
   - action: click|type|select|navigate|wait_for|scroll|hover|extract|table_extract|screenshot
     target:
       hints:
-        - type: data_attribute|role|type|aria_label|name|text_contains|placeholder_contains|near_label|fieldset_context|associated_label|section_context|class_contains|id
+        - type: data_attribute|role|type|aria_label|name|text_contains|placeholder_contains|near_label|fieldset_context|associated_label|section_context|landmark_context|class_contains|id
           value: "hint value"
       fallback_selector: "css selector as backup"
     value: "for type/select actions"
@@ -56,8 +56,9 @@ steps:
 9. **fieldset_context** - Fieldset legend text (e.g., "Billing Address", "Shipping Address") - Critical for disambiguating identical inputs in different form sections
 10. **associated_label** - Label text via for=/aria-labelledby - More precise than near_label when explicit label association exists
 11. **section_context** - Nearest section heading text (h1-h6) - Helps identify which page section the element belongs to
-12. **class_contains** - Semantic CSS classes (NOT utility classes like Tailwind) - Less stable
-13. **id** - Element ID - ONLY if not auto-generated (avoid UUIDs, React/Vue prefixes)
+12. **landmark_context** - Nearest ARIA landmark region (navigation, main, search, form, banner, contentinfo) - Disambiguates elements across major page sections
+13. **class_contains** - Semantic CSS classes (NOT utility classes like Tailwind) - Less stable
+14. **id** - Element ID - ONLY if not auto-generated (avoid UUIDs, React/Vue prefixes)
 
 ## IMPORTANT: ARIA Roles (NOT HTML tags)
 The "role" hint MUST use ARIA role names, NOT HTML tag names. Here is the mapping:
@@ -107,11 +108,12 @@ CORRECT (for styled links like "C'est parti !" or "Submit"):
     value: btn
 
 ## IMPORTANT: Structural Context Hints (Form Disambiguation)
-When actions include \`fieldset_context\`, \`associated_label\`, or \`section_context\` hints, these provide critical structural DOM context:
+When actions include \`fieldset_context\`, \`associated_label\`, \`section_context\`, or \`landmark_context\` hints, these provide critical structural DOM context:
 
 - **fieldset_context**: The fieldset legend text. When two inputs have identical name/type/role but different fieldset_context values (e.g., "Billing Address" vs "Shipping Address"), the fieldset_context is what distinguishes them. ALWAYS include fieldset_context in the generated hints when present.
 - **associated_label**: Explicit label association (via for= or aria-labelledby). More precise than near_label. Prefer this over near_label when both exist for the same element.
 - **section_context**: Section heading text (h1-h6). Useful when elements are in different page sections but not in fieldsets.
+- **landmark_context**: The nearest ARIA landmark region (e.g., "navigation", "main", "search"). When a page has multiple search inputs or buttons, landmark_context distinguishes elements in the header navigation from those in the main content. Include when present.
 
 Example - two "Email" inputs in a checkout form:
 \`\`\`yaml
@@ -173,7 +175,7 @@ Without fieldset_context, these two steps would be indistinguishable.
     - Check if the captured actions include a click on the menu trigger BEFORE the target action
     - If not present, add a \`wait_for\` with timeout for the menu trigger, then a \`click\` action on it
     - Elements with role="menuitem" or inside \`[role="menu"]\` typically require opening the parent menu first
-15. **STRUCTURAL HINTS**: When captured actions include \`fieldset_context\`, \`associated_label\`, or \`section_context\` hints, ALWAYS preserve them in the generated BSL. These hints are critical for disambiguating identical elements in different form sections. Without them, the resolver cannot distinguish between e.g., "Email" in billing vs "Email" in shipping.
+15. **STRUCTURAL HINTS**: When captured actions include \`fieldset_context\`, \`associated_label\`, \`section_context\`, or \`landmark_context\` hints, ALWAYS preserve them in the generated BSL. These hints are critical for disambiguating identical elements in different form/page sections. Without them, the resolver cannot distinguish between e.g., "Email" in billing vs "Email" in shipping.
 
 ## BSL Examples (Correct Format)
 \`\`\`yaml
@@ -274,7 +276,7 @@ BSL format:
 - version: "1.0.0"
 - steps: array with action, target (hints array only), value, output (for extract)
 
-Hints (by priority): data_attribute, role, type, aria_label, name, text_contains, placeholder_contains, near_label, fieldset_context, associated_label, section_context, class_contains, id
+Hints (by priority): data_attribute, role, type, aria_label, name, text_contains, placeholder_contains, near_label, fieldset_context, associated_label, section_context, landmark_context, class_contains, id
 
 ARIA roles (use these for "role" hint, NOT HTML tags):
 - h1-h6 → "heading", p → "paragraph", a → "link", button → "button"
@@ -295,7 +297,7 @@ Rules:
 - NAVIGATION MENUS: If element is inside dropdown/menu (data-radix-*, navigation-menu-link), add click to open menu first
 - FALLBACK SELECTOR: If action has fallbackSelector field, include it as fallback_selector in target (important for links)
 - PRESERVE ALL LINK CLICKS: NEVER remove clicks on links or menu items that navigate to other pages - they are essential
-- STRUCTURAL HINTS: fieldset_context (fieldset legend), associated_label (label[for]/aria-labelledby), section_context (heading) disambiguate identical elements in different form sections. ALWAYS preserve these when present.
+- STRUCTURAL HINTS: fieldset_context (fieldset legend), associated_label (label[for]/aria-labelledby), section_context (heading), landmark_context (ARIA landmark region) disambiguate identical elements in different form/page sections. ALWAYS preserve these when present.
 
 Output ONLY YAML.`;
 }
