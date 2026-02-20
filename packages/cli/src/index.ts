@@ -32,7 +32,9 @@ export { StepReporter } from './output.js';
 export { SimpleResolver } from './resolver.js';
 export { BSLRunner } from './runner.js';
 export type { RunResult, BSLRunnerOptions } from './runner.js';
-export { CascadeCLIResolver } from './cascadeResolver.js';
+export { CascadeCLIResolver, DiagnosticError } from './cascadeResolver.js';
+export type { DiagnosticReport } from './diagnostic/types.js';
+export type { FailureDiagnostic } from '@browserlet/core/types';
 export { BatchRunner } from './batchRunner.js';
 export type { BatchResult, ScriptResult, BatchRunnerOptions } from './batchRunner.js';
 export { TestReporter } from './testReporter.js';
@@ -56,7 +58,8 @@ program
   .option('--auto-repair', 'Automatically apply LLM-suggested repairs for failed selectors (confidence >= 0.70)', false)
   .option('--interactive', 'Interactively approve repair suggestions for failed selectors', false)
   .option('--session-restore <sessionId>', 'Restore session state from a previous run (skips authentication)')
-  .action(async (scriptPath: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean; microPrompts: boolean; autoRepair: boolean; interactive: boolean; sessionRestore?: string }) => {
+  .option('--diagnostic-json', 'Output failure diagnostics as structured JSON to stdout instead of human-readable text', false)
+  .action(async (scriptPath: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean; microPrompts: boolean; autoRepair: boolean; interactive: boolean; sessionRestore?: string; diagnosticJson: boolean }) => {
     // Validate script path
     if (!fs.existsSync(scriptPath)) {
       console.error(pc.red(`Error: Script file not found: ${scriptPath}`));
@@ -244,6 +247,7 @@ program
         autoRepair: options.autoRepair,
         interactive: options.interactive,
         sessionId: options.sessionRestore ? undefined : sessionId,
+        diagnosticJson: options.diagnosticJson,
       });
 
       const result = await runner.run(scriptPath);
@@ -278,7 +282,8 @@ program
   .option('--workers <count>', 'Number of parallel workers', '1')
   .option('--auto-repair', 'Automatically apply LLM-suggested repairs for failed selectors (confidence >= 0.70)', false)
   .option('--interactive', 'Interactively approve repair suggestions for failed selectors', false)
-  .action(async (directory: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean; microPrompts: boolean; bail: boolean; workers: string; autoRepair: boolean; interactive: boolean }) => {
+  .option('--diagnostic-json', 'Output failure diagnostics as structured JSON to stdout instead of human-readable text', false)
+  .action(async (directory: string, options: { headed: boolean; timeout: string; outputDir: string; vault: boolean; microPrompts: boolean; bail: boolean; workers: string; autoRepair: boolean; interactive: boolean; diagnosticJson: boolean }) => {
     // Validate directory exists
     if (!fs.existsSync(directory)) {
       console.error(pc.red(`Error: Directory not found: ${directory}`));
@@ -407,6 +412,7 @@ program
         workers,
         autoRepair: options.autoRepair,
         interactive: options.interactive,
+        diagnosticJson: options.diagnosticJson,
       }, reporter);
 
       const scripts = batchRunner.discover(directory);

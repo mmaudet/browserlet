@@ -7,6 +7,8 @@
 
 import pc from 'picocolors';
 import ora, { type Ora } from 'ora';
+import type { DiagnosticReport } from './diagnostic/types.js';
+import { formatDiagnosticText } from './diagnostic/formatter.js';
 
 /**
  * Format a duration in milliseconds to a human-readable string.
@@ -68,8 +70,9 @@ export class StepReporter {
   /**
    * Mark the current step as failed with a red X and error message.
    * Optionally displays the path to a failure screenshot.
+   * If diagnosticReport is provided, prints the detailed diagnostic block to stderr.
    */
-  stepFail(error: string, screenshotPath?: string): void {
+  stepFail(error: string, screenshotPath?: string, diagnosticReport?: DiagnosticReport): void {
     if (this.spinner) {
       let message = this.spinner.text + pc.red(` -- ${error}`);
       if (screenshotPath) {
@@ -77,6 +80,11 @@ export class StepReporter {
       }
       this.spinner.fail(message);
       this.spinner = null;
+    }
+
+    // If diagnostic report provided, print the detailed diagnostic block to stderr
+    if (diagnosticReport) {
+      process.stderr.write(formatDiagnosticText(diagnosticReport));
     }
   }
 

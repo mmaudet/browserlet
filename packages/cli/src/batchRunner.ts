@@ -53,6 +53,7 @@ export interface BatchRunnerOptions {
   workers?: number;          // Concurrent worker count (default: 1)
   autoRepair?: boolean;      // Auto-apply LLM repairs (>= 0.70 confidence)
   interactive?: boolean;     // Interactively approve repairs
+  diagnosticJson?: boolean;  // Output failure diagnostics as JSON to stdout
 }
 
 /**
@@ -129,6 +130,7 @@ export class BatchRunner {
         llmConfig: this.options.llmConfig,
         autoRepair: this.options.autoRepair,
         interactive: this.options.interactive,
+        diagnosticJson: this.options.diagnosticJson,
       });
 
       const runResult = await runner.run(scriptPath);

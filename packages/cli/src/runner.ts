@@ -22,7 +22,10 @@ import {
 } from '@browserlet/core/substitution';
 import { PlaywrightExecutor } from './executor.js';
 import type { StepError } from './executor.js';
-import { CascadeCLIResolver } from './cascadeResolver.js';
+import { CascadeCLIResolver, DiagnosticError } from './cascadeResolver.js';
+import type { DiagnosticReport } from './diagnostic/types.js';
+import { suggestFix } from './diagnostic/suggester.js';
+import { formatDiagnosticJSON } from './diagnostic/formatter.js';
 import { SimpleResolver } from './resolver.js';
 import { StepReporter } from './output.js';
 import { CLIPasswordStorage } from './credentials/resolver.js';
@@ -59,6 +62,7 @@ export interface BSLRunnerOptions {
   autoRepair?: boolean;    // --auto-repair: apply repairs >= 0.70 confidence automatically
   interactive?: boolean;   // --interactive: prompt user to approve each repair
   sessionId?: string;      // If provided, save session snapshot after successful run
+  diagnosticJson?: boolean; // --diagnostic-json: output machine-readable JSON instead of text
 }
 
 /**
@@ -365,7 +369,21 @@ export class BSLRunner {
           // Screenshot itself failed (browser crashed, page closed, etc.)
         }
 
-        reporter.stepFail(errorMessage, capturedScreenshotPath);
+        // Build diagnostic report if available
+        let diagnosticReport: DiagnosticReport | undefined;
+        if (error instanceof DiagnosticError) {
+          const diagnostic = error.diagnostic;
+          const suggestion = suggestFix(diagnostic);
+          diagnosticReport = { diagnostic, suggestion };
+
+          if (this.options.diagnosticJson) {
+            // JSON mode: write to stdout for piping
+            process.stdout.write(formatDiagnosticJSON(diagnosticReport) + '\n');
+          }
+        }
+
+        // In JSON mode, skip the text diagnostic (pass undefined) since JSON was written to stdout
+        reporter.stepFail(errorMessage, capturedScreenshotPath, !this.options.diagnosticJson ? diagnosticReport : undefined);
 
         // Determine exit code based on error type
         const exitCode = stepError.code === 'TIMEOUT' ? 2 : 1;
