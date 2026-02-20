@@ -4,6 +4,24 @@
  */
 
 import type { CapturedAction } from '../../content/recording/types';
+import type { HintType, SemanticHint } from '@browserlet/core/types';
+import { HINT_WEIGHTS } from '@browserlet/core/types';
+
+/**
+ * Sort hints by descending HINT_WEIGHTS value.
+ * Highest weight (most stable) hints come first.
+ * Does not mutate the original array.
+ *
+ * @param hints - Array of semantic hints to sort
+ * @returns New array sorted by weight descending
+ */
+export function sortHintsByWeight(hints: SemanticHint[]): SemanticHint[] {
+  return [...hints].sort((a, b) => {
+    const wa = HINT_WEIGHTS[a.type as HintType] ?? 0;
+    const wb = HINT_WEIGHTS[b.type as HintType] ?? 0;
+    return wb - wa; // Descending: highest weight first
+  });
+}
 
 /**
  * Build a structured prompt for BSL generation from captured actions
@@ -20,7 +38,12 @@ import type { CapturedAction } from '../../content/recording/types';
  * @returns Structured prompt string for LLM
  */
 export function buildBSLPrompt(actions: CapturedAction[], startUrl?: string): string {
-  const actionsJson = JSON.stringify(actions, null, 2);
+  // Sort hints by weight (most stable first) before feeding to LLM
+  const sortedActions = actions.map(action => ({
+    ...action,
+    hints: sortHintsByWeight(action.hints),
+  }));
+  const actionsJson = JSON.stringify(sortedActions, null, 2);
 
   return `You are a BSL (Browserlet Scripting Language) expert. Convert the following captured user actions into a valid BSL script.
 
@@ -176,6 +199,8 @@ Without fieldset_context, these two steps would be indistinguishable.
     - If not present, add a \`wait_for\` with timeout for the menu trigger, then a \`click\` action on it
     - Elements with role="menuitem" or inside \`[role="menu"]\` typically require opening the parent menu first
 15. **STRUCTURAL HINTS**: When captured actions include \`fieldset_context\`, \`associated_label\`, \`section_context\`, or \`landmark_context\` hints, ALWAYS preserve them in the generated BSL. These hints are critical for disambiguating identical elements in different form/page sections. Without them, the resolver cannot distinguish between e.g., "Email" in billing vs "Email" in shipping.
+16. **HINT PRESERVATION (CRITICAL)**: Every hint of type data_attribute, role, type, aria_label, name, text_contains, fieldset_context, or associated_label that appears in a recorded action MUST appear in the generated BSL step for that action. These are high-stability hints (weight >= 0.7). Do NOT drop them to "simplify" the output — they are the primary means of finding the element reliably.
+17. **HINT ORDER**: Hints in a step's target.hints array MUST be ordered from most stable to least stable (data_attribute > role > type > aria_label > name > text_contains > placeholder_contains > fieldset_context > associated_label > section_context > near_label > class_contains). This ordering is already applied in the input — preserve it.
 
 ## BSL Examples (Correct Format)
 \`\`\`yaml
@@ -263,7 +288,12 @@ Generate a complete, valid BSL script. Output ONLY the YAML, no explanations or 
  * @returns Compact prompt string for LLM
  */
 export function buildCompactBSLPrompt(actions: CapturedAction[], startUrl?: string): string {
-  const actionsJson = JSON.stringify(actions, null, 2);
+  // Sort hints by weight (most stable first) before feeding to LLM
+  const sortedActions = actions.map(action => ({
+    ...action,
+    hints: sortHintsByWeight(action.hints),
+  }));
+  const actionsJson = JSON.stringify(sortedActions, null, 2);
 
   return `Convert these browser actions to BSL YAML:
 
@@ -298,6 +328,8 @@ Rules:
 - FALLBACK SELECTOR: If action has fallbackSelector field, include it as fallback_selector in target (important for links)
 - PRESERVE ALL LINK CLICKS: NEVER remove clicks on links or menu items that navigate to other pages - they are essential
 - STRUCTURAL HINTS: fieldset_context (fieldset legend), associated_label (label[for]/aria-labelledby), section_context (heading), landmark_context (ARIA landmark region) disambiguate identical elements in different form/page sections. ALWAYS preserve these when present.
+- HINT PRESERVATION (CRITICAL): Every hint of type data_attribute, role, type, aria_label, name, text_contains, fieldset_context, or associated_label MUST appear in the generated BSL. These are high-stability hints (weight >= 0.7). Do NOT drop them.
+- HINT ORDER: Preserve the input hint ordering (most stable first). Do not reorder hints.
 
 Output ONLY YAML.`;
 }
