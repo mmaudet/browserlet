@@ -55,11 +55,12 @@ Plans:
   2. Generated BSL steps favor high-weight, stable hints (landmarks, labels, fieldset legends) over low-weight, fragile hints (class names, DOM position)
   3. After generation, a validation pass compares generated BSL hints against the recorded DOM snapshot and flags mismatches before the user runs the script
   4. LLM correctly generates BSL for both legacy HTML table-based layouts (e.g., OBM) and modern SPA component structures (e.g., React/Vue)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 037-01: TBD
-- [ ] 037-02: TBD
+- [ ] 037-01-PLAN.md — Hint preservation audit (GEN-01) + weight-sorted hints in prompt builder (GEN-02)
+- [ ] 037-02-PLAN.md — Post-generation validation against DOM snapshot (GEN-03)
+- [ ] 037-03-PLAN.md — Layout-aware generation: legacy table vs SPA prompt sections (GEN-04)
 
 ### Phase 38: Failure Diagnostics
 **Goal**: When a BSL step fails, the user gets a clear, actionable report explaining why the element was not found and what to do about it
@@ -112,7 +113,7 @@ Phases execute in numeric order: 36 -> 37 -> 38 -> 39 -> 40
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 36. Recording Enrichment | 0/2 | Not started | - |
-| 37. Generation Quality | 0/? | Not started | - |
+| 37. Generation Quality | 0/3 | Planned | - |
 | 38. Failure Diagnostics | 0/1 | Planned | - |
 | 39. Repair Workflow | 0/? | Not started | - |
 | 40. Pipeline Validation | 0/? | Not started | - |
