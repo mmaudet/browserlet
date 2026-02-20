@@ -86,11 +86,11 @@ Plans:
   2. When repairing a hint, the repair engine analyzes the current page DOM and suggests alternative hints that would match the intended element
   3. After repairing hints, user can re-run the script immediately against the target page to verify the fix works
   4. Each repair is tracked with before/after hint values, creating an audit trail visible in the script history
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 039-01: TBD
-- [ ] 039-02: TBD
+- [ ] 039-01-PLAN.md — Shared repair types, repair store (state/apply/audit), DiagnosticRepairPanel UI, execution store wiring (REP-01, REP-02, REP-03, REP-04)
+- [ ] 039-02-PLAN.md — Content script DOM_HINT_SUGGEST handler + domHintSuggester DOM scanner (REP-02, REP-03)
 
 ### Phase 40: Pipeline Validation
 **Goal**: The full record-generate-execute pipeline demonstrably succeeds at >90% first-try rate on both legacy and modern applications, with diagnostics that correctly identify root causes of remaining failures
@@ -115,7 +115,7 @@ Phases execute in numeric order: 36 -> 37 -> 38 -> 39 -> 40
 | 36. Recording Enrichment | 0/2 | Not started | - |
 | 37. Generation Quality | 0/3 | Planned | - |
 | 38. Failure Diagnostics | 0/1 | Planned | - |
-| 39. Repair Workflow | 0/? | Not started | - |
+| 39. Repair Workflow | 0/2 | Planned | - |
 | 40. Pipeline Validation | 0/? | Not started | - |
 
 ---
