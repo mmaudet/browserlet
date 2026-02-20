@@ -22,5 +22,6 @@ export const HINT_WEIGHTS: Record<HintType, number> = {
   landmark_context: 0.65, // ARIA landmark region - page structure context
   section_context: 0.6,  // Section heading - page section disambiguation
   near_label: 0.6,      // Less reliable in tables/complex layouts
+  position_context: 0.55, // Positional disambiguation - fragile if rows reorder but critical for table rows
   class_contains: 0.5,  // Often minified/generated
 };

@@ -1,9 +1,10 @@
 /**
  * Semantic hint generator for recording user actions
- * Extracts 14 semantic hint types from DOM elements (10 original + 4 structural context)
+ * Extracts 15 semantic hint types from DOM elements (10 original + 4 structural context + 1 positional)
  */
 
 import { SemanticHint, HintType } from './types';
+import type { SPAContext, SPAFramework } from './types';
 import { getElementRole, findAssociatedLabel, getNearbyText } from '../../../utils/hints/dom';
 import { getVisibleText, normalizeText } from '../../../utils/hints/text';
 import { extractDOMContext } from '../playback/domContextExtractor';
@@ -110,6 +111,12 @@ export function generateHints(element: Element): SemanticHint[] {
   // 14. Landmark context -- nearest ARIA landmark region for page-structure disambiguation
   if (domContext.landmark) {
     hints.push({ type: 'landmark_context', value: domContext.landmark });
+  }
+
+  // 15. Position context -- disambiguates when multiple identical elements exist
+  const positionContext = generatePositionContext(element, hints);
+  if (positionContext) {
+    hints.push(positionContext);
   }
 
   return hints;
@@ -294,4 +301,127 @@ function isSemanticDataAttribute(name: string): boolean {
     'data-value',
   ];
   return semanticPrefixes.some(prefix => name.startsWith(prefix));
+}
+
+// ---------------------------------------------------------------------------
+// Position context -- disambiguates repeated identical elements
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate a position_context hint when multiple sibling elements share the
+ * same role AND text. Returns null if the element is unique (no disambiguation needed).
+ *
+ * Performance: capped at 200 candidates via querySelectorAll to avoid full-DOM scans.
+ */
+function generatePositionContext(element: Element, hints: SemanticHint[]): SemanticHint | null {
+  const roleHint = hints.find(h => h.type === 'role');
+  const textHint = hints.find(h => h.type === 'text_contains');
+
+  // Only disambiguate when we have both role and text
+  if (!roleHint || !textHint) return null;
+
+  const role = typeof roleHint.value === 'string' ? roleHint.value : null;
+  const text = typeof textHint.value === 'string' ? textHint.value : null;
+  if (!role || !text) return null;
+
+  // Build selector for same-role elements
+  const tagMap: Record<string, string> = {
+    button: 'button, [role="button"]',
+    link: 'a[href], [role="link"]',
+    textbox: 'input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]), textarea, [role="textbox"]',
+    checkbox: 'input[type="checkbox"], [role="checkbox"]',
+    radio: 'input[type="radio"], [role="radio"]',
+    combobox: 'select, [role="combobox"]',
+  };
+  const selector = tagMap[role] || `[role="${role}"]`;
+
+  let candidates: Element[];
+  try {
+    candidates = Array.from(document.querySelectorAll(selector)).slice(0, 200);
+  } catch {
+    return null;
+  }
+
+  // Filter by matching text content
+  const normalizedText = text.toLowerCase().trim();
+  const sameTextElements = candidates.filter(el => {
+    const elText = (el.textContent || '').toLowerCase().trim();
+    return elText === normalizedText || elText.includes(normalizedText);
+  });
+
+  if (sameTextElements.length < 2) return null; // Element is unique
+
+  const index = sameTextElements.indexOf(element);
+  if (index === -1) return null;
+
+  // Check for table context (use row index for better semantics)
+  const row = element.closest('tr');
+  if (row) {
+    const tbody = row.parentElement;
+    if (tbody) {
+      const rows = Array.from(tbody.children).filter(c => c.tagName === 'TR');
+      const rowIndex = rows.indexOf(row);
+      if (rowIndex >= 0) {
+        return { type: 'position_context', value: `row ${rowIndex + 1} of ${rows.length}` };
+      }
+    }
+  }
+
+  // General position
+  return { type: 'position_context', value: `item ${index + 1} of ${sameTextElements.length}` };
+}
+
+// ---------------------------------------------------------------------------
+// SPA framework detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Detect SPA framework context for the given element.
+ * Returns undefined when no SPA signals are present (plain HTML page).
+ */
+export function detectSPAContext(element: Element): SPAContext | undefined {
+  const framework = detectFramework();
+  if (framework === 'unknown') return undefined;
+
+  const component = detectComponent(element);
+  const is_dynamic_zone = detectDynamicZone(element);
+
+  return { framework, component, is_dynamic_zone };
+}
+
+function detectFramework(): SPAFramework {
+  // React signals
+  if (typeof window !== 'undefined' && '__REACT_DEVTOOLS_GLOBAL_HOOK__' in window) return 'react';
+  if (document.querySelector('[data-reactroot]')) return 'react';
+
+  // Vue signals
+  if (typeof window !== 'undefined' && '__VUE__' in window) return 'vue';
+  if (document.querySelector('[data-v-app]')) return 'vue';
+
+  // Angular signals
+  if (typeof window !== 'undefined' && 'ng' in (window as Window & typeof globalThis & { ng?: unknown })) return 'angular';
+  if (document.querySelector('[ng-version]')) return 'angular';
+
+  return 'unknown';
+}
+
+function detectComponent(element: Element): string | undefined {
+  let current: Element | null = element;
+  let depth = 0;
+  while (current && depth < 5) {
+    const comp = current.getAttribute('data-component');
+    if (comp) return comp;
+    current = current.parentElement;
+    depth++;
+  }
+  return undefined;
+}
+
+function detectDynamicZone(element: Element): boolean {
+  return !!(
+    element.closest('router-view') ||
+    element.closest('[data-router-view]') ||
+    element.closest('ng-view') ||
+    element.closest('[ng-view]')
+  );
 }

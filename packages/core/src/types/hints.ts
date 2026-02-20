@@ -6,7 +6,7 @@
  * that makes BSL scripts resilient to DOM changes.
  */
 
-// Semantic hint types (14 types: 10 from POC + 4 structural context)
+// Semantic hint types (15 types: 10 from POC + 4 structural context + 1 positional)
 export type HintType =
   | 'role'
   | 'text_contains'
@@ -21,7 +21,8 @@ export type HintType =
   | 'fieldset_context'
   | 'associated_label'
   | 'section_context'
-  | 'landmark_context';  // nearest ARIA landmark region (navigation, main, search, form, banner, contentinfo)
+  | 'landmark_context'   // nearest ARIA landmark region (navigation, main, search, form, banner, contentinfo)
+  | 'position_context';  // positional disambiguation (e.g. "row 3 of 5") when sibling elements are identical
 
 // Captured semantic hint
 export interface SemanticHint {
