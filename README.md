@@ -1,8 +1,8 @@
 # Browserlet
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
-[![Version: v1.8](https://img.shields.io/badge/version-v1.8-green.svg)]()
-[![Tests: 444](https://img.shields.io/badge/tests-444%20passing-brightgreen.svg)]()
+[![Version: v1.9](https://img.shields.io/badge/version-v1.9-green.svg)]()
+[![Tests: 524](https://img.shields.io/badge/tests-524%20passing-brightgreen.svg)]()
 [![Chrome](https://img.shields.io/badge/Chrome-MV3-yellow.svg)]()
 [![Firefox](https://img.shields.io/badge/Firefox-MV3-orange.svg)]()
 
@@ -114,7 +114,7 @@ BSL (Browserlet Scripting Language) scripts are YAML files with semantic selecto
 | `hover` | Hover over an element | `target` |
 | `screenshot` | Capture page as PNG | `output` |
 
-### Semantic Resolution — 13 Hint Types
+### Semantic Resolution — 15 Hint Types
 
 Instead of brittle CSS selectors, BSL targets elements with semantic hints. The cascade resolver matches them through 6 stages:
 
@@ -129,7 +129,7 @@ Instead of brittle CSS selectors, BSL targets elements with semantic hints. The 
 
 Stages 1-2 resolve ~80% of elements without any LLM call.
 
-**13 hint types with weights:**
+**15 hint types with weights:**
 
 | Hint | Weight | Description |
 |------|--------|-------------|
@@ -143,8 +143,10 @@ Stages 1-2 resolve ~80% of elements without any LLM call.
 | `placeholder_contains` | 0.7 | Placeholder text |
 | `fieldset_context` | 0.7 | Fieldset legend (form section disambiguation) |
 | `associated_label` | 0.7 | Explicit `for`/`aria-labelledby` association |
+| `landmark_context` | 0.65 | ARIA landmark region (nav, main, search, etc.) |
 | `section_context` | 0.6 | Section heading context |
 | `near_label` | 0.6 | Adjacent label text |
+| `position_context` | 0.55 | Positional disambiguation for repeated elements |
 | `class_contains` | 0.5 | Semantic class names (CSS modules filtered) |
 
 ### Data Extraction & Transforms
@@ -220,6 +222,7 @@ browserlet test ./scripts/
 | `--interactive` | Approve repair suggestions manually | `false` |
 | `--micro-prompts` | Enable LLM for cascade resolver stages 3-5 | `false` |
 | `--session-restore` | Restore session state (cookies + localStorage) from previous run | `false` |
+| `--diagnostic-json` | Output structured failure diagnostics as JSON to stdout | `false` |
 
 #### Examples
 
@@ -261,6 +264,35 @@ steps:
 ```
 
 The vault unlock cache reduces master password prompts during batch execution — after the first unlock, subsequent commands within 15 minutes proceed without prompting.
+
+### Failure Diagnostics
+
+When a step fails, Browserlet provides structured diagnostics showing exactly what was searched and why it failed:
+
+- **Per-candidate scoring matrix** — every hint checked against every candidate element, with individual scores
+- **Confidence gap** — the threshold required vs. the best candidate's score
+- **Fix suggestion** — deterministic recommendation (e.g., "try adding a `near_label` hint for disambiguation")
+- **JSON output** — `--diagnostic-json` pipes structured reports for CI/CD automation
+
+```bash
+# Human-readable diagnostics (stderr)
+browserlet run login.bsl
+
+# Machine-readable JSON (stdout)
+browserlet run login.bsl --diagnostic-json | jq '.suggestion'
+```
+
+### Repair Workflow
+
+When a script breaks, fix it without re-recording:
+
+**Extension:** The DiagnosticRepairPanel opens automatically when a step fails with diagnostic info. It shows:
+- Failed and matched hints with color-coded badges
+- "Get suggestions from page" — scans the live DOM for alternative hints (no LLM required)
+- One-click apply and re-run to verify the fix
+- Repair audit trail in `chrome.storage.local`
+
+**CLI:** Use `--auto-repair` for LLM-guided automatic fix, or `--interactive` to review each suggestion.
 
 ### Screenshots & Visual Debugging
 
@@ -347,6 +379,7 @@ browserlet/                          # npm workspaces monorepo
 │           ├── session/             #   Session persistence (storageState snapshots)
 │           ├── credentials/         #   Resolver, log sanitizer
 │           ├── llm/                 #   Micro-prompt router
+│           ├── diagnostic/          #   Failure diagnostics (suggester, formatter)
 │           └── repair/              #   AI auto-repair engine
 ├── entrypoints/                     # Browser extension (WXT)
 │   ├── background/                  #   Service worker
@@ -368,7 +401,7 @@ npm install                 # Install all workspaces
 npm run dev                 # Extension dev mode (Chrome, HMR)
 npm run dev:firefox         # Extension dev mode (Firefox)
 npm run build               # Production build
-npm test                    # Run all tests (444 tests, 24 suites)
+npm test                    # Run all tests (524 tests, 29 suites)
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and [SECURITY.md](SECURITY.md) for security policy.
@@ -388,13 +421,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and [SECURITY.
 | v1.6 | CLI & Monorepo | `browserlet run`, @browserlet/core, Playwright runner, CLI vault |
 | v1.7 | Testing & Repair | `browserlet test`, batch workers, AI auto-repair, vault CLI |
 | v1.8 | Session Persistence | Session capture/restore (extension + CLI), vault unlock cache, BSL `session_persistence` |
+| v1.9 | Reliability & Diagnostics | 15 hint types, layout-aware generation, failure diagnostics, repair workflow, >90% first-try success |
 
-### What's Next (v1.9+)
+### What's Next (v2.0+)
 
-- Script version control
-- Scheduled execution (cron-like)
 - JUnit XML / HTML reports for CI/CD
 - `--last-failed` flag for re-running failures
+- Script version control with diff tracking
+- Scheduled execution (cron-like)
 - Screenshot diff on repair
 
 ## License
