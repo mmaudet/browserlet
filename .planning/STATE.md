@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 
 Milestone: v1.9 Reliability & Diagnostics
 Phase: 39 of 40 (Repair Workflow)
-Plan: 1 of 2 complete
-Status: Executing Phase 039
-Last activity: 2026-02-20 -- Completed 039-01 (Repair workflow UI + shared types)
+Plan: 2 of 2 complete
+Status: Phase 039 Complete
+Last activity: 2026-02-20 -- Completed 039-02 (Content script DOM hint suggester)
 
-Progress: [█████░░░░░] 18%
+Progress: [██████░░░░] 20%
 
 ## Performance Metrics
 
@@ -50,6 +50,10 @@ See PROJECT.md Key Decisions table for full list.
 - [039-01] Dynamic import for repair store in EXECUTION_FAILED handler to avoid circular dependencies
 - [039-01] Bottom-sheet overlay style for DiagnosticRepairPanel (mobile-friendly UX)
 - [039-01] Re-run fetches latest script from scriptsState to pick up applied repairs
+- [039-02] Reused matchHintSimple logic from cascadeResolver for consistent hint matching across resolution and repair
+- [039-02] Stability filters reject UUID IDs, pure numeric IDs, and long alphanumeric class names from extracted hints
+- [039-02] Dynamic import for domHintSuggester keeps content script bundle lean (loads only on repair)
+- [039-02] Graceful empty response on error keeps repair UX non-blocking
 
 ### Pending Todos
 
@@ -71,13 +75,14 @@ None.
 | Phase 037 P03 | 3min | 2 tasks | 2 files |
 | Phase 038 P01 | 8min | 3 tasks | 15 files |
 | Phase 039 P01 | 4min | 3 tasks | 7 files |
+| Phase 039 P02 | 3min | 2 tasks | 2 files |
 
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 039-01-PLAN.md (Repair workflow UI + shared types)
-Resume with: /gsd:execute-phase 039 (plan 02 remaining)
+Stopped at: Completed 039-02-PLAN.md (Content script DOM hint suggester)
+Resume with: /gsd:plan-phase (next phase)
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-20 after 039-01 completion*
+*Last updated: 2026-02-20 after 039-02 completion*
