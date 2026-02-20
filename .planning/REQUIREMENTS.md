@@ -31,10 +31,10 @@ Requirements for v1.9 Reliability & Diagnostics. Fiabiliser le pipeline record â
 
 ### Repair Workflow
 
-- [ ] **REP-01**: User can repair a failed hint directly from the diagnostic output without re-recording the full script
-- [ ] **REP-02**: Repair engine suggests alternative hints based on current page DOM state
-- [ ] **REP-03**: Repaired script can be re-validated immediately against the target page
-- [ ] **REP-04**: Repair tracks changes (old hint to new hint) for audit trail
+- [x] **REP-01**: User can repair a failed hint directly from the diagnostic output without re-recording the full script
+- [x] **REP-02**: Repair engine suggests alternative hints based on current page DOM state
+- [x] **REP-03**: Repaired script can be re-validated immediately against the target page
+- [x] **REP-04**: Repair tracks changes (old hint to new hint) for audit trail
 
 ### Validation
 
@@ -87,10 +87,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DIAG-03 | Phase 38 | Complete |
 | DIAG-04 | Phase 38 | Complete |
 | DIAG-05 | Phase 38 | Complete |
-| REP-01 | Phase 39 | Pending |
-| REP-02 | Phase 39 | Pending |
-| REP-03 | Phase 39 | Pending |
-| REP-04 | Phase 39 | Pending |
+| REP-01 | Phase 39 | Complete |
+| REP-02 | Phase 39 | Complete |
+| REP-03 | Phase 39 | Complete |
+| REP-04 | Phase 39 | Complete |
 | VAL-01 | Phase 40 | Pending |
 | VAL-02 | Phase 40 | Pending |
 | VAL-03 | Phase 40 | Pending |

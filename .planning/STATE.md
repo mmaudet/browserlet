@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Automatisation web resiliente pour applications legacy, sans cout recurrent d'IA
-**Current focus:** v1.9 Reliability & Diagnostics -- Phase 38: Failure Diagnostics
+**Current focus:** v1.9 Reliability & Diagnostics -- Phase 39: Repair Workflow
 
 ## Current Position
 
 Milestone: v1.9 Reliability & Diagnostics
-Phase: 38 of 40 (Failure Diagnostics)
-Plan: 1 of 1 complete
-Status: Phase 038 Complete
-Last activity: 2026-02-20 -- Completed 038-01 (Full failure diagnostics pipeline)
+Phase: 39 of 40 (Repair Workflow)
+Plan: 1 of 2 complete
+Status: Executing Phase 039
+Last activity: 2026-02-20 -- Completed 039-01 (Repair workflow UI + shared types)
 
-Progress: [████░░░░░░] 15%
+Progress: [█████░░░░░] 18%
 
 ## Performance Metrics
 
@@ -47,6 +47,9 @@ See PROJECT.md Key Decisions table for full list.
 - [Phase 038]: PartialFailureDiagnostic assembled in-browser, completed CLI-side with Node.js context (stepId, pageUrl, searchedHints, timestamp)
 - [Phase 038]: DiagnosticError.message preserves matched=[]/failed=[] format for RepairEngine backward compatibility
 - [Phase 038]: Text diagnostics to stderr, JSON diagnostics to stdout for clean piping with --diagnostic-json
+- [039-01] Dynamic import for repair store in EXECUTION_FAILED handler to avoid circular dependencies
+- [039-01] Bottom-sheet overlay style for DiagnosticRepairPanel (mobile-friendly UX)
+- [039-01] Re-run fetches latest script from scriptsState to pick up applied repairs
 
 ### Pending Todos
 
@@ -67,13 +70,14 @@ None.
 | Phase 036 P02 | 5min | 2 tasks | 8 files |
 | Phase 037 P03 | 3min | 2 tasks | 2 files |
 | Phase 038 P01 | 8min | 3 tasks | 15 files |
+| Phase 039 P01 | 4min | 3 tasks | 7 files |
 
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 038-01-PLAN.md (Full failure diagnostics pipeline -- Phase 038 complete)
-Resume with: /gsd:execute-phase 039
+Stopped at: Completed 039-01-PLAN.md (Repair workflow UI + shared types)
+Resume with: /gsd:execute-phase 039 (plan 02 remaining)
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-20 after 038-01 completion*
+*Last updated: 2026-02-20 after 039-01 completion*
