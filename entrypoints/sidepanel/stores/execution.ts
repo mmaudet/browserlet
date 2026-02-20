@@ -260,12 +260,43 @@ chrome.runtime.onMessage.addListener((message) => {
     case 'EXECUTION_FAILED': {
       const error = message.payload?.error || 'Execution failed';
       const step = message.payload?.step;
+      const diagnosticInfo = message.payload?.diagnostic;
       console.log('[Browserlet] Execution failed:', { error, step, payload: message.payload });
       // Update step if provided
       if (typeof step === 'number') {
         currentStep.value = step;
       }
       failExecution(error);
+
+      // REP-01: auto-open repair panel when diagnostic info is available
+      if (diagnosticInfo && currentScript.value) {
+        import('./repair.js').then(({ openRepair }) => {
+          import('@browserlet/core/parser').then(({ parseSteps: parseStepsForRepair }) => {
+            try {
+              const script = currentScript.value;
+              if (!script) return;
+              const parsed = parseStepsForRepair(script.content);
+              const stepIdx = typeof step === 'number' ? step : 0;
+              const failedStep = parsed.steps[stepIdx];
+              if (failedStep?.target) {
+                openRepair({
+                  scriptId: script.id,
+                  scriptContent: script.content,
+                  stepIndex: stepIdx,
+                  stepIntent: failedStep.target.intent,
+                  originalHints: failedStep.target.hints,
+                  failedHints: diagnosticInfo.failedHints ?? [],
+                  matchedHints: diagnosticInfo.matchedHints ?? [],
+                  pageUrl: diagnosticInfo.pageUrl ?? '',
+                  failureReason: error,
+                });
+              }
+            } catch (e) {
+              console.warn('[Execution] Could not populate repair target:', e);
+            }
+          });
+        });
+      }
       break;
     }
 

@@ -19,6 +19,8 @@ import { suggestedScriptIds, loadTriggers } from './stores/triggers';
 import { CredentialManager } from './components/CredentialManager';
 import { ActionBar } from './components/ActionBar';
 import { startExecution, showCompletionModal, completedScriptName } from './stores/execution';
+import { repairTarget } from './stores/repair';
+import { DiagnosticRepairPanel } from './components/DiagnosticRepairPanel';
 
 // App initialization state
 const appState = signal<'loading' | 'needs_setup' | 'needs_unlock' | 'ready'>('loading');
@@ -391,6 +393,9 @@ function App() {
 
       {/* Execution completion modal */}
       <CompletionModal />
+
+      {/* Diagnostic repair panel overlay */}
+      {repairTarget.value && <DiagnosticRepairPanel />}
     </div>
   );
 }
