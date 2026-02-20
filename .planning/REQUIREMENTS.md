@@ -9,8 +9,8 @@ Requirements for v1.9 Reliability & Diagnostics. Fiabiliser le pipeline record â
 
 ### Recording Quality
 
-- [ ] **REC-01**: Recording captures enriched DOM context per interaction (parent landmarks, fieldset legends, nearby labels, section headings)
-- [ ] **REC-02**: Recording filters unstable hints (auto-generated IDs, dynamic CSS classes, framework artifacts) before LLM submission
+- [x] **REC-01**: Recording captures enriched DOM context per interaction (parent landmarks, fieldset legends, nearby labels, section headings)
+- [x] **REC-02**: Recording filters unstable hints (auto-generated IDs, dynamic CSS classes, framework artifacts) before LLM submission
 - [ ] **REC-03**: Recording detects and annotates SPA-specific patterns (React/Vue component structures, dynamic content zones)
 - [ ] **REC-04**: Recording captures disambiguation context when multiple similar elements exist on the page
 
@@ -74,8 +74,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REC-01 | Phase 36 | Pending |
-| REC-02 | Phase 36 | Pending |
+| REC-01 | Phase 36 | Complete |
+| REC-02 | Phase 36 | Complete |
 | REC-03 | Phase 36 | Pending |
 | REC-04 | Phase 36 | Pending |
 | GEN-01 | Phase 37 | Pending |
