@@ -23,6 +23,109 @@ export function sortHintsByWeight(hints: SemanticHint[]): SemanticHint[] {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Layout-type detection
+// ---------------------------------------------------------------------------
+
+export type LayoutType = 'legacy-table' | 'spa-component' | 'generic';
+
+/**
+ * Detect the layout type from recorded actions to select the appropriate
+ * generation strategy. Analyzes hint patterns across all actions.
+ *
+ * @returns 'legacy-table' for HTML table-based UIs (OBM, classic CMSes)
+ *          'spa-component' for React/Vue SPA UIs
+ *          'generic' when no strong signal is detected
+ */
+export function detectLayoutType(actions: CapturedAction[]): LayoutType {
+  let tableSignals = 0;
+  let spaSignals = 0;
+
+  for (const action of actions) {
+    for (const hint of action.hints) {
+      // Legacy table signals
+      if (hint.type === 'role' && typeof hint.value === 'string') {
+        if (['cell', 'columnheader', 'rowheader', 'row'].includes(hint.value)) {
+          tableSignals++;
+        }
+      }
+      // SPA signals: data-component, data-slot (Radix UI), SPA-style data attributes
+      if (hint.type === 'data_attribute' && typeof hint.value === 'object') {
+        const attrName = hint.value.name;
+        if (
+          attrName === 'data-component' ||
+          attrName === 'data-slot' ||
+          attrName.startsWith('data-radix') ||
+          attrName.startsWith('data-react') ||
+          attrName.startsWith('data-v-')  // Vue
+        ) {
+          spaSignals++;
+        }
+      }
+      // SPA signals: section_context often present in SPAs with route-based views
+      if (hint.type === 'section_context') {
+        spaSignals += 0.5; // weaker signal, requires more to tip
+      }
+    }
+    // SPA signal: auto-generated IDs typical of React/Vue
+    const idHint = action.hints.find(h => h.type === 'id');
+    if (idHint && typeof idHint.value === 'string') {
+      // Check common React/Vue ID patterns directly
+      if (/^(:r|ember|vue|ng-|__)/i.test(idHint.value)) {
+        spaSignals++;
+      }
+    }
+  }
+
+  // Require at least 2 clear signals to classify (avoids false positives)
+  if (tableSignals >= 2 && tableSignals > spaSignals) return 'legacy-table';
+  if (spaSignals >= 2 && spaSignals > tableSignals) return 'spa-component';
+  return 'generic';
+}
+
+// ---------------------------------------------------------------------------
+// Layout-specific prompt guidance
+// ---------------------------------------------------------------------------
+
+function buildLayoutGuidance(layoutType: LayoutType): string {
+  if (layoutType === 'legacy-table') {
+    return `
+## Layout: Legacy HTML Table Structure (OBM / Classic Web App)
+The recorded page uses HTML table-based layout. Apply these additional rules:
+- Table cells carry data — use role=cell with text_contains to target specific values in rows
+- Use role=columnheader with text_contains to reference column headers for context
+- Row navigation: when clicking a row-level action button (e.g., "Edit", "Delete"), use fieldset_context or near_label with the row's identifying cell value to disambiguate multiple identical buttons
+- Tables often have no ARIA landmarks — rely on text_contains and near_label for context
+- Prefer: [role=cell + text_contains] over [class_contains + position-based]
+- Do NOT use role=row as a target — rows are containers, not interactive elements
+- If an action is "click the Edit button in the row where Name = 'Dupont'", encode it as:
+  hints:
+    - type: role
+      value: button
+    - type: text_contains
+      value: "Edit"
+    - type: near_label
+      value: "Dupont"
+`;
+  }
+
+  if (layoutType === 'spa-component') {
+    return `
+## Layout: Modern SPA Component Structure (React / Vue)
+The recorded page uses a component-based SPA. Apply these additional rules:
+- After any click that triggers navigation or route change, add a wait_for step before the next action — SPA route changes update the DOM asynchronously
+- Use data_attribute hints (data-testid, data-cy, data-component, data-slot) when present — they are the most stable identifiers in SPAs
+- Avoid class_contains for styled-components or Emotion classes (they are build-time hashed and change on each deploy)
+- aria_label is often the only stable text identifier in SPAs that use i18n — prefer it over text_contains when both are available
+- For Radix UI / shadcn components: prefer data_attribute[data-slot] as the primary hint
+- Dropdown/menu items: check if a trigger click is needed before targeting menu items (items may be in the DOM but hidden until the trigger is activated)
+- React portals: elements rendered outside the component tree (e.g., modals, tooltips) may not be inside expected parent — use aria_label or role to target them
+`;
+  }
+
+  return ''; // generic — no extra section
+}
+
 /**
  * Build a structured prompt for BSL generation from captured actions
  *
@@ -44,6 +147,10 @@ export function buildBSLPrompt(actions: CapturedAction[], startUrl?: string): st
     hints: sortHintsByWeight(action.hints),
   }));
   const actionsJson = JSON.stringify(sortedActions, null, 2);
+
+  // Detect layout type for conditional guidance
+  const layoutType = detectLayoutType(actions);
+  const layoutGuidance = buildLayoutGuidance(layoutType);
 
   return `You are a BSL (Browserlet Scripting Language) expert. Convert the following captured user actions into a valid BSL script.
 
@@ -201,7 +308,7 @@ Without fieldset_context, these two steps would be indistinguishable.
 15. **STRUCTURAL HINTS**: When captured actions include \`fieldset_context\`, \`associated_label\`, \`section_context\`, or \`landmark_context\` hints, ALWAYS preserve them in the generated BSL. These hints are critical for disambiguating identical elements in different form/page sections. Without them, the resolver cannot distinguish between e.g., "Email" in billing vs "Email" in shipping.
 16. **HINT PRESERVATION (CRITICAL)**: Every hint of type data_attribute, role, type, aria_label, name, text_contains, fieldset_context, or associated_label that appears in a recorded action MUST appear in the generated BSL step for that action. These are high-stability hints (weight >= 0.7). Do NOT drop them to "simplify" the output — they are the primary means of finding the element reliably.
 17. **HINT ORDER**: Hints in a step's target.hints array MUST be ordered from most stable to least stable (data_attribute > role > type > aria_label > name > text_contains > placeholder_contains > fieldset_context > associated_label > section_context > near_label > class_contains). This ordering is already applied in the input — preserve it.
-
+${layoutGuidance}
 ## BSL Examples (Correct Format)
 \`\`\`yaml
 # Click a heading (NOT role: h1)
@@ -295,6 +402,14 @@ export function buildCompactBSLPrompt(actions: CapturedAction[], startUrl?: stri
   }));
   const actionsJson = JSON.stringify(sortedActions, null, 2);
 
+  // Detect layout type for a brief note
+  const layoutType = detectLayoutType(actions);
+  const layoutNote = layoutType === 'legacy-table'
+    ? '\nLayout: HTML table (role=cell/columnheader for table data, near_label for row disambiguation)'
+    : layoutType === 'spa-component'
+    ? '\nLayout: SPA (add wait_for after route changes, prefer data_attribute, avoid hashed classes)'
+    : '';
+
   return `Convert these browser actions to BSL YAML:
 
 ${actionsJson}
@@ -330,6 +445,6 @@ Rules:
 - STRUCTURAL HINTS: fieldset_context (fieldset legend), associated_label (label[for]/aria-labelledby), section_context (heading), landmark_context (ARIA landmark region) disambiguate identical elements in different form/page sections. ALWAYS preserve these when present.
 - HINT PRESERVATION (CRITICAL): Every hint of type data_attribute, role, type, aria_label, name, text_contains, fieldset_context, or associated_label MUST appear in the generated BSL. These are high-stability hints (weight >= 0.7). Do NOT drop them.
 - HINT ORDER: Preserve the input hint ordering (most stable first). Do not reorder hints.
-
+${layoutNote}
 Output ONLY YAML.`;
 }
