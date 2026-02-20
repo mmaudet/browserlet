@@ -1,118 +1,123 @@
-# Browserlet Development Roadmap
+# Roadmap: Browserlet v1.9 Reliability & Diagnostics
 
-**Last updated:** 2026-02-16
+## Overview
 
----
+v1.9 fiabilises the record-generate-execute pipeline to achieve >90% first-try success rate. The milestone progresses from enriching what the recorder captures, through improving LLM generation quality, to providing clear failure diagnostics and a repair workflow that eliminates full re-recording. Validation against real legacy and modern apps closes the milestone.
 
 ## Milestones
 
-- ✅ **v1.0 MVP** — Phases 1-6 (shipped 2026-01-31)
-- ✅ **v1.1 Security & Stability** — Phases 7-10 (shipped 2026-01-31)
-- ✅ **v1.2 Persistent Credentials** — Phases 11-12 (shipped 2026-02-01)
-- ✅ **v1.3 UX Sidepanel** — Phase 13 (shipped 2026-02-01)
-- ✅ **v1.4 Data Extraction & Screenshots** — Phases 14-16 (shipped 2026-02-12)
-- ✅ **v1.5 Resolver Redesign & Firefox** — Phases 17-22 (shipped 2026-02-13)
-- ✅ **v1.6 CLI Runner & Automated Testing** — Phases 23-26 (shipped 2026-02-14)
-- ✅ **v1.7 CLI Completion & Batch Testing** — Phases 27-31 (shipped 2026-02-15) → [archive](milestones/v1.7-ROADMAP.md)
-- 🚧 **v1.8 Session Persistence & Vault UX** — Phases 32-35 (in progress)
-
----
-
-## 🚧 v1.8 Session Persistence & Vault UX (In Progress)
-
-**Milestone Goal:** Add session persistence (cookies + localStorage snapshots) for extension and CLI to eliminate repeated authentication in automation workflows, plus vault unlock caching to reduce password prompts during batch execution.
-
-**Overview:** The roadmap follows dependency-driven structure starting from vault unlock caching (phase 32) which enables encrypted session snapshots for both platforms. Extension uses chrome.cookies API with content script localStorage injection (phase 33), CLI uses Playwright storageState with encrypted file persistence (phase 34), and BSL integration exposes session_persistence declarations (phase 35).
+- [x] **v1.0 MVP** - Phases 1-6 (shipped 2026-01-31)
+- [x] **v1.1 Security & Stability** - Phases 7-10 (shipped 2026-01-31)
+- [x] **v1.2 Persistent Credentials** - Phases 11-12 (shipped 2026-02-01)
+- [x] **v1.3 UX Sidepanel** - Phase 13 (shipped 2026-02-01)
+- [x] **v1.4 Self-Healing & Data Extraction** - Phases 14-16 (shipped 2026-02-12)
+- [x] **v1.5 Resolver Redesign & Firefox** - Phases 17-22 (shipped 2026-02-13)
+- [x] **v1.6 CLI Runner** - Phases 23-26 (shipped 2026-02-14)
+- [x] **v1.7 CLI Completion & Batch Testing** - Phases 27-31 (shipped 2026-02-15)
+- [x] **v1.8 Session Persistence & Vault UX** - Phases 32-35 (shipped 2026-02-19)
+- [ ] **v1.9 Reliability & Diagnostics** - Phases 36-40 (in progress)
 
 ## Phases
 
 **Phase Numbering:**
-- Integer phases (32, 33, 34, 35): Planned milestone work
-- Decimal phases (32.1, 32.2): Urgent insertions (marked with INSERTED)
+- Integer phases (36, 37, 38...): Planned milestone work
+- Decimal phases (36.1, 36.2): Urgent insertions (marked with INSERTED)
 
-Decimal phases appear between their surrounding integers in numeric order.
-
-- [x] **Phase 32: Vault Unlock Cache** - CLI caches derived key for 15 minutes to avoid repeated master password prompts (completed 2026-02-16)
-- [x] **Phase 33: Extension Session Persistence** - Capture/restore cookies and localStorage via chrome.cookies API and content scripts (completed 2026-02-16)
-- [x] **Phase 34: CLI Session Persistence** - Capture/restore session state via Playwright storageState with encrypted file storage (completed 2026-02-16)
-- [ ] **Phase 35: BSL Integration & Validation** - session_persistence BSL declaration, parser validation, auto-capture after successful runs
+- [ ] **Phase 36: Recording Enrichment** - Capture richer DOM context and filter unstable artifacts for higher-quality input to LLM generation
+- [ ] **Phase 37: Generation Quality** - Improve LLM BSL output to preserve recorded hints, select optimal combinations, and handle diverse page structures
+- [ ] **Phase 38: Failure Diagnostics** - Provide actionable failure reports showing what was searched, what was found, and what to fix
+- [ ] **Phase 39: Repair Workflow** - Enable targeted hint repair from diagnostic output without re-recording entire scripts
+- [ ] **Phase 40: Pipeline Validation** - Validate the full record-generate-execute pipeline at >90% first-try success on legacy and modern apps
 
 ## Phase Details
 
-### Phase 32: Vault Unlock Cache
-**Goal**: CLI users unlock vault once and run multiple commands without repeated master password prompts for 15 minutes
-**Depends on**: Nothing (first phase of v1.8)
-**Requirements**: VULT-01, VULT-02, VULT-03
+### Phase 36: Recording Enrichment
+**Goal**: Recording captures rich, stable, disambiguated DOM context that gives the LLM everything it needs to generate resilient BSL
+**Depends on**: Nothing (first phase of v1.9)
+**Requirements**: REC-01, REC-02, REC-03, REC-04
 **Success Criteria** (what must be TRUE):
-  1. User runs `browserlet run` with vault credentials and is prompted for master password only once
-  2. User runs second `browserlet run` within 15 minutes and is NOT prompted for master password
-  3. User runs `browserlet run` after 15 minutes and IS prompted for master password again
-  4. User runs `browserlet vault lock` and immediately triggered master password prompt on next vault access
-  5. Vault cache file has 0600 permissions (owner read/write only) preventing local privilege escalation
-**Plans:** 2 plans
+  1. When user records a click on a form field, the captured context includes parent landmarks, fieldset legend, nearby label, and section heading
+  2. When user records on a page with CSS Module hashed classes or React-generated IDs, those unstable hints are filtered out before reaching the LLM
+  3. When user records on a React/Vue SPA, the recording annotates component boundaries and dynamic content zones in the captured context
+  4. When user records a click and multiple similar elements exist (e.g., 5 "Edit" buttons in a table), the recording captures enough disambiguation context to distinguish the target from its siblings
+**Plans**: TBD
 
 Plans:
-- [ ] 032-01-PLAN.md -- Vault cache module with encrypted key storage and device key infrastructure
-- [ ] 032-02-PLAN.md -- CLI integration (run/test cache-aware unlock, vault lock command, startup cleanup)
+- [ ] 036-01: TBD
+- [ ] 036-02: TBD
 
-### Phase 33: Extension Session Persistence
-**Goal**: Extension users capture session cookies and localStorage after successful authentication, restore them before script execution to skip re-authentication
-**Depends on**: Phase 32 (vault encryption for session snapshots)
-**Requirements**: SEXT-01, SEXT-02, SEXT-03
+### Phase 37: Generation Quality
+**Goal**: LLM generates BSL that faithfully preserves recorded context, selects the most stable hint combinations, and can be validated against the original page
+**Depends on**: Phase 36
+**Requirements**: GEN-01, GEN-02, GEN-03, GEN-04
 **Success Criteria** (what must be TRUE):
-  1. User runs script with successful authentication, then closes browser
-  2. User reopens browser, runs same script, and is NOT prompted to log in again
-  3. Extension captures all cookie metadata (HttpOnly, SameSite, Secure, domain, path, expiry) during snapshot
-  4. User views session snapshot in chrome.storage.local and sees encrypted blob (not plaintext cookies)
-**Plans**: 3 plans
+  1. When LLM generates BSL from enriched recording, all meaningful hints from the recorded context appear in the output (no silent hint loss)
+  2. Generated BSL steps favor high-weight, stable hints (landmarks, labels, fieldset legends) over low-weight, fragile hints (class names, DOM position)
+  3. After generation, a validation pass compares generated BSL hints against the recorded DOM snapshot and flags mismatches before the user runs the script
+  4. LLM correctly generates BSL for both legacy HTML table-based layouts (e.g., OBM) and modern SPA component structures (e.g., React/Vue)
+**Plans**: TBD
 
 Plans:
-- [ ] 033-01-PLAN.md — Session capture infrastructure with chrome.cookies API and encrypted storage
-- [ ] 033-02-PLAN.md — Session restoration with chrome.cookies.set API and localStorage bridge
-- [ ] 033-03-PLAN.md — Script execution integration and UI controls for session management
+- [ ] 037-01: TBD
+- [ ] 037-02: TBD
 
-### Phase 34: CLI Session Persistence
-**Goal**: CLI users capture session state (cookies + localStorage) after script execution and restore before subsequent runs via --session-restore flag
-**Depends on**: Phase 32 (vault encryption for session files)
-**Requirements**: SCLI-01, SCLI-02, SCLI-03
+### Phase 38: Failure Diagnostics
+**Goal**: When a BSL step fails, the user gets a clear, actionable report explaining why the element was not found and what to do about it
+**Depends on**: Phase 37
+**Requirements**: DIAG-01, DIAG-02, DIAG-03, DIAG-04, DIAG-05
 **Success Criteria** (what must be TRUE):
-  1. User runs `browserlet run script.bsl` with successful authentication
-  2. User runs `browserlet run script.bsl --session-restore` and is NOT prompted to log in again
-  3. Session state files are stored in platform-specific directory (~/.browserlet/sessions/ on macOS/Linux, %APPDATA%/browserlet/sessions/ on Windows)
-  4. User views session file and sees encrypted JSON (not plaintext cookies)
-  5. CLI validates protocol match (HTTPS session cannot restore to HTTP) and warns user
-**Plans**: 2 plans
+  1. When a step fails, the diagnostic output lists every hint that was searched and the individual score each candidate element received for each hint
+  2. When a step fails, the report shows a side-by-side of the expected element description vs the actual top candidates found on the page with their structural context
+  3. When a step fails, the report shows the confidence threshold, the best candidate's score, and the gap between them
+  4. When a step fails, the diagnostic output includes a suggested fix (e.g., "try changing hint X to Y" or "add hint Z for disambiguation")
+  5. Diagnostic reports are available as structured JSON (for CLI piping and automation) and as human-readable text (for extension side panel display)
+**Plans**: TBD
 
 Plans:
-- [ ] 034-01-PLAN.md — Session storage module with encrypted snapshot save/load and platform-specific paths
-- [ ] 034-02-PLAN.md — CLI integration (capture after run, restore before run, --session-restore flag, protocol validation)
+- [ ] 038-01: TBD
+- [ ] 038-02: TBD
 
-### Phase 35: BSL Integration & Validation
-**Goal**: Users declare session_persistence in BSL metadata block to control auto-capture behavior per script
-**Depends on**: Phase 33 (extension session persistence), Phase 34 (CLI session persistence)
-**Requirements**: BSL-01, BSL-02, BSL-03
+### Phase 39: Repair Workflow
+**Goal**: User can fix a broken BSL script by editing specific hints from the diagnostic output, get alternative suggestions from the live page, re-validate immediately, and track what changed
+**Depends on**: Phase 38
+**Requirements**: REP-01, REP-02, REP-03, REP-04
 **Success Criteria** (what must be TRUE):
-  1. User writes BSL script with `session_persistence: {enabled: true, max_age: 72h, snapshot_id: "myapp"}` and BSL parser validates syntax without errors
-  2. User runs script with session_persistence enabled, and session snapshot is automatically captured after successful execution (no manual command)
-  3. User runs same script second time, and session is automatically restored before first step (no manual --session-restore flag)
-  4. User runs script with session_persistence disabled, and NO session snapshot is captured or restored
-**Plans:** 2 plans
+  1. User can click a failed step in the diagnostic output and edit its hints directly, without re-recording the entire script
+  2. When repairing a hint, the repair engine analyzes the current page DOM and suggests alternative hints that would match the intended element
+  3. After repairing hints, user can re-run the script immediately against the target page to verify the fix works
+  4. Each repair is tracked with before/after hint values, creating an audit trail visible in the script history
+**Plans**: TBD
 
 Plans:
-- [ ] 035-01-PLAN.md — Parser extension: SessionPersistenceConfig type, parseSessionPersistence validation, tests, extension import bridge
-- [ ] 035-02-PLAN.md — CLI integration: auto-capture/restore from parsed BSL session_persistence metadata
+- [ ] 039-01: TBD
+- [ ] 039-02: TBD
+
+### Phase 40: Pipeline Validation
+**Goal**: The full record-generate-execute pipeline demonstrably succeeds at >90% first-try rate on both legacy and modern applications, with diagnostics that correctly identify root causes of remaining failures
+**Depends on**: Phase 39
+**Requirements**: VAL-01, VAL-02, VAL-03
+**Success Criteria** (what must be TRUE):
+  1. Recording, generating, and executing a 10+ step BSL script on OBM (legacy HTML/table-based) succeeds on the first try at least 9 out of 10 times
+  2. Recording, generating, and executing a 10+ step BSL script on a modern SPA (React or Vue) succeeds on the first try at least 9 out of 10 times
+  3. For every step that fails across validation runs, the diagnostic report correctly identifies the root cause (wrong hint, missing disambiguation, SPA timing, etc.)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 040-01-PLAN.md — Create and execute OBM legacy + modern SPA validation scripts (10x each), document success rates and root causes
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 32 → 33 → 34 → 35
+Phases execute in numeric order: 36 -> 37 -> 38 -> 39 -> 40
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 32. Vault Unlock Cache | 2/2 | Complete | 2026-02-16 |
-| 33. Extension Session Persistence | 3/3 | Complete (human-verify pending) | 2026-02-16 |
-| 34. CLI Session Persistence | 2/2 | Complete | 2026-02-16 |
-| 35. BSL Integration & Validation | 0/0 | Not started | - |
+| 36. Recording Enrichment | 0/? | Not started | - |
+| 37. Generation Quality | 0/? | Not started | - |
+| 38. Failure Diagnostics | 0/? | Not started | - |
+| 39. Repair Workflow | 0/? | Not started | - |
+| 40. Pipeline Validation | 0/? | Not started | - |
 
 ---
-*Roadmap created: 2026-02-16*
+*Roadmap created: 2026-02-20*
+*Last updated: 2026-02-20*
