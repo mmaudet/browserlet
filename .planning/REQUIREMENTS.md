@@ -19,7 +19,7 @@ Requirements for v1.9 Reliability & Diagnostics. Fiabiliser le pipeline record â
 - [x] **GEN-01**: LLM preserves all meaningful recorded hints in generated BSL without loss
 - [x] **GEN-02**: LLM selects optimal hint combinations favoring highest-weight, most stable hints
 - [x] **GEN-03**: Generated BSL includes post-generation validation check against recorded DOM snapshot
-- [ ] **GEN-04**: Generation handles both legacy HTML table-based layouts and modern SPA component structures
+- [x] **GEN-04**: Generation handles both legacy HTML table-based layouts and modern SPA component structures
 
 ### Diagnostics
 
@@ -81,7 +81,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GEN-01 | Phase 37 | Complete |
 | GEN-02 | Phase 37 | Complete |
 | GEN-03 | Phase 37 | Complete |
-| GEN-04 | Phase 37 | Pending |
+| GEN-04 | Phase 37 | Complete |
 | DIAG-01 | Phase 38 | Pending |
 | DIAG-02 | Phase 38 | Pending |
 | DIAG-03 | Phase 38 | Pending |

@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 
 Milestone: v1.9 Reliability & Diagnostics
 Phase: 37 of 40 (Generation Quality)
-Plan: 2 of 3 complete
-Status: Executing
-Last activity: 2026-02-20 -- Completed 037-01 (hint preservation audit + weight-sorted hints)
+Plan: 3 of 3 complete
+Status: Phase 037 Complete
+Last activity: 2026-02-20 -- Completed 037-03 (layout-aware generation)
 
-Progress: [██░░░░░░░░] 7%
+Progress: [███░░░░░░░] 10%
 
 ## Performance Metrics
 
@@ -36,6 +36,9 @@ See PROJECT.md Key Decisions table for full list.
 - [037-01] sortHintsByWeight applied in both buildBSLPrompt and buildCompactBSLPrompt for consistency
 - [037-02] DOMSnapshot uses minimal forward-compatible format (observedValues map + observedDataAttributes array)
 - [037-02] Validator returns report object (never throws) for non-blocking warnings
+- [037-03] detectLayoutType uses signal-counting with threshold >= 2 to classify legacy-table vs spa-component vs generic
+- [037-03] section_context contributes 0.5 SPA signal (weaker than data_attribute signals at 1.0)
+- [037-03] Generic layout produces empty string guidance (zero token overhead for common case)
 - [Phase 036]: landmark_context weight set to 0.65 (between section_context 0.6 and fieldset_context 0.7)
 - [Phase 036]: Added role='search' to domContextExtractor for search landmark detection
 
@@ -55,13 +58,14 @@ None.
 | 11 | Ajouter un delai de 2s avant le screenshot | 2026-02-16 | eab43f3 | [11-ajouter-un-d-lai-de-2s-avant-le-screensh](./quick/11-ajouter-un-d-lai-de-2s-avant-le-screensh/) |
 | Phase 036 P01 | 5min | 2 tasks | 6 files |
 | Phase 037 P01 | 4min | 3 tasks | 3 files |
+| Phase 037 P03 | 3min | 2 tasks | 2 files |
 
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 037-01-PLAN.md (hint preservation audit + weight-sorted hints)
-Resume with: /gsd:execute-phase 037 (plan 03 next)
+Stopped at: Completed 037-03-PLAN.md (layout-aware generation -- Phase 037 complete)
+Resume with: /gsd:execute-phase 038
 
 ---
 *Created: 2026-02-14*
-*Last updated: 2026-02-20 after 037-01 completion*
+*Last updated: 2026-02-20 after 037-03 completion*
