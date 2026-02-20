@@ -341,6 +341,22 @@ async function handleServiceWorkerMessage(message: ServiceWorkerMessage): Promis
       return { success: true };
     }
 
+    case 'DOM_HINT_SUGGEST': {
+      // REP-02: Repair workflow — suggest alternative hints from live DOM
+      const { suggestHintsFromDOM } = await import('./playback/domHintSuggester.js');
+      const { hints, intent } = (message.payload ?? {}) as { hints?: unknown; intent?: string };
+      if (!Array.isArray(hints)) {
+        return { success: false, error: 'hints payload missing' };
+      }
+      try {
+        const suggestions = await suggestHintsFromDOM(hints, intent);
+        return { success: true, suggestions };
+      } catch (err) {
+        console.warn('[Content] DOM_HINT_SUGGEST failed:', err);
+        return { success: true, suggestions: [] }; // graceful empty
+      }
+    }
+
     default:
       return { success: false, error: `Unknown message type: ${message.type}` };
   }
