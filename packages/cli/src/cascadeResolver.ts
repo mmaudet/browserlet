@@ -31,6 +31,9 @@ export class DiagnosticError extends Error {
 /** Actions that do not require selector resolution */
 const NO_SELECTOR_ACTIONS = new Set(['navigate', 'screenshot']);
 
+/** Reduced timeout for Phase 3 when Phase 1 found zero candidates */
+const ZERO_CANDIDATE_TIMEOUT = 3000;
+
 /** Partial diagnostic data from the in-browser resolver (no stepId/pageUrl) */
 interface PartialDiagnosticData {
   failedAtStage: number;
@@ -94,11 +97,13 @@ export class CascadeCLIResolver {
   /**
    * Resolve a BSL step target to a Playwright-compatible selector string.
    *
-   * Resolution flow:
-   * 1. If step has no target or is a no-selector action, return ''
-   * 2. Call page.evaluate() to run waitForElementCascade(hints, timeout)
-   * 3. If element found: mark with data-browserlet-resolved attribute, return selector
-   * 4. If cascade fails: throw Error with diagnostic info for fallback handling
+   * Resolution flow (3 phases):
+   * Phase 1: Immediate resolveElementCascade (no MutationObserver) ~5ms
+   *   → success ? return selector
+   * Phase 2: Test fallback_selector via page.locator ~10ms
+   *   → found ? return CSS selector directly
+   * Phase 3: waitForElementCascade with MutationObserver (dynamic timeout)
+   *   → timeout=3s if Phase 1 found 0 candidates, full timeout otherwise
    *
    * @param step - The BSL step to resolve
    * @returns Attribute selector string like [data-browserlet-resolved="__brl_1234_abc"]
@@ -125,9 +130,90 @@ export class CascadeCLIResolver {
     }
 
     const hints = step.target.hints;
-    const timeout = this.timeout;
 
-    // Run cascade resolution inside page context
+    // --- Phase 1: Immediate resolution (no MutationObserver) ---
+    // Calls resolveElementCascade directly (stages 1-5 without DOM wait).
+    // If element is found and interactable, marks it and returns immediately.
+    const phase1Result = await this.page.evaluate(
+      async ({ hints: serializedHints }) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const resolver = (globalThis as any).__browserletResolver;
+        if (!resolver || typeof resolver.resolveElementCascade !== 'function') {
+          return {
+            success: false as const,
+            error: 'Resolver bundle not available on page (window.__browserletResolver missing)',
+            confidence: 0,
+            stage: 0,
+            matchedHints: [] as string[],
+            failedHints: [] as string[],
+            matchedCount: 0,
+          };
+        }
+
+        try {
+          const cascadeResult = await resolver.resolveElementCascade(serializedHints);
+
+          if (cascadeResult.element && resolver.isElementInteractable(cascadeResult.element)) {
+            const marker = `__brl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+            cascadeResult.element.setAttribute('data-browserlet-resolved', marker);
+            return {
+              success: true as const,
+              selector: `[data-browserlet-resolved="${marker}"]`,
+              confidence: cascadeResult.confidence as number,
+              stage: cascadeResult.stage as number,
+              matchedHints: cascadeResult.matchedHints as string[],
+              failedHints: cascadeResult.failedHints as string[],
+              matchedCount: (cascadeResult.matchedHints as string[]).length,
+            };
+          }
+
+          return {
+            success: false as const,
+            error: 'No interactable element found in immediate resolution',
+            confidence: (cascadeResult.confidence ?? 0) as number,
+            stage: (cascadeResult.stage ?? 0) as number,
+            matchedHints: (cascadeResult.matchedHints ?? []) as string[],
+            failedHints: (cascadeResult.failedHints ?? []) as string[],
+            matchedCount: ((cascadeResult.matchedHints ?? []) as string[]).length,
+            diagnostic: cascadeResult.diagnostic ?? undefined,
+          };
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          return {
+            success: false as const,
+            error: message,
+            confidence: 0,
+            stage: 0,
+            matchedHints: [] as string[],
+            failedHints: [] as string[],
+            matchedCount: 0,
+          };
+        }
+      },
+      { hints },
+    );
+
+    if (phase1Result.success) {
+      return (phase1Result as typeof phase1Result & { selector: string }).selector;
+    }
+
+    // --- Phase 2: Test fallback_selector ---
+    if (step.target.fallback_selector) {
+      try {
+        const count = await this.page.locator(step.target.fallback_selector).count();
+        if (count > 0) {
+          return step.target.fallback_selector;
+        }
+      } catch {
+        // Invalid selector or page navigation — continue to Phase 3
+      }
+    }
+
+    // --- Phase 3: waitForElementCascade with MutationObserver (dynamic timeout) ---
+    const effectiveTimeout = phase1Result.confidence === 0 && phase1Result.matchedCount === 0
+      ? ZERO_CANDIDATE_TIMEOUT
+      : this.timeout;
+
     const result = await this.page.evaluate(
       async ({ hints: serializedHints, timeoutMs }) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -150,7 +236,6 @@ export class CascadeCLIResolver {
           );
 
           if (cascadeResult.element) {
-            // Mark the element with a unique data attribute for Playwright targeting
             const marker = `__brl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
             cascadeResult.element.setAttribute('data-browserlet-resolved', marker);
 
@@ -185,7 +270,7 @@ export class CascadeCLIResolver {
           };
         }
       },
-      { hints, timeoutMs: timeout },
+      { hints, timeoutMs: effectiveTimeout },
     );
 
     if (result.success) {
