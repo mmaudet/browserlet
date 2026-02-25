@@ -3,67 +3,61 @@
 Browserlet permet d'automatiser des workflows web en 3 temps :
 
 1. **Enregistrer** un credential (mot de passe) dans l'extension Chrome
-2. **Enregistrer** un scenario d'actions depuis l'extension
-3. **Rejouer** ce scenario en ligne de commande (CLI)
+2. **Enregistrer** un scénario d'actions depuis l'extension
+3. **Rejouer** ce scénario en ligne de commande (CLI)
 
-Ce guide vous accompagne pas a pas, de l'extension au terminal.
+Ce guide vous accompagne pas à pas, de l'extension au terminal.
 
 ---
 
-## Prerequis
+## Prérequis
 
-| Element | Detail |
+| Élément | Détail |
 |---------|--------|
-| Extension Browserlet | Installee et activee dans Chrome |
-| CLI Browserlet | Installe (`npm install` depuis le depot) |
-| Cle API (optionnelle) | `ANTHROPIC_API_KEY` — necessaire uniquement pour `--micro-prompts` et `--auto-repair` |
+| Extension Browserlet | Installée et activée dans Chrome |
+| CLI Browserlet | Installé (`npm install` depuis le dépôt) |
+| Clé API (optionnelle) | `ANTHROPIC_API_KEY` — nécessaire uniquement pour `--micro-prompts` et `--auto-repair` |
 
 ---
 
-## Etape 1 : Gerer les credentials dans l'extension
+## Étape 1 : Gérer les credentials dans l'extension
 
-Les credentials permettent de stocker vos mots de passe de maniere chiffree (AES-256-GCM) et de les injecter dans vos scripts sans jamais les exposer en clair.
+Les credentials permettent de stocker vos mots de passe de manière chiffrée (AES-256-GCM) et de les injecter dans vos scripts sans jamais les exposer en clair.
 
 ### 1.1 Ouvrir le side panel
 
-Cliquez sur l'icone Browserlet dans la barre d'extensions Chrome. Le side panel s'ouvre sur le cote droit du navigateur.
+Cliquez sur l'icône Browserlet dans la barre d'extensions Chrome. Le side panel s'ouvre sur le côté droit du navigateur.
 
 ![Side panel ouvert](images/ext-sidepanel-ouvert.png)
 
+### 1.2 Configurer le mot de passe maître (première utilisation)
 
-### 1.2 Configurer le mot de passe maitre (premiere utilisation)
+Lors du premier accès au gestionnaire de credentials, l'extension vous demande de créer un **mot de passe maître**. Ce mot de passe protège l'ensemble de votre coffre-fort local.
 
-Lors du premier acces au gestionnaire de credentials, l'extension vous demande de creer un **mot de passe maitre**. Ce mot de passe protege l'ensemble de votre coffre-fort local.
+![Mot de passe maître](images/ext-mot-de-passe-maitre.png)
 
-![Mot de passe maitre](images/ext-mot-de-passe-maitre.png)
-
-
-> **Important** : ce mot de passe n'est jamais transmis. Si vous le perdez, les credentials stockes ne sont plus recuperables.
+> **Important** : ce mot de passe n'est jamais transmis. Si vous le perdez, les credentials stockés ne sont plus récupérables.
 
 ### 1.3 Ajouter un credential
 
 Depuis le gestionnaire de credentials :
 
-1. Cliquez sur **Ajouter un credential**
-2. Renseignez les champs :
-   - **Alias** : identifiant court utilise dans les scripts (ex. `LINAGORA`)
-   - **URL** (optionnel) : site associe
-   - **Nom d'utilisateur** (optionnel) : login associe
-   - **Mot de passe** : la valeur secrete
-3. Validez
+1. Cliquez sur le bouton **+** (vert) à côté de « Stored Credentials »
+2. Le **mode capture** s'active : naviguez sur un site et saisissez vos identifiants
+3. L'extension détecte automatiquement les champs de login
+4. Cliquez sur **Arrêter** pour valider les credentials capturés
 
 ![Ajout d'un credential](images/ext-credential-ajout.png)
 
+### 1.4 Vérifier la liste des credentials
 
-### 1.4 Verifier la liste des credentials
-
-La liste affiche les alias enregistres, sans jamais montrer les mots de passe en clair.
+La liste affiche les alias enregistrés, sans jamais montrer les mots de passe en clair.
 
 ![Liste des credentials](images/ext-credential-liste.png)
 
 ### 1.5 Utiliser un credential dans un script
 
-Dans un script BSL, referencez un credential avec la syntaxe :
+Dans un script BSL, référencez un credential avec la syntaxe :
 
 ```yaml
 value: "{{credential:ALIAS}}"
@@ -81,64 +75,64 @@ Par exemple, pour un champ mot de passe :
   value: "{{credential:LINAGORA}}"
 ```
 
-Le remplacement se fait **uniquement a l'execution** — le mot de passe n'apparait jamais dans le fichier `.bsl` ni dans les logs.
+Le remplacement se fait **uniquement à l'exécution** — le mot de passe n'apparaît jamais dans le fichier `.bsl` ni dans les logs.
 
 ---
 
-## Etape 2 : Enregistrer un scenario
+## Étape 2 : Enregistrer un scénario
 
-L'extension enregistre vos actions dans le navigateur et genere un script BSL (Browserlet Scripting Language) au format YAML.
+L'extension enregistre vos actions dans le navigateur et génère un script BSL (Browserlet Scripting Language) au format YAML.
 
 ### 2.1 Naviguer sur le site cible
 
 Ouvrez le site sur lequel vous souhaitez enregistrer un workflow (ex. `https://twake.linagora.com`).
 
-### 2.2 Demarrer l'enregistrement
+### 2.2 Démarrer l'enregistrement
 
-Dans le side panel, cliquez sur le bouton **Enregistrer**. Un overlay rouge apparait autour de la page pour indiquer que l'enregistrement est actif.
+Dans le side panel, cliquez sur le bouton **Démarrer l'enregistrement**. Un badge rouge « REC » apparaît en haut à droite de la page pour indiquer que l'enregistrement est actif.
 
-![Demarrer l'enregistrement](images/ext-enregistrement-start.png)
+![Démarrer l'enregistrement](images/ext-enregistrement-start.png)
 
 ![Overlay d'enregistrement](images/ext-enregistrement-overlay.png)
 
 ### 2.3 Effectuer les actions
 
-Realisez les actions que vous souhaitez automatiser :
+Réalisez les actions que vous souhaitez automatiser :
 
 - **Clic** sur un bouton ou un lien
 - **Saisie** de texte dans un champ
 - **Navigation** entre les pages
-- **Selection** dans un menu deroulant
+- **Sélection** dans un menu déroulant
 
-L'extension capture chaque interaction et genere automatiquement des **hints semantiques** (role, texte, placeholder, label...) pour cibler les elements de maniere resiliente.
+L'extension capture chaque interaction et génère automatiquement des **hints sémantiques** (rôle, texte, placeholder, label...) pour cibler les éléments de manière résiliente.
 
 ### 2.4 Utiliser un credential pour un champ mot de passe
 
-Lorsque vous saisissez un mot de passe, l'extension detecte le champ `type="password"` et vous propose d'associer un credential existant au lieu d'enregistrer la valeur en clair.
+Lorsque vous saisissez un mot de passe, l'extension détecte le champ `type="password"` et vous propose d'associer un credential existant au lieu d'enregistrer la valeur en clair.
 
-Selectionnez l'alias souhaite (ex. `LINAGORA`). Le script generera `{{credential:LINAGORA}}` a la place du mot de passe.
+Sélectionnez l'alias souhaité (ex. `LINAGORA`). Le script générera `{{credential:LINAGORA}}` à la place du mot de passe.
 
-### 2.5 Arreter et visualiser le BSL
+### 2.5 Arrêter et visualiser le BSL
 
-Cliquez sur **Arreter** pour terminer l'enregistrement. Le script BSL genere s'affiche dans l'editeur integre du side panel.
+Cliquez sur **Arrêter l'enregistrement** pour terminer. Le script BSL généré s'affiche dans l'éditeur intégré du side panel.
 
-![Arreter l'enregistrement](images/ext-enregistrement-stop.png)
+![Arrêter l'enregistrement](images/ext-enregistrement-stop.png)
 
-![Editeur BSL](images/ext-bsl-editeur.png)
+![Éditeur BSL](images/ext-bsl-editeur.png)
 
-Vous pouvez relire et modifier le script directement dans l'editeur avant de l'exporter.
+Vous pouvez relire et modifier le script directement dans l'éditeur avant de l'exporter.
 
 ### 2.6 Exporter en fichier .bsl
 
-Cliquez sur **Exporter** pour telecharger le fichier `.bsl` sur votre machine. Placez-le dans votre repertoire de travail.
+Cliquez sur **Exporter** pour télécharger le fichier `.bsl` sur votre machine. Placez-le dans votre répertoire de travail.
 
 ![Export BSL](images/ext-export-bsl.png)
 
 ---
 
-## Etape 3 : Preparer le vault CLI
+## Étape 3 : Préparer le vault CLI
 
-Le vault CLI est un coffre-fort local (stocke dans `~/.browserlet/vault.json`) qui permet a la CLI de dechiffrer les `{{credential:...}}` a l'execution.
+Le vault CLI est un coffre-fort local (stocké dans `~/.browserlet/vault.json`) qui permet à la CLI de déchiffrer les `{{credential:...}}` à l'exécution.
 
 ### 3.1 Initialiser le vault
 
@@ -146,33 +140,33 @@ Le vault CLI est un coffre-fort local (stocke dans `~/.browserlet/vault.json`) q
 browserlet vault init
 ```
 
-Vous serez invite a creer un mot de passe maitre (avec confirmation).
+Vous serez invité à créer un mot de passe maître (avec confirmation).
 
 ![Vault init](images/cli-vault-init.png)
 
 ### 3.2 Ajouter un credential
 
-**Methode manuelle** — ajoutez un credential un par un :
+**Méthode manuelle** — ajoutez un credential un par un :
 
 ```bash
 browserlet vault add LINAGORA
 ```
 
-La CLI demande la valeur du credential (saisie masquee).
+La CLI demande la valeur du credential (saisie masquée).
 
-**Methode import** — importez tous les credentials depuis l'extension Chrome :
+**Méthode import** — importez tous les credentials depuis l'extension Chrome :
 
 ```bash
 browserlet vault import-from-extension
 ```
 
 Cette commande :
-- Detecte le profil Chrome contenant l'extension Browserlet
-- Demande le mot de passe maitre de l'extension
-- Cree le vault CLI s'il n'existe pas encore
-- Importe les credentials en detectant les doublons
+- Détecte le profil Chrome contenant l'extension Browserlet
+- Demande le mot de passe maître de l'extension
+- Crée le vault CLI s'il n'existe pas encore
+- Importe les credentials en détectant les doublons
 
-### 3.3 Verifier les credentials disponibles
+### 3.3 Vérifier les credentials disponibles
 
 ```bash
 browserlet vault list
@@ -185,12 +179,12 @@ Affiche la liste des alias (jamais les valeurs en clair).
 | Commande | Description |
 |----------|-------------|
 | `browserlet vault del <alias>` | Supprimer un credential |
-| `browserlet vault lock` | Verrouiller le vault immediatement |
-| `browserlet vault reset` | Supprimer entierement le vault |
+| `browserlet vault lock` | Verrouiller le vault immédiatement |
+| `browserlet vault reset` | Supprimer entièrement le vault |
 
 ---
 
-## Etape 4 : Rejouer en CLI
+## Étape 4 : Rejouer en CLI
 
 ### 4.1 Lancer un script
 
@@ -199,37 +193,37 @@ browserlet run mon-script.bsl --headed --vault
 ```
 
 - `--headed` : ouvre un navigateur visible (utile pour le debug ; sans ce flag, le navigateur tourne en mode headless)
-- `--vault` : active le dechiffrement des `{{credential:...}}`
+- `--vault` : active le déchiffrement des `{{credential:...}}`
 
 ### 4.2 Flags principaux
 
-| Flag | Description | Defaut |
+| Flag | Description | Défaut |
 |------|-------------|--------|
 | `--headed` | Navigateur visible | headless |
-| `--vault` | Active le vault pour les credentials | desactive |
-| `--timeout <ms>` | Timeout global par etape (ms) | 30000 |
-| `--output-dir <dir>` | Repertoire des screenshots et diagnostics | `browserlet-output` |
-| `--micro-prompts` | Active les micro-prompts LLM pour la resolution d'elements (necessite `ANTHROPIC_API_KEY`) | desactive |
-| `--auto-repair` | Applique automatiquement les reparations suggerees par le LLM (confiance >= 0.70) | desactive |
-| `--interactive` | Approuver manuellement chaque reparation (exclusif avec `--auto-repair`) | desactive |
-| `--session-restore <id>` | Restaurer une session precedente (sauter l'authentification) | — |
-| `--diagnostic-json` | Sortie des diagnostics en JSON structure | desactive |
+| `--vault` | Active le vault pour les credentials | désactivé |
+| `--timeout <ms>` | Timeout global par étape (ms) | 30000 |
+| `--output-dir <dir>` | Répertoire des screenshots et diagnostics | `browserlet-output` |
+| `--micro-prompts` | Active les micro-prompts LLM pour la résolution d'éléments (nécessite `ANTHROPIC_API_KEY`) | désactivé |
+| `--auto-repair` | Applique automatiquement les réparations suggérées par le LLM (confiance >= 0.70) | désactivé |
+| `--interactive` | Approuver manuellement chaque réparation (exclusif avec `--auto-repair`) | désactivé |
+| `--session-restore <id>` | Restaurer une session précédente (sauter l'authentification) | — |
+| `--diagnostic-json` | Sortie des diagnostics en JSON structuré | désactivé |
 
-### 4.3 Lire les resultats
+### 4.3 Lire les résultats
 
-Apres l'execution, la CLI affiche un resume :
+Après l'exécution, la CLI affiche un résumé :
 
-- Nombre d'etapes reussies / echouees
-- Temps d'execution par etape
-- Chemin des screenshots generes
+- Nombre d'étapes réussies / échouées
+- Temps d'exécution par étape
+- Chemin des screenshots générés
 
-Les screenshots et rapports d'erreur sont enregistres dans le repertoire `--output-dir` (par defaut `browserlet-output/`).
+Les screenshots et rapports d'erreur sont enregistrés dans le répertoire `--output-dir` (par défaut `browserlet-output/`).
 
 ![Sortie CLI](images/cli-run-output.png)
 
-### 4.4 Execution par lot
+### 4.4 Exécution par lot
 
-Pour executer un repertoire entier de scripts :
+Pour exécuter un répertoire entier de scripts :
 
 ```bash
 browserlet test ./scripts/ --workers 4 --bail
@@ -237,14 +231,14 @@ browserlet test ./scripts/ --workers 4 --bail
 
 | Flag | Description |
 |------|-------------|
-| `--workers <n>` | Nombre de workers paralleles (defaut : 1) |
-| `--bail` | Arreter au premier echec |
+| `--workers <n>` | Nombre de workers parallèles (défaut : 1) |
+| `--bail` | Arrêter au premier échec |
 
 ---
 
 ## Exemple concret : Twake Drive
 
-Voici un script complet qui se connecte a Twake et navigue jusqu'au dossier LINAGORA dans Drive.
+Voici un script complet qui se connecte à Twake et navigue jusqu'au dossier LINAGORA dans Drive.
 
 ### Script `twake-drive.bsl`
 
@@ -321,7 +315,7 @@ steps:
   - action: screenshot
     value: "browserlet-output/twake-02-dashboard.png"
 
-  # Cliquer sur Drive dans la barre laterale
+  # Cliquer sur Drive dans la barre latérale
   - action: click
     target:
       intent: "Drive link or icon in the left sidebar"
@@ -376,36 +370,24 @@ steps:
 browserlet run twake-drive.bsl --headed --vault
 ```
 
-### Screenshots de resultat
+### Screenshot de résultat
 
 **Page de login :**
 
 ![Login Twake](images/twake-01-login.png)
 
-**Dashboard apres connexion :**
-
-![Dashboard Twake](images/twake-02-dashboard.png)
-
-**Vue Drive :**
-
-![Drive Twake](images/twake-03-drive.png)
-
-**Dossier LINAGORA :**
-
-![Dossier LINAGORA](images/twake-04-linagora-drive.png)
-
 ---
 
-## Aide-memoire
+## Aide-mémoire
 
 ### Commandes vault
 
 | Commande | Description |
 |----------|-------------|
-| `browserlet vault init` | Creer le vault avec un mot de passe maitre |
+| `browserlet vault init` | Créer le vault avec un mot de passe maître |
 | `browserlet vault add <alias>` | Ajouter un credential |
 | `browserlet vault del <alias>` | Supprimer un credential |
-| `browserlet vault list` | Lister les alias enregistres |
+| `browserlet vault list` | Lister les alias enregistrés |
 | `browserlet vault import-from-extension` | Importer depuis l'extension Chrome |
 | `browserlet vault lock` | Verrouiller le vault |
 | `browserlet vault reset` | Supprimer le vault |
@@ -416,11 +398,11 @@ browserlet run twake-drive.bsl --headed --vault
 |------|-------------|
 | `--headed` | Navigateur visible |
 | `--vault` | Activer le vault |
-| `--timeout <ms>` | Timeout par etape |
-| `--output-dir <dir>` | Repertoire de sortie |
+| `--timeout <ms>` | Timeout par étape |
+| `--output-dir <dir>` | Répertoire de sortie |
 | `--micro-prompts` | Micro-prompts LLM |
-| `--auto-repair` | Reparation automatique |
-| `--interactive` | Reparation interactive |
+| `--auto-repair` | Réparation automatique |
+| `--interactive` | Réparation interactive |
 | `--session-restore <id>` | Restaurer une session |
 | `--diagnostic-json` | Diagnostics JSON |
 
@@ -428,8 +410,8 @@ browserlet run twake-drive.bsl --headed --vault
 
 | Flag | Description |
 |------|-------------|
-| `--workers <n>` | Workers paralleles |
-| `--bail` | Arreter au premier echec |
+| `--workers <n>` | Workers parallèles |
+| `--bail` | Arrêter au premier échec |
 | *(+ tous les flags de `run`)* | |
 
 ### Syntaxe credential dans BSL
@@ -443,12 +425,12 @@ value: "{{credential:MON_ALIAS}}"
 | Action | Description |
 |--------|-------------|
 | `navigate` | Ouvrir une URL |
-| `click` | Cliquer sur un element |
+| `click` | Cliquer sur un élément |
 | `type` | Saisir du texte |
-| `select` | Choisir dans un menu deroulant |
-| `wait_for` | Attendre un element ou une condition |
+| `select` | Choisir dans un menu déroulant |
+| `wait_for` | Attendre un élément ou une condition |
 | `extract` | Extraire du texte |
 | `table_extract` | Extraire un tableau HTML |
 | `screenshot` | Capturer la page |
-| `hover` | Survoler un element |
-| `scroll` | Defiler vers un element |
+| `hover` | Survoler un élément |
+| `scroll` | Défiler vers un élément |

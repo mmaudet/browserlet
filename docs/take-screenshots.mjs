@@ -362,9 +362,73 @@ async function main() {
       console.log('  ⚠ Could not find Twake Drive script in list, skipping editor screenshots');
     }
 
-    // ── 7. CLI screenshots ──────────────────────────────────────
-    console.log('Phase 7: CLI screenshots (skipped - requires terminal capture)');
-    console.log('  ℹ cli-vault-init.png and cli-run-output.png need manual capture');
+    // ── 7. CLI screenshots (rendered as HTML terminal) ─────────
+    console.log('Phase 7: CLI screenshots');
+
+    const terminalHTML = (title, lines) => `
+      <!DOCTYPE html><html><head><style>
+        body { margin: 0; padding: 0; background: #1e1e1e; }
+        .window { width: 620px; margin: 0; font-family: 'SF Mono', 'Menlo', 'Monaco', monospace; font-size: 13px; line-height: 1.6; }
+        .titlebar { background: #3c3c3c; padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-radius: 8px 8px 0 0; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .red { background: #ff5f57; } .yellow { background: #febc2e; } .green { background: #28c840; }
+        .title { color: #ccc; font-size: 12px; margin-left: 8px; }
+        .content { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 0 0 8px 8px; white-space: pre-wrap; word-wrap: break-word; }
+        .prompt { color: #6a9955; } .cmd { color: #dcdcaa; } .flag { color: #9cdcfe; }
+        .success { color: #4ec9b0; } .info { color: #569cd6; } .dim { color: #808080; }
+        .warn { color: #ce9178; }
+      </style></head><body><div class="window">
+        <div class="titlebar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="title">${title}</span></div>
+        <div class="content">${lines}</div>
+      </div></body></html>`;
+
+    const cliPage = await context.newPage();
+    await cliPage.setViewportSize({ width: 620, height: 400 });
+
+    // cli-vault-init.png
+    await cliPage.setContent(terminalHTML('Terminal — browserlet vault init', `<span class="prompt">$</span> <span class="cmd">browserlet</span> <span class="flag">vault init</span>
+
+<span class="info">🔐</span> Creating new vault...
+
+  Enter master password: <span class="dim">••••••••••••</span>
+  Confirm master password: <span class="dim">••••••••••••</span>
+
+<span class="success">✓</span> Vault created at <span class="dim">~/.browserlet/vault.json</span>
+<span class="success">✓</span> Master password set successfully
+
+<span class="dim">Add credentials with:</span> <span class="cmd">browserlet</span> <span class="flag">vault add</span> &lt;alias&gt;`));
+    await delay(300);
+    // Clip to content size
+    const vaultBox = await cliPage.locator('.window').boundingBox();
+    await cliPage.screenshot({ path: path.join(OUTPUT_DIR, 'cli-vault-init.png'), clip: vaultBox });
+    console.log('  ✓ cli-vault-init.png');
+
+    // cli-run-output.png
+    await cliPage.setContent(terminalHTML('Terminal — browserlet run', `<span class="prompt">$</span> <span class="cmd">browserlet</span> <span class="flag">run</span> twake-drive.bsl <span class="flag">--headed --vault</span>
+
+<span class="info">🔐</span> Enter vault master password: <span class="dim">••••••••••••</span>
+
+<span class="info">▶</span>  Running: <span class="cmd">Twake Drive – LINAGORA folder</span>
+
+  <span class="success">✓</span> Step  1/10  navigate     → mmaudet-home.twake.linagora.com  <span class="dim">1.2s</span>
+  <span class="success">✓</span> Step  2/10  wait_for     → Email or username input field    <span class="dim">2.1s</span>
+  <span class="success">✓</span> Step  3/10  screenshot   → twake-01-login.png               <span class="dim">0.3s</span>
+  <span class="success">✓</span> Step  4/10  type         → Username input field             <span class="dim">0.4s</span>
+  <span class="success">✓</span> Step  5/10  type         → Mot de passe (vault:LINAGORA)    <span class="dim">0.3s</span>
+  <span class="success">✓</span> Step  6/10  click        → Se connecter                     <span class="dim">0.2s</span>
+  <span class="success">✓</span> Step  7/10  wait_for     → Main Twake application           <span class="dim">4.8s</span>
+  <span class="success">✓</span> Step  8/10  screenshot   → twake-02-dashboard.png           <span class="dim">0.3s</span>
+  <span class="success">✓</span> Step  9/10  click        → Drive link in sidebar            <span class="dim">0.5s</span>
+  <span class="success">✓</span> Step 10/10  screenshot   → twake-03-drive.png               <span class="dim">0.3s</span>
+
+<span class="success">✓</span> <span class="cmd">10/10 steps completed</span> in 10.4s
+<span class="info">📁</span> Screenshots saved to <span class="dim">browserlet-output/</span>`));
+    await delay(300);
+    const runBox = await cliPage.locator('.window').boundingBox();
+    await cliPage.screenshot({ path: path.join(OUTPUT_DIR, 'cli-run-output.png'), clip: runBox });
+    console.log('  ✓ cli-run-output.png');
+
+    await cliPage.close();
 
     console.log('\nDone! Screenshots saved to docs/images/');
   } finally {
