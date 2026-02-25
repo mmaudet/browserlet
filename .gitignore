@@ -30,8 +30,24 @@ npm-debug.log*
 .env.local
 .env.*.local
 
+# Build artifacts
+tsconfig.tsbuildinfo
+browserlet-output/
+packages/cli/browserlet-output/
+packages/cli/cli
+
+# Screenshots (temp)
+packages/cli/screenshot-*.png
+
 # Planning docs (local only)
 .planning/
 
 # PRD (local only)
 prd-browserlet.md
+
+# Demo & doc generation scripts
+demos/
+docs/presentation/
+
+# Scratch BSL scripts
+*.bsl
