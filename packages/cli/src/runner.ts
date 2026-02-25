@@ -408,6 +408,13 @@ export class BSLRunner {
       }
     }
 
+    // Save extracted data as JSON file + console output
+    if (Object.keys(extractedData).length > 0) {
+      const extractedPath = path.join(this.options.outputDir, 'extracted.json');
+      fs.writeFileSync(extractedPath, JSON.stringify(extractedData, null, 2), 'utf-8');
+      console.log(`[Extracted] ${extractedPath}`);
+    }
+
     reporter.scriptPass(totalDuration);
     return { exitCode: 0 };
   }
