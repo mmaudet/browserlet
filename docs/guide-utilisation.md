@@ -29,14 +29,14 @@ Les credentials permettent de stocker vos mots de passe de maniere chiffree (AES
 Cliquez sur l'icone Browserlet dans la barre d'extensions Chrome. Le side panel s'ouvre sur le cote droit du navigateur.
 
 ![Side panel ouvert](images/ext-sidepanel-ouvert.png)
-<!-- PLACEHOLDER : capture du side panel Browserlet ouvert -->
+
 
 ### 1.2 Configurer le mot de passe maitre (premiere utilisation)
 
 Lors du premier acces au gestionnaire de credentials, l'extension vous demande de creer un **mot de passe maitre**. Ce mot de passe protege l'ensemble de votre coffre-fort local.
 
 ![Mot de passe maitre](images/ext-mot-de-passe-maitre.png)
-<!-- PLACEHOLDER : capture de l'ecran de creation du mot de passe maitre -->
+
 
 > **Important** : ce mot de passe n'est jamais transmis. Si vous le perdez, les credentials stockes ne sont plus recuperables.
 
@@ -53,14 +53,13 @@ Depuis le gestionnaire de credentials :
 3. Validez
 
 ![Ajout d'un credential](images/ext-credential-ajout.png)
-<!-- PLACEHOLDER : capture du formulaire d'ajout de credential -->
+
 
 ### 1.4 Verifier la liste des credentials
 
 La liste affiche les alias enregistres, sans jamais montrer les mots de passe en clair.
 
 ![Liste des credentials](images/ext-credential-liste.png)
-<!-- PLACEHOLDER : capture de la liste des credentials -->
 
 ### 1.5 Utiliser un credential dans un script
 
@@ -99,10 +98,8 @@ Ouvrez le site sur lequel vous souhaitez enregistrer un workflow (ex. `https://t
 Dans le side panel, cliquez sur le bouton **Enregistrer**. Un overlay rouge apparait autour de la page pour indiquer que l'enregistrement est actif.
 
 ![Demarrer l'enregistrement](images/ext-enregistrement-start.png)
-<!-- PLACEHOLDER : capture du bouton d'enregistrement -->
 
 ![Overlay d'enregistrement](images/ext-enregistrement-overlay.png)
-<!-- PLACEHOLDER : capture de la page avec l'overlay rouge -->
 
 ### 2.3 Effectuer les actions
 
@@ -126,10 +123,8 @@ Selectionnez l'alias souhaite (ex. `LINAGORA`). Le script generera `{{credential
 Cliquez sur **Arreter** pour terminer l'enregistrement. Le script BSL genere s'affiche dans l'editeur integre du side panel.
 
 ![Arreter l'enregistrement](images/ext-enregistrement-stop.png)
-<!-- PLACEHOLDER : capture du bouton d'arret -->
 
 ![Editeur BSL](images/ext-bsl-editeur.png)
-<!-- PLACEHOLDER : capture de l'editeur BSL dans le side panel -->
 
 Vous pouvez relire et modifier le script directement dans l'editeur avant de l'exporter.
 
@@ -138,7 +133,6 @@ Vous pouvez relire et modifier le script directement dans l'editeur avant de l'e
 Cliquez sur **Exporter** pour telecharger le fichier `.bsl` sur votre machine. Placez-le dans votre repertoire de travail.
 
 ![Export BSL](images/ext-export-bsl.png)
-<!-- PLACEHOLDER : capture du bouton d'export -->
 
 ---
 
@@ -155,7 +149,6 @@ browserlet vault init
 Vous serez invite a creer un mot de passe maitre (avec confirmation).
 
 ![Vault init](images/cli-vault-init.png)
-<!-- PLACEHOLDER : capture du terminal apres vault init -->
 
 ### 3.2 Ajouter un credential
 
@@ -233,7 +226,6 @@ Apres l'execution, la CLI affiche un resume :
 Les screenshots et rapports d'erreur sont enregistres dans le repertoire `--output-dir` (par defaut `browserlet-output/`).
 
 ![Sortie CLI](images/cli-run-output.png)
-<!-- PLACEHOLDER : capture de la sortie terminal apres un run reussi -->
 
 ### 4.4 Execution par lot
 
