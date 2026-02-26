@@ -49,5 +49,8 @@ prd-browserlet.md
 demos/
 docs/presentation/
 
+# Internal tooling
+tools/
+
 # Scratch BSL scripts
 *.bsl
