@@ -129,7 +129,38 @@ export class CascadeCLIResolver {
       );
     }
 
-    const hints = step.target.hints;
+    // Retry loop: if page.evaluate fails due to navigation (execution context
+    // destroyed), wait for the new page to load and retry. The resolver bundle
+    // is re-injected automatically via addInitScript on each navigation.
+    const MAX_NAV_RETRIES = 5;
+    const NAV_RETRY_DELAY_MS = 1000;
+
+    for (let attempt = 0; attempt <= MAX_NAV_RETRIES; attempt++) {
+      try {
+        return await this._resolveOnce(step);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const isNavError = msg.includes('Execution context was destroyed')
+          || msg.includes('Target closed')
+          || msg.includes('frame was detached');
+        if (isNavError && attempt < MAX_NAV_RETRIES) {
+          // Wait for navigation to settle, then retry
+          await new Promise(r => setTimeout(r, NAV_RETRY_DELAY_MS));
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    // Unreachable, but TypeScript needs it
+    throw new Error('CascadeCLIResolver: max navigation retries exceeded');
+  }
+
+  /**
+   * Single-attempt resolution (extracted from resolve() to support retry on navigation).
+   */
+  private async _resolveOnce(step: BSLStep): Promise<string> {
+    const hints = step.target!.hints;
 
     // --- Phase 1: Immediate resolution (no MutationObserver) ---
     // Calls resolveElementCascade directly (stages 1-5 without DOM wait).
@@ -198,11 +229,11 @@ export class CascadeCLIResolver {
     }
 
     // --- Phase 2: Test fallback_selector ---
-    if (step.target.fallback_selector) {
+    if (step.target!.fallback_selector) {
       try {
-        const count = await this.page.locator(step.target.fallback_selector).count();
+        const count = await this.page.locator(step.target!.fallback_selector).count();
         if (count > 0) {
-          return step.target.fallback_selector;
+          return step.target!.fallback_selector;
         }
       } catch {
         // Invalid selector or page navigation — continue to Phase 3
@@ -298,7 +329,7 @@ export class CascadeCLIResolver {
       {
         stepId,
         pageUrl,
-        searchedHints: step.target.hints,
+        searchedHints: step.target!.hints,
         timestamp: new Date().toISOString(),
         failedAtStage: result.diagnostic?.failedAtStage ?? result.stage,
         confidenceThreshold: 0.70,

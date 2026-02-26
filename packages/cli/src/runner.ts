@@ -228,8 +228,14 @@ export class BSLRunner {
               selector = await simpleResolver.resolve(step);
               cascadeError = null; // Simple resolver succeeded, no repair needed
             } catch {
-              // Both resolvers failed
-              if (!repairEngine) {
+              // Both resolvers failed.
+              // For wait_for actions: use fallback_selector directly — the executor's
+              // executeWaitFor will poll with the step's own timeout (e.g. 20s), which
+              // is the correct behavior since wait_for's purpose is to wait for elements.
+              if (step.action === 'wait_for' && step.target?.fallback_selector) {
+                selector = step.target.fallback_selector;
+                cascadeError = null;
+              } else if (!repairEngine) {
                 // No repair available, throw cascade error
                 throw new Error(cascadeError ?? 'Both cascade and simple resolver failed');
               }

@@ -248,9 +248,32 @@ export class PlaywrightExecutor {
 
   /**
    * Wait for an element to become visible on the page.
+   * Retries if the execution context is destroyed mid-navigation
+   * (e.g. login form submission triggers a redirect).
    */
   private async executeWaitFor(selector: string, timeout: number): Promise<void> {
-    await this.page.waitForSelector(selector, { state: 'visible', timeout });
+    const deadline = Date.now() + timeout;
+
+    while (true) {
+      try {
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) {
+          throw Object.assign(new Error(`Timeout after ${timeout}ms waiting for ${selector}`), { name: 'TimeoutError' });
+        }
+        await this.page.waitForSelector(selector, { state: 'visible', timeout: remaining });
+        return;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const isNavError = msg.includes('Execution context was destroyed')
+          || msg.includes('Target closed')
+          || msg.includes('frame was detached');
+        if (isNavError && Date.now() < deadline) {
+          await new Promise(r => setTimeout(r, 500));
+          continue;
+        }
+        throw err;
+      }
+    }
   }
 
   /**
@@ -272,6 +295,11 @@ export class PlaywrightExecutor {
   /**
    * Extract tabular data from a <table> element.
    * Returns headers from <th> elements and rows as Record<string, string>[].
+   *
+   * Handles split-table layouts (common in legacy servlets) where headers
+   * are in one <table> and data rows in a sibling <table>. When the matched
+   * table has headers but no data rows, automatically searches sibling tables
+   * for rows that match the header column count.
    */
   private async executeTableExtract(
     selector: string,
@@ -280,22 +308,24 @@ export class PlaywrightExecutor {
     // Wait for the table to be visible first
     await this.page.waitForSelector(selector, { state: 'visible', timeout });
 
-    const result = await this.page.$$eval(
-      `${selector} tr`,
-      (rows: Element[]) => {
+    const result = await this.page.evaluate(
+      (sel: string) => {
+        const table = document.querySelector(sel);
+        if (!table) return { headers: [] as string[], rows: [] as Record<string, string>[] };
+
+        // Collect headers and data rows from the matched table
         const headers: string[] = [];
         const dataRows: Record<string, string>[] = [];
+        const allRows = table.querySelectorAll('tr');
 
-        for (let i = 0; i < rows.length; i++) {
-          const row = rows[i]!;
+        for (const row of allRows) {
           const thCells = row.querySelectorAll('th');
           const tdCells = row.querySelectorAll('td');
 
           if (thCells.length > 0 && headers.length === 0) {
-            // Extract headers from <th> elements
             thCells.forEach((th) => headers.push(th.textContent?.trim() ?? ''));
-          } else if (tdCells.length > 0) {
-            // Extract data row using headers as keys
+          } else if (tdCells.length > 1) {
+            // Skip section-header rows (single colspan cell like "Demandes qualifiées")
             const rowData: Record<string, string> = {};
             tdCells.forEach((td, colIndex) => {
               const key = headers[colIndex] ?? `col_${colIndex}`;
@@ -305,8 +335,55 @@ export class PlaywrightExecutor {
           }
         }
 
+        // If we found headers but no data rows, search sibling tables (split-table layout)
+        if (headers.length > 0 && dataRows.length === 0) {
+          const parent = table.parentElement;
+          if (parent) {
+            const siblingTables = parent.querySelectorAll('table');
+            for (const sibling of siblingTables) {
+              if (sibling === table) continue;
+              const sibRows = sibling.querySelectorAll('tr');
+              for (const row of sibRows) {
+                const tdCells = row.querySelectorAll('td');
+                if (tdCells.length > 1) {
+                  const rowData: Record<string, string> = {};
+                  tdCells.forEach((td, colIndex) => {
+                    const key = headers[colIndex] ?? `col_${colIndex}`;
+                    rowData[key] = td.textContent?.trim() ?? '';
+                  });
+                  dataRows.push(rowData);
+                }
+              }
+              if (dataRows.length > 0) break;
+            }
+          }
+        }
+
+        // Last resort: search ALL tables on page for data rows matching header count
+        if (headers.length > 0 && dataRows.length === 0) {
+          const allTables = document.querySelectorAll('table');
+          for (const t of allTables) {
+            if (t === table) continue;
+            const tRows = t.querySelectorAll('tr');
+            for (const row of tRows) {
+              const tdCells = row.querySelectorAll('td');
+              // Match tables with similar column count (±2 for checkbox/action columns)
+              if (tdCells.length > 1 && Math.abs(tdCells.length - headers.length) <= 2) {
+                const rowData: Record<string, string> = {};
+                tdCells.forEach((td, colIndex) => {
+                  const key = headers[colIndex] ?? `col_${colIndex}`;
+                  rowData[key] = td.textContent?.trim() ?? '';
+                });
+                dataRows.push(rowData);
+              }
+            }
+            if (dataRows.length > 0) break;
+          }
+        }
+
         return { headers, rows: dataRows };
       },
+      selector,
     );
 
     return result;
