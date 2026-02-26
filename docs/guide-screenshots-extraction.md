@@ -210,10 +210,10 @@ Apres execution, Browserlet ecrit un fichier `browserlet-output/extracted.json` 
     ],
     "rows": [
       {
-        "N° demande": "VILA203",
-        "Matricule": "A293",
-        "Prenom": "Pascal",
-        "Nom": "VILAREM",
+        "N° demande": "DUPO107",
+        "Matricule": "B412",
+        "Prenom": "Jean",
+        "Nom": "DUPONT",
         "Demande": "Le lundi 02/02/2026 matin exclu",
         "Duree": "0.50 J.",
         "Type de demande": "Absence",
@@ -221,13 +221,13 @@ Apres execution, Browserlet ecrit un fichier `browserlet-output/extracted.json` 
         "CP acquis (sans distinction)": "20.747",
         "CP restants (sans distinction)": "2.000",
         "RTT Restants": "1.500",
-        "Commentaire": "Recup de vendredi matin pris par la reunion IA"
+        "Commentaire": "Recuperation reunion projet"
       },
       {
-        "N° demande": "PERE31",
-        "Matricule": "A783",
-        "Prenom": "Patrick",
-        "Nom": "PEREIRA",
+        "N° demande": "MART58",
+        "Matricule": "B629",
+        "Prenom": "Sophie",
+        "Nom": "MARTIN",
         "Demande": "Du lundi 02/02/2026 au vendredi 06/02/2026",
         "Duree": "5.00 J.",
         "Type de demande": "Absence",
@@ -242,7 +242,7 @@ Apres execution, Browserlet ecrit un fichier `browserlet-output/extracted.json` 
 }
 ```
 
-*(2 lignes sur 6 montrees pour la lisibilite)*
+*(2 lignes sur 6 montrees pour la lisibilite -- donnees anonymisees)*
 
 Le JSON est directement exploitable par un script Python, un pipeline CI, ou une API pour alimenter un tableau de bord ou declencher des alertes.
 
@@ -295,7 +295,7 @@ browserlet run nibelis-absences.bsl --headed --vault --output-dir debug-run/
 Chaque ligne est un objet dont les cles correspondent aux headers. Par exemple, pour acceder au prenom de la premiere ligne :
 
 ```javascript
-data.demandes_absence.rows[0]["Prenom"]  // "Pascal"
+data.demandes_absence.rows[0]["Prenom"]  // "Jean"
 ```
 
 ### Ciblage du tableau
@@ -387,60 +387,6 @@ browserlet-output/
   nibelis-validation-demandes.png   # Screenshot du tableau
   extracted.json                    # Donnees extraites en JSON
 ```
-
----
-
-## Generation de GIF anime (bonus)
-
-Le script `demos/make-gif.sh` assemble automatiquement les screenshots en un GIF anime avec un template navigateur.
-
-### Preparer un script GIF
-
-La version GIF du script ajoute des screenshots aux etapes cles et les place dans `gif-frames/` :
-
-```yaml
-# Commentaire = label de la frame dans le GIF
-# Page de connexion Nibelis
-- action: screenshot
-  value: "browserlet-output/gif-frames/nibelis-01-login.png"
-
-# Selection du profil Manager
-- action: screenshot
-  value: "browserlet-output/gif-frames/nibelis-02-profil.png"
-
-# Dashboard Manager avec taches en attente
-- action: screenshot
-  value: "browserlet-output/gif-frames/nibelis-03-dashboard.png"
-
-# Tableau des demandes d'absence en attente
-- action: screenshot
-  value: "browserlet-output/gif-frames/nibelis-04-demandes.png"
-```
-
-Le commentaire `#` au-dessus de chaque screenshot devient le label affiche dans la barre d'etape du GIF.
-
-### Lancer la generation
-
-```bash
-./demos/make-gif.sh demos/nibelis-absences-gif.bsl
-```
-
-Le script :
-1. Execute le BSL et capture les screenshots + les donnees extraites
-2. Composite chaque screenshot dans un template navigateur avec une barre d'etape coloree
-3. Genere une frame summary avec les donnees extraites (si `extracted.json` existe)
-4. Assemble le tout en GIF anime
-
-### Resultat
-
-```
-=== GIF Ready ===
-  File:   browserlet-output/nibelis-absences.gif
-  Size:   404 KB
-  Frames: 5 (2.8s par frame, 4.5s sur la derniere)
-```
-
-Le GIF est directement utilisable dans une documentation, un README ou une presentation.
 
 ---
 
