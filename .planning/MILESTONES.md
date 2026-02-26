@@ -221,3 +221,65 @@
 
 ---
 
+
+## v1.8 Session Persistence & Vault UX (Shipped: 2026-02-19)
+
+**Delivered:** Session persistence (cookies + localStorage snapshots) for extension and CLI to eliminate repeated authentication, vault unlock caching for batch execution, and BSL `session_persistence` declaration for per-script auto-capture/restore.
+
+**Phases completed:** 32-35 (9 plans total)
+
+**Key accomplishments:**
+
+- Vault unlock cache: encrypted temp file with device key, 15min TTL, 0600 permissions, `vault lock`/`vault del`/`vault reset` commands
+- Extension session capture: chrome.cookies API snapshot with encrypted chrome.storage.local persistence and TTL metadata
+- Extension session restore: chrome.cookies.set API restoration with localStorage bridge via content script injection
+- Session persistence UI: per-script "Memoriser la connexion" checkbox, status badges, session management in execution flow
+- CLI session storage: Playwright storageState encrypted snapshots in platform-specific data directory (env-paths)
+- CLI session integration: `--session-restore` flag with protocol validation, auto-capture on exit code 0
+- BSL `session_persistence` declaration: parser validation (enabled, max_age, snapshot_id), auto-capture/restore without manual flags
+
+**Stats:**
+
+- ~38,800 lines of TypeScript (up from ~37,000)
+- 4 phases, 9 plans
+- 1 day (2026-02-16)
+- 40 files changed, +5,396 / -68 lines
+- 444 tests passing (342 extension + 102 CLI)
+
+**Git range:** `08ffdc3` → `bbcdf18`
+
+**What's next:** v1.9 with script version control, scheduling, JUnit XML reporting
+
+---
+
+
+## v1.9 Reliability & Diagnostics (Shipped: 2026-02-20)
+
+**Delivered:** Pipeline reliability improvements achieving >90% first-try success rate with enriched recording (15 hint types), layout-aware generation, structured failure diagnostics, and in-browser repair workflow.
+
+**Phases completed:** 36-40 (9 plans total)
+
+**Key accomplishments:**
+
+- Recording enrichment: `landmark_context` (14th) and `position_context` (15th) hint types, SPA framework detection (React/Vue/Angular), expanded Vue/Angular artifact filtering
+- Generation quality: hint preservation audit catching silent LLM hint loss, weight-sorted hints in prompts, layout-aware generation (legacy-table vs SPA-component vs generic)
+- Post-generation validation: DOMSnapshot comparison catches LLM-invented hints before script execution
+- Failure diagnostics: per-candidate scoring matrix, confidence gap reporting, deterministic fix suggestions, `--diagnostic-json` for CLI automation
+- Repair workflow: DiagnosticRepairPanel overlay in sidepanel, DOM hint suggester scanning live page for alternatives (no LLM), repair audit trail in chrome.storage.local
+- Pipeline validation: OBM legacy + TodoMVC SPA validation scripts; discovered and fixed MutationObserver null-body bug during SSO redirects
+
+**Stats:**
+
+- ~40,000 lines of TypeScript (up from ~38,800)
+- 5 phases, 9 plans
+- 1 day (2026-02-20)
+- 51 files changed, +5,309 / -143 lines
+- 29 commits
+- 524 tests passing (up from 444)
+
+**Git range:** `1789005` → `cef1691`
+
+**What's next:** v2.0 with JUnit reporting, scheduling, script version control
+
+---
+

@@ -38,9 +38,9 @@ Requirements for v1.9 Reliability & Diagnostics. Fiabiliser le pipeline record â
 
 ### Validation
 
-- [ ] **VAL-01**: Full pipeline (record, generate, execute) succeeds on OBM legacy at >90% first-try rate
-- [ ] **VAL-02**: Full pipeline (record, generate, execute) succeeds on a modern SPA at >90% first-try rate
-- [ ] **VAL-03**: Failure diagnostics correctly identify the root cause for each failed step
+- [x] **VAL-01**: Full pipeline (record, generate, execute) succeeds on OBM legacy at >90% first-try rate
+- [x] **VAL-02**: Full pipeline (record, generate, execute) succeeds on a modern SPA at >90% first-try rate
+- [x] **VAL-03**: Failure diagnostics correctly identify the root cause for each failed step
 
 ## Future Requirements (v2.0+)
 
@@ -91,9 +91,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REP-02 | Phase 39 | Complete |
 | REP-03 | Phase 39 | Complete |
 | REP-04 | Phase 39 | Complete |
-| VAL-01 | Phase 40 | Pending |
-| VAL-02 | Phase 40 | Pending |
-| VAL-03 | Phase 40 | Pending |
+| VAL-01 | Phase 40 | Complete |
+| VAL-02 | Phase 40 | Complete |
+| VAL-03 | Phase 40 | Complete |
 
 **Coverage:**
 - v1.9 requirements: 20 total

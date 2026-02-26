@@ -8,26 +8,15 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 
 **Automatisation web résiliente pour applications legacy, sans coût récurrent d'IA** — Les sélecteurs sémantiques ciblent l'intention ("le bouton de validation") plutôt que la structure DOM fragile (`#btn-submit-x7`), rendant les scripts maintenables quand l'UI évolue.
 
-## Current Milestone: v1.8 Session Persistence & Vault UX
+## Current State (v1.9 Shipped)
 
-**Goal:** Ajouter la persistance de session entre exécutions (extension + CLI) et améliorer l'UX du vault CLI avec un cache de déverrouillage.
-
-**Target features:**
-- Session snapshot capture/restore (cookies + localStorage) dans l'extension via chrome.cookies API
-- Session persistence CLI via Playwright storageState natif
-- Déclaration BSL `auth.session_persistence` (capture, ttl, on_invalid, encryption)
-- Validation de session avec TTL configurable et fallback automatique
-- Vault unlock cache CLI — fichier temp chiffré avec TTL 15min par défaut
-
-## Current State (v1.7 Shipped)
-
-**Shipped:** 2026-02-15
-**Codebase:** ~37,000 LOC TypeScript
+**Shipped:** 2026-02-20
+**Codebase:** ~40,000 LOC TypeScript
 **Tech Stack:** WXT, Preact, Monaco Editor, Chrome/Firefox Manifest V3, Playwright, Commander.js, esbuild
-**Tests:** 428 (326 extension + 102 CLI)
+**Tests:** 524 (422 extension + 102 CLI)
 
 **What's Working:**
-- Recording with 13 semantic hint types (10 original + 3 structural context)
+- Recording with 15 semantic hint types (10 original + 3 structural + landmark_context + position_context)
 - BSL playback with cascade resolver (deterministic-first + micro-prompts)
 - LLM integration (Claude API + Ollama + OpenAI Compatible) with encrypted keys
 - Contextual triggers (suggest + auto-execute modes)
@@ -47,7 +36,15 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 - Auto-screenshot on step failure
 - Screenshot gallery with ZIP export
 - Firefox MV3 cross-browser support
-- CSS Module hashed class filtering in recording hints
+- CSS Module hashed class filtering + Vue/Angular artifact filtering in recording hints
+- SPA framework detection (React/Vue/Angular) with component boundary context
+- Hint preservation audit (prevents LLM from silently dropping high-weight hints)
+- Layout-aware BSL generation (legacy-table, SPA-component, generic prompt sections)
+- Post-generation DOM snapshot validation (catches LLM-invented hints)
+- Structured failure diagnostics with per-candidate scoring and fix suggestions
+- `--diagnostic-json` flag for CLI automation of failure analysis
+- DiagnosticRepairPanel: in-browser repair without re-recording (DOM hint suggester)
+- Repair audit trail in chrome.storage.local
 - **CLI runner:** `browserlet run script.bsl` via Playwright (headless/headed, --timeout, --output-dir)
 - **Cascade resolver in CLI:** 44KB esbuild IIFE bundle injected via page.evaluate() with SimpleResolver fallback
 - **CLI credential vault:** AES-GCM encrypted local vault with CLIPasswordStorage adapter, vault import from extension
@@ -58,6 +55,11 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 - **AI auto-repair:** `--auto-repair` and `--interactive` flags for LLM-guided hint repair on failure
 - **Vault CLI:** `vault init`, `vault add`, `vault list`, `vault del`, `vault reset`, `vault import-from-extension` commands
 - **Monorepo:** @browserlet/core shared package (types, parser, prompts, substitution)
+- **Vault unlock cache:** 15min TTL encrypted temp file, `vault lock`/`vault del`/`vault reset` commands
+- **Extension session persistence:** chrome.cookies API capture/restore with encrypted chrome.storage.local
+- **CLI session persistence:** Playwright storageState with encrypted file storage, `--session-restore` flag
+- **BSL session_persistence:** declaration with auto-capture/restore per script (enabled, max_age, snapshot_id)
+- **Sidepanel refactored:** Scripts/Record/Credentials/Settings bottom bar, ExecutionHistoryModal extracted
 
 ## Requirements
 
@@ -129,16 +131,27 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 - ✓ Vault management — init, add, list, import-from-extension commands
 - ✓ Real-world E2E hardening — Unicode stripping, type fallback, resolver improvements
 
-### Active (v1.8)
+**v1.8:**
+- ✓ Session snapshot capture/restore — extension (chrome.cookies + localStorage encrypted snapshots)
+- ✓ Session snapshot capture/restore — CLI (Playwright storageState with encrypted file persistence)
+- ✓ BSL `session_persistence` declaration — enabled, max_age, snapshot_id with auto-capture/restore
+- ✓ Vault unlock cache CLI — encrypted temp file, 15min TTL, device key, vault lock/del/reset commands
 
-- [ ] Session snapshot capture/restore — extension (chrome.cookies + localStorage)
-- [ ] Session snapshot capture/restore — CLI (Playwright storageState)
-- [ ] BSL `auth.session_persistence` declaration — capture, ttl, on_invalid, encryption
-- [ ] Session validation with TTL and semantic indicators
-- [ ] Fallback behavior on expired/invalid session (login, prompt, abort)
-- [ ] Vault unlock cache CLI — encrypted temp file, 15min TTL default, configurable
+**v1.9:**
+- ✓ Recording enrichment — 15 hint types, landmark_context, position_context, SPA framework detection
+- ✓ Generation quality — hint preservation audit, weight-sorted hints, layout-aware prompts, DOM snapshot validation
+- ✓ Failure diagnostics — per-candidate scoring, confidence gap, fix suggestions, --diagnostic-json
+- ✓ Repair workflow — DiagnosticRepairPanel, DOM hint suggester, repair audit trail
+- ✓ Pipeline validation — OBM legacy + SPA modern at >90% success rate
 
-### Future (v1.9+)
+### Active (v2.0+)
+
+- [ ] JUnit XML / HTML report output for CI/CD integration
+- [ ] `--last-failed` flag for re-running only failed scripts
+- [ ] Script version control with diff tracking
+- [ ] Scheduled execution (cron-like) for automated runs
+
+### Future (v2.0+)
 
 - [ ] Script version control
 - [ ] Scheduling (exécution programmée)
@@ -195,7 +208,7 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 | WXT framework | Auto-manifest, HMR, conventions | ✓ Good |
 | VanJS → Preact migration | VanJS cross-module state unreliable | ✓ Good |
 | In-page notifications | Chrome buttons don't work on macOS | ✓ Good |
-| 13 semantic hint types | 10 original + 3 structural (fieldset, label, section) | ✓ Good |
+| 15 semantic hint types | 10 original + 3 structural + landmark_context + position_context | ✓ Good |
 | Cascade resolver (0.85/0.70 thresholds) | Deterministic-first, 80%+ without LLM | ✓ Good |
 | PBKDF2 600k iterations | OWASP 2025/2026 recommendation | ✓ Good |
 | Validation by decryption | No hash storage, more secure | ✓ Good |
@@ -223,9 +236,18 @@ Browserlet est une extension Chrome/Firefox et un outil CLI qui permettent d'aut
 | normalizeText strips invisible Unicode | Fixes LTR mark / zero-width char comparison failures | ✓ Good |
 | class_contains as scoring signal only | Not hard filter in gatherCompetitors fallback | ✓ Good |
 
-| Playwright storageState for CLI sessions | Native JSON format, proven, no custom serialization | — Pending |
-| Encrypted temp file for vault cache | Secure (0600 perms), TTL-based, no daemon needed | — Pending |
-| chrome.cookies API for extension snapshots | Native MV3 API, no headless browser needed | — Pending |
+| Playwright storageState for CLI sessions | Native JSON format, proven, no custom serialization | ✓ Good |
+| Encrypted temp file for vault cache | Secure (0600 perms), TTL-based, no daemon needed | ✓ Good |
+| chrome.cookies API for extension snapshots | Native MV3 API, no headless browser needed | ✓ Good |
+| Device key (random, not password-derived) | Avoids PBKDF2 overhead on cache operations | ✓ Good |
+| Three-path session handling | manual --session-restore > BSL auto-restore > default random ID | ✓ Good |
+| Non-fatal session capture/restore | Never breaks script execution on session errors | ✓ Good |
+| detectLayoutType signal counting | Threshold >= 2 signals to classify legacy-table vs SPA vs generic | ✓ Good |
+| Hint preservation audit threshold 0.7 | Catches loss of data_attribute, role, type, aria_label, name, text_contains | ✓ Good |
+| PartialFailureDiagnostic in-browser | Assembled CLI-side to avoid DOM refs crossing page boundary | ✓ Good |
+| DiagnosticError preserves message format | matched=[]/failed=[] string for RepairEngine backward compat | ✓ Good |
+| DOM hint suggester (no LLM) | Pure deterministic DOM scan, <100ms, works offline | ✓ Good |
+| MutationObserver null-body guard | document.body || document.documentElement with retry for SSO redirects | ✓ Good |
 
 ---
-*Last updated: 2026-02-16 after v1.8 milestone start*
+*Last updated: 2026-02-20 after v1.9 milestone completion*
