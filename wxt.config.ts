@@ -45,7 +45,7 @@ export default defineConfig({
     const isFirefox = browser === 'firefox';
 
     // Base permissions (common to all browsers)
-    const basePermissions = ['storage', 'unlimitedStorage', 'tabs', 'activeTab', 'notifications', 'alarms', 'idle', 'cookies'];
+    const basePermissions = ['storage', 'unlimitedStorage', 'tabs', 'activeTab', 'notifications', 'alarms', 'idle', 'cookies', 'downloads', 'clipboardWrite', 'contextMenus'];
 
     // Chrome-specific permissions
     const chromePermissions = [...basePermissions, 'scripting', 'sidePanel'];
@@ -92,6 +92,12 @@ export default defineConfig({
       }),
       action: {
         default_title: 'Open Browserlet',
+        default_icon: {
+          16: 'icon/16.png',
+          32: 'icon/32.png',
+          48: 'icon/48.png',
+          128: 'icon/128.png',
+        },
       },
     };
   },
