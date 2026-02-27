@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "Web automation for legacy applications",
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox --mv3",
@@ -15,6 +17,9 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "keywords": [
     "chrome-extension",
