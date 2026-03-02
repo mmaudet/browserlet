@@ -1,4 +1,5 @@
 import type { AppState, Message, MessageResponse, PingResponse, CapturedAction } from '../../utils/types';
+import { isFirefox } from '../../utils/browser-detect';
 import { storage } from '../../utils/storage/browserCompat';
 import { getState, setState, setRecordingState, addRecordedAction, clearRecordedActions } from './storage';
 import { getLLMService } from './llm';
@@ -311,10 +312,29 @@ async function processMessage(
         }
 
         // Capture as PNG (lossless, per user preference SHOT-06)
-        const dataUrl = await chrome.tabs.captureVisibleTab(
-          tab.windowId,
-          { format: 'png' }
-        );
+        let dataUrl: string;
+        try {
+          dataUrl = await chrome.tabs.captureVisibleTab(
+            tab.windowId,
+            { format: 'png' }
+          );
+        } catch (captureError) {
+          // Firefox MV3: host_permissions may not be auto-granted.
+          // Provide a clear error message guiding the user.
+          if (isFirefox && captureError instanceof Error &&
+              captureError.message.includes('activeTab')) {
+            console.error(
+              '[Browserlet BG] Firefox screenshot permission denied.',
+              'Ensure the extension has "Access your data for all websites" granted',
+              'in about:addons > Browserlet > Permissions.'
+            );
+            return {
+              success: false,
+              error: 'Screenshot permission not granted. Go to about:addons > Browserlet > Permissions and enable "Access your data for all websites".'
+            };
+          }
+          throw captureError;
+        }
 
         // Save to storage
         console.log('[Browserlet BG] Saving screenshot for script:', scriptId, 'step:', stepIndex);

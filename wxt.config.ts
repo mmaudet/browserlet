@@ -50,8 +50,8 @@ export default defineConfig({
     // Chrome-specific permissions
     const chromePermissions = [...basePermissions, 'scripting', 'sidePanel'];
 
-    // Firefox MV3 permissions (scripting now available)
-    const firefoxPermissions = [...basePermissions, 'scripting'];
+    // Firefox MV2 permissions (scripting not used - content scripts are auto-registered)
+    const firefoxPermissions = [...basePermissions];
 
     return {
       name: '__MSG_appName__',
