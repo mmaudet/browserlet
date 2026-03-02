@@ -11,6 +11,22 @@ import type { LLMProvider } from './types';
 import type { CapturedAction } from '../../../content/recording/types';
 
 /**
+ * Normalize an OpenAI-compatible endpoint URL to always point to /chat/completions.
+ * Accepts:
+ *   - https://api.example.com/v1               → https://api.example.com/v1/chat/completions
+ *   - https://api.example.com/v1/              → https://api.example.com/v1/chat/completions
+ *   - https://api.example.com/v1/chat/completions  → unchanged
+ *   - https://api.example.com/v1/chat/completions/ → trailing slash stripped
+ */
+export function normalizeOpenAIEndpoint(endpoint: string): string {
+  let url = endpoint.trim().replace(/\/+$/, '');
+  if (!url.endsWith('/chat/completions')) {
+    url = `${url}/chat/completions`;
+  }
+  return url;
+}
+
+/**
  * OpenAI API response structure
  */
 interface OpenAIResponse {
@@ -40,12 +56,12 @@ export class OpenAIProvider implements LLMProvider {
 
   /**
    * Create a new OpenAI-compatible provider
-   * @param endpoint - Chat completions endpoint URL
+   * @param endpoint - Chat completions endpoint URL (or base URL ending with /v1)
    * @param apiKey - API key for authentication
    * @param model - Model name to use (default: gpt-4o)
    */
   constructor(endpoint: string, apiKey: string, model?: string) {
-    this.endpoint = endpoint;
+    this.endpoint = normalizeOpenAIEndpoint(endpoint);
     this.apiKey = apiKey;
     this.model = model ?? 'gpt-4o';
     this.rateLimiter = new RateLimiter();

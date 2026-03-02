@@ -106,9 +106,11 @@ export function LLMSettings() {
   };
 
   // Derive models endpoint from chat completions endpoint
+  // Handles both /v1/chat/completions and /v1 formats (#5)
   const getModelsEndpoint = (chatEndpoint: string): string => {
-    // Replace /chat/completions with /models
-    return chatEndpoint.replace(/\/chat\/completions\/?$/, '/models');
+    const url = chatEndpoint.trim().replace(/\/+$/, '');
+    const stripped = url.replace(/\/chat\/completions\/?$/, '');
+    return `${stripped}/models`;
   };
 
   // Fetch OpenAI-compatible models from the API
