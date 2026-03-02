@@ -187,6 +187,13 @@ export class RecordingManager {
   private handleAction(action: CapturedAction): void {
     if (this.state !== 'recording' || !this.session) return;
 
+    // Filter out iframe actions (issue #3)
+    // Iframe navigations are blocked at NavigationCapture level.
+    // Iframe interactions (click/input) are dropped here to avoid
+    // orphaned actions in the BSL script.
+    // TODO: support iframe interactions when frame context is added to BSL
+    if (action.isIframe) return;
+
     this.session.actions.push(action);
 
     // Show captured feedback briefly

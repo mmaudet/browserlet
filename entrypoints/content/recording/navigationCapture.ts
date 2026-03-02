@@ -120,6 +120,10 @@ export class NavigationCapture {
   private captureNavigation(description: string, targetUrl: string): void {
     if (!this.isActive || !this.callback) return;
 
+    // Ignore navigation events from iframes — they pollute the BSL script
+    // with unwanted navigate actions to iframe URLs (issue #3)
+    if (window !== window.top) return;
+
     const action: CapturedAction = {
       type: 'navigate',
       timestamp: Date.now(),
