@@ -50,6 +50,11 @@ The extension also maintains a **HintStabilityTracker** that records per-site hi
 
 > **Micro-prompts do not modify the BSL script.** They only assist element resolution at runtime. To permanently update hints in the `.bsl` file, use the CLI's `--auto-repair` flag — see [Auto-Repair](#auto-repair) below.
 
+## Prerequisites
+
+- **Node.js >= 22** (enforced via `engine-strict=true`)
+- npm
+
 ## Quick Start
 
 ### Extension (Chrome / Firefox)
