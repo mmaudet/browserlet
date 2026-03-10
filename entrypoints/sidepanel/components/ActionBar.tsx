@@ -15,7 +15,6 @@ const styles: Record<string, Record<string, string | number>> = {
     background: 'white',
     padding: '6px 0 8px',
     flexShrink: 0,
-    zIndex: 100,
   },
   button: {
     flex: 1,
