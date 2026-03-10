@@ -14,10 +14,7 @@ const styles: Record<string, Record<string, string | number>> = {
     borderTop: '1px solid #e5e5e5',
     background: 'white',
     padding: '6px 0 8px',
-    position: 'fixed' as const,
-    bottom: 0,
-    left: 0,
-    right: 0,
+    flexShrink: 0,
     zIndex: 100,
   },
   button: {
